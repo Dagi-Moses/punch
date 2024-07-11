@@ -11,7 +11,7 @@ class LoginFunctions {
   final BuildContext context;
 
   /// Login action that will be performed on click to action button in login mode.
-  Future<String?> onLogin(LoginData loginData) async {
+  void onLogin(LoginData loginData) async {
     await Future.delayed(const Duration(seconds: 2));
     return null;
   }

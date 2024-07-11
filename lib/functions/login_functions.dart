@@ -1,7 +1,15 @@
-import 'package:animated_login/animated_login.dart';
-import 'package:flutter/material.dart';
+import 'dart:convert';
 
-import 'dialog_builders.dart';
+import 'package:provider/provider.dart';
+import 'package:punch/animated_login.dart';
+import 'package:flutter/material.dart';
+import 'package:punch/constants/constants.dart';
+import 'package:punch/models/userModel.dart';
+import 'package:punch/providers/authProvider.dart';
+import 'package:punch/utils/dialog_builders.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class LoginFunctions {
   /// Collection of functions will be performed on login/signup.
@@ -9,27 +17,8 @@ class LoginFunctions {
   const LoginFunctions(this.context);
   final BuildContext context;
 
-  /// Login action that will be performed on click to action button in login mode.
-  Future<String?> onLogin(LoginData loginData) async {
-    await Future.delayed(const Duration(seconds: 2));
-    return null;
-  }
-
-  /// Sign up action that will be performed on click to action button in sign up mode.
-  Future<String?> onSignup(SignUpData signupData) async {
-    if (signupData.password != signupData.confirmPassword) {
-      return 'The passwords you entered do not match, check again.';
-    }
-    await Future.delayed(const Duration(seconds: 2));
-    return null;
-  }
-
-  /// Social login callback example.
-  Future<String?> socialLogin(String type) async {
-    await Future.delayed(const Duration(seconds: 2));
-    return null;
-  }
-
+  
+    
   /// Action that will be performed on click to "Forgot Password?" text/CTA.
   /// Probably you will navigate user to a page to create a new password after the verification.
   Future<String?> onForgotPassword(String email) async {

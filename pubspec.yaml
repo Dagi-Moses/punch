@@ -34,14 +34,15 @@ dependencies:
     sdk: flutter
    provider: ^6.0.5
    url_launcher: ^6.1.12
-   http: ^0.13.3
+   http: ^1.2.1
    fluttertoast: ^8.0.9
    flutter_spinkit: ^5.2.1
    shared_preferences_web: ^2.0.0
    shared_preferences: ^2.2.3
    flutter_svg: ^0.22.0
    fl_chart: ^0.68.0
-   google_fonts: ^2.1.0
+  
+   google_fonts: ^6.2.1
    flutter_icons:
      git:
        url: https://github.com/adarsh-technocrat/flutter-icons.git
@@ -49,11 +50,18 @@ dependencies:
    json_annotation: ^4.0.1
    json_serializable: ^4.1.2
    build_runner: ^2.0.3
-   intl: ^0.17.0
+   intl: ^0.19.0
    table_calendar: ^3.0.0
    flutter_screenutil: ^5.0.0+2
    smooth_page_indicator: ^0.3.0-nullsafety.0
+   
+   easy_sidemenu: ^0.6.0
    colorize_text_avatar: ^1.0.2
+   tuple: ^2.0.2
+   paged_datatable: ^2.1.0
+   
+  
+   
 
  
 dev_dependencies:

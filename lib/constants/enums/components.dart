@@ -6,8 +6,8 @@ enum LoginComponents {
   /// Title of the form.
   formTitle,
 
-  /// Social logins.
-  socialLogins,
+  // /// Social logins.
+  // socialLogins,
 
   /// Description of the login screen.
   description,
@@ -18,9 +18,9 @@ enum LoginComponents {
   /// Main action button, either login or signup.
   actionButton,
 
-  /// Change action text button, either login or signup.
-  /// Prefixed with "Already have an account?" or "Not have an account?" texts.
-  changeActionButton,
+  // /// Change action text button, either login or signup.
+  // /// Prefixed with "Already have an account?" or "Not have an account?" texts.
+  // changeActionButton,
 
   /// Forgot password action button.
   forgotPassword,
@@ -28,11 +28,11 @@ enum LoginComponents {
   /// Logo of the app.
   logo,
 
-  /// Not have an account text.
-  notHaveAnAccount,
+  // /// Not have an account text.
+  // notHaveAnAccount,
 
-  /// Use email text.
-  useEmail,
+  // /// Use email text.
+  // useEmail,
 
   /// Checkbox for privacy policy and terms&conditions.
   policyCheckbox,

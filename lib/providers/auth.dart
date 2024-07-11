@@ -18,9 +18,9 @@ typedef AuthModeChangeCallback = void Function(AuthMode authMode);
 /// [Auth] is the provider for auth related data, functions.
 class Auth extends ChangeNotifier {
   /// Manages the state related to the authentication modes.
-  Auth({
-    required GlobalKey<FormState> formKey,
-    this.socialLogins = const <SocialLogin>[],
+   Auth({
+   GlobalKey<FormState> ?formKey,
+  
     this.onAuthModeChange,
     this.validateName = true,
     this.validateEmail = true,
@@ -37,23 +37,23 @@ class Auth extends ChangeNotifier {
     TextEditingController? passwordController,
     TextEditingController? confirmPasswordController,
     AuthMode? initialMode,
-    LoginCallback? onLogin,
+   VoidCallback? onLogin,
     SignupCallback? onSignup,
     ForgotPasswordCallback? onForgotPassword,
     SignUpModes? signUpMode,
-  })  : _formKey = formKey,
+  })  : _formKey = formKey!,
         _signUpMode = signUpMode ?? SignUpModes.both,
         _nameController = nameController ?? TextEditingController(text: ''),
         _emailController = emailController ?? TextEditingController(text: ''),
         _passwordController =
-            passwordController ?? TextEditingController(text: ''),
+            passwordController!,
         _confirmPasswordController =
             confirmPasswordController ?? TextEditingController(text: ''),
         _nameValidator = nameValidator,
         _emailValidator = emailValidator,
         _passwordValidator = passwordValidator,
         _hasPrivacyPolicy = hasPrivacyPolicy {
-    _onLogin = onLogin ?? _defaultLoginFunc;
+    _onLogin = onLogin! ;
     _onSignup = onSignup ?? _defaultSignupFunc;
     _onForgotPassword = onForgotPassword ?? _defaultForgotPassFunc;
     _mode = initialMode ?? AuthMode.login;
@@ -61,8 +61,7 @@ class Auth extends ChangeNotifier {
   }
 
   /// Default login, signup and forgot password functions to be
-  /// called in case any custom functions are not provided.
-  Future<String?> _defaultLoginFunc(LoginData a) async => null;
+  
   Future<String?> _defaultSignupFunc(SignUpData a) async => null;
   Future<String?> _defaultForgotPassFunc(String e) async => null;
 
@@ -72,10 +71,10 @@ class Auth extends ChangeNotifier {
   /// Callback to use auth mode changes.
   final AuthModeChangeCallback? onAuthModeChange;
 
-  late final LoginCallback _onLogin;
+ late final VoidCallback _onLogin;
 
   /// Function to be called on login action.
-  LoginCallback get onLogin => _onLogin;
+  //VoidCallback get onLogin => _onLogin;
 
   late final SignupCallback _onSignup;
 
@@ -86,9 +85,6 @@ class Auth extends ChangeNotifier {
 
   /// Function to be called on click to forgot password text.
   ForgotPasswordCallback get onForgotPassword => _onForgotPassword;
-
-  /// List of social login options.
-  final List<SocialLogin>? socialLogins;
 
   bool _checkedPrivacyBox = false;
   bool _showCheckboxError = false;
@@ -136,14 +132,14 @@ class Auth extends ChangeNotifier {
   bool get isAnimatedLogin => !_isReverse ^ (_initialMode == AuthMode.login);
 
   /// Username in the text controller.
-  String? username;
-
+  String? _username;
+String? get username => _username;
   /// Email user entered in the text controller.
-  String? email;
-
+  String? _email;
+String? get email => _email;
   /// Password text in the text controller.
-  String? password;
-
+  String? _password;
+String? get password => _password;
   /// Confirm password text in the text controller.
   String? confirmPassword;
 
@@ -151,15 +147,27 @@ class Auth extends ChangeNotifier {
 
   /// Sets the username.
   // ignore: use_setters_to_change_properties
-  void setUsername(String? newUsername) => username = newUsername;
+  
+  void setUsername({required String newUsername}) {
+    _username = newUsername;
+    notifyListeners();
+  }
 
   /// Sets the email.
   // ignore: use_setters_to_change_properties
-  void setEmail(String? newEmail) => email = newEmail;
+  
 
+  void setEmail({required String newEmail}) {
+    _email = newEmail;
+    notifyListeners();
+  }
   /// Sets the password.
   // ignore: use_setters_to_change_properties
-  void setPassword(String? newPassword) => password = newPassword;
+ 
+  void setPassword({required String newPassword}) {
+    _password = newPassword ;
+    notifyListeners();
+  }
 
   /// Sets the checkbox.
   void setCheckedPrivacyPolicy({bool? newValue}) {
@@ -261,65 +269,11 @@ class Auth extends ChangeNotifier {
   /// The form key that will be assigned to the form.
   GlobalKey<FormState> get formKey => _formKey;
 
-  /// Callback for the social login actions.
-  Future<void> socialLoginCallback(int index) async {
-    await socialLogins![index].callback();
-  }
+ 
 
   /// Any login or signup action.
   
-  User? _user;
-  String? _errorMessage;
-
-  User? get user => _user;
-  String? get errorMessage => _errorMessage;
-
-  final String baseUrl = 'http://localhost:3000';
-  void setUser(User? user) => _user = user;
-
-  Future<void> action( BuildContext context) async {
-    FocusManager.instance.primaryFocus?.unfocus();
-    if (formKey.currentState!.validate()) {
-      _loginResult(context);
-    }
-  }
   
-  
-  void _loginResult( BuildContext context) async {
-      final url = Uri.parse('$baseUrl/login');
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'username': _emailController.text,
-        'password': _passwordController.text,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      _user = User.fromJson(responseData);
-      _errorMessage = null;
-    } else {
-      _errorMessage = 'Failed to sign in';
-      _user = null;
-       Fluttertoast.showToast(
-        msg: 'Incorrect Details',
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.black54,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-     
-    }
-    formKey.currentState!.reset();
-    notifyListeners();
-  }
-    
  
   
 

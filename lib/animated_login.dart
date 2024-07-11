@@ -2,6 +2,7 @@ library animated_login;
 
 import 'dart:async';
 
+import 'package:punch/providers/authProvider.dart';
 import 'package:punch/src/src_shelf.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -30,7 +31,7 @@ class AnimatedLogin extends StatefulWidget {
     this.loginDesktopTheme,
     this.loginMobileTheme,
     this.loginTexts,
-    this.socialLogins,
+  
     this.onLogin,
     this.onSignup,
     this.onForgotPassword,
@@ -44,13 +45,13 @@ class AnimatedLogin extends StatefulWidget {
     this.nameValidator,
     this.emailValidator,
     this.passwordValidator,
-    this.validateName = true,
-    this.validateEmail = true,
-    this.validatePassword = true,
+    this.validateName = false,
+   required this.validateEmail,
+    required this.validatePassword ,
     this.validateCheckbox = true,
     this.nameController,
-    this.emailController,
-    this.passwordController,
+    required this.emailController,
+    required this.passwordController,
     this.confirmPasswordController,
     this.backgroundImage,
     this.logo,
@@ -75,11 +76,8 @@ class AnimatedLogin extends StatefulWidget {
   /// Determines all of the texts on the screen.
   final LoginTexts? loginTexts;
 
-  /// List of social login options that will be provided.
-  final List<SocialLogin>? socialLogins;
-
   /// Login callback that will be called after login button pressed.
-  final LoginCallback? onLogin;
+  final VoidCallback? onLogin;
 
   /// Signup callback that will be called after signup button pressed.
   final SignupCallback? onSignup;
@@ -128,13 +126,13 @@ class AnimatedLogin extends StatefulWidget {
   final bool validateCheckbox;
 
   /// Optional TextEditingController for name input field.
-  final TextEditingController? nameController;
+  final TextEditingController ? nameController;
 
   /// Optional TextEditingController for email input field.
-  final TextEditingController? emailController;
+  final TextEditingController emailController;
 
   /// Optional TextEditingController for password input field.
-  final TextEditingController? passwordController;
+  final TextEditingController passwordController;
 
   /// Optional TextEditingController for confirm password input field.
   final TextEditingController? confirmPasswordController;
@@ -195,15 +193,17 @@ class _AnimatedLoginState extends State<AnimatedLogin> {
         -1;
     return MultiProvider(
       providers: <ChangeNotifierProvider<dynamic>>[
+         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        // ChangeNotifierProvider(create: (_) => Auth()),
         ChangeNotifierProvider<LoginTexts>.value(value: loginTexts),
         ChangeNotifierProvider<LoginTheme>.value(value: loginTheme),
         ChangeNotifierProvider<Auth>(
           create: (BuildContext context) => Auth(
-            onForgotPassword: widget.onForgotPassword,
-            onLogin: widget.onLogin,
+            onForgotPassword: widget.onForgotPassword,  
+           onLogin: widget.onLogin,
             onSignup: widget.onSignup,
             checkboxCallback: widget.checkboxCallback,
-            socialLogins: widget.socialLogins,
+          
             initialMode: widget.initialMode,
             onAuthModeChange: widget.onAuthModeChange,
             signUpMode: widget.signUpMode,
@@ -228,7 +228,7 @@ class _AnimatedLoginState extends State<AnimatedLogin> {
           ? _webScaffold(loginTheme.backgroundColor)
           : GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              onTap: () {FocusManager.instance.primaryFocus?.unfocus();},
               child: _webScaffold(loginTheme.backgroundColor),
             ),
     );
@@ -351,6 +351,9 @@ class __ViewState extends State<_View> with SingleTickerProviderStateMixin {
           Container(color: loginTheme.backgroundColor),
           _animatedWebWelcome,
           _WebForm(
+            email: auth.emailController.text,
+            password: auth.passwordController.text,
+            formKey: auth.formKey,
             animationController: animationController,
             privacyPolicyChild: widget.privacyPolicyChild,
           ),
@@ -507,13 +510,19 @@ class __ViewState extends State<_View> with SingleTickerProviderStateMixin {
      
      
       case LoginComponents.form:
-        return _mobileWrapper(component.animationType, const _Form());
+        return _mobileWrapper(component.animationType,  _Form(   email: auth.emailController.text,
+              password: auth.passwordController.text,
+              formKey: auth.formKey,
+            ));
       case LoginComponents.forgotPassword:
         return context.select<Auth, bool>((Auth auth) => auth.isAnimatedLogin)
             ? _mobileWrapper(component.animationType, const _ForgotPassword())
             : Container();
       case LoginComponents.actionButton:
-        return _mobileWrapper(component.animationType, const _ActionButton());
+        return _mobileWrapper(component.animationType,  _ActionButton( 
+             
+              formKey: auth.formKey,
+            ));
       case LoginComponents.formTitle:
       case LoginComponents.logo:
       case LoginComponents.title:

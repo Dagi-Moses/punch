@@ -1,6 +1,7 @@
 import 'package:punch/decorations/button_styles.dart';
 import 'package:punch/decorations/text_styles.dart';
 import 'package:punch/providers/auth.dart';
+import 'package:punch/providers/authProvider.dart';
 import 'package:punch/providers/login_theme.dart';
 import 'package:punch/responsiveness/dynamic_size.dart';
 import 'package:punch/widgets/texts/base_text.dart';
@@ -11,8 +12,6 @@ import 'package:provider/provider.dart';
 
 /// An [ElevatedButton] with rounded corners.
 class RoundedButton extends StatefulWidget {
-  /// Takes some parameters to customize the design,
-  /// and uses "ButtonStyles(context).roundedStyle" to give roundness.
   const RoundedButton({
     required this.buttonText,
     required this.onPressed,
@@ -26,31 +25,14 @@ class RoundedButton extends StatefulWidget {
     Key? key,
   }) : super(key: key);
 
-  /// Text on the button.
   final String buttonText;
-
-  /// Callback to call on pressed.
   final AsyncCallback? onPressed;
-
-  /// Background color of the button.
   final Color? backgroundColor;
-
-  /// Border color of the button.
   final Color? borderColor;
-
-  /// Radius of the borders.
   final BorderRadius? borderRadius;
-
-  /// Width of the border.
   final double borderWidth;
-
-  /// Width of the button.
   final double? width;
-
-  /// Height of the button.
   final double? height;
-
-  /// Style of the button.
   final ButtonStyle? buttonStyle;
 
   @override
@@ -58,32 +40,34 @@ class RoundedButton extends StatefulWidget {
 }
 
 class _RoundedButtonState extends State<RoundedButton> {
-  bool _loading = false;
   late LoginTheme loginTheme;
 
   @override
   Widget build(BuildContext context) {
     loginTheme = context.read<LoginTheme>();
-    return loginTheme.showLoadingButton
-        ? AnimatedContainer(
-            width: _buttonWidth,
-            height: _buttonHeight,
-            duration: const Duration(milliseconds: 300),
-            child: _button,
-          )
-        : _button;
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        final loading = authProvider.textButtonLoading;
+        return AnimatedContainer(
+          width: _buttonWidth(loading),
+          height: _buttonHeight,
+          duration: const Duration(milliseconds: 300),
+          child: _button(loading),
+        );
+      },
+    );
   }
 
-  Widget get _button => ElevatedButton(
+  Widget _button(bool loading) => ElevatedButton(
         style: widget.buttonStyle != null
             ? widget.buttonStyle!
                 .merge(_defaultButtonStyle(context, loginTheme.isLandscape))
             : _defaultButtonStyle(context, loginTheme.isLandscape),
-        onPressed: widget.onPressed == null ? null : _onPressed,
-        child: _buttonChild,
+        onPressed: widget.onPressed,
+        child: _buttonChild(loading),
       );
 
-  Widget get _buttonChild => _loading && loginTheme.showLoadingButton
+  Widget _buttonChild(bool loading) => loading
       ? SizedBox(
           height: _loadingSize(context),
           width: _loadingSize(context),
@@ -95,39 +79,7 @@ class _RoundedButtonState extends State<RoundedButton> {
   double _loadingSize(BuildContext context) =>
       loginTheme.loadingButtonSize ?? DynamicSize(context).responsiveSize * 10;
 
-  Future<void> _onPressed() async {
-    if (_loading || widget.onPressed == null) return;
-    setState(() => _loading = true);
-    final auth = context.read<Auth>();
-    await auth.cancelableOperation?.cancel();
-    auth.cancelableOperation = CancelableOperation<void>.fromFuture(
-      widget.onPressed!(),
-      onCancel: _setLoading,
-    );
-    auth.cancelableOperation?.then((_) => _setLoading());
-  }
-
-  void _setLoading() {
-    if (mounted) setState(() => _loading = false);
-  }
-
-  /// Calls the rounded style from [ButtonStyles] class with custom parameters.
-  ButtonStyle _defaultButtonStyle(BuildContext context, bool isLandscape) =>
-      ButtonStyles(context).roundedStyle(
-        borderWidth: widget.borderWidth,
-        backgroundColor: widget.backgroundColor,
-        borderColor: widget.borderColor ?? (isLandscape ? Colors.white : Colors.white),
-        borderRadius: widget.borderRadius,
-        size: Size(_buttonWidth, _buttonHeight),
-        textStyle: TextStyles(context).bodyStyle(
-          color: isLandscape ? Colors.white : Theme.of(context).primaryColor,
-          fontWeight: FontWeight.w500,
-        ),
-        foregroundColor:
-            isLandscape ? Colors.white : Colors.red.shade700,
-      );
-
-  double get _buttonWidth => _loading && loginTheme.showLoadingButton
+  double _buttonWidth(bool loading) => loading
       ? _loadingSize(context) * 3.3
       : widget.width ??
           DynamicSize(context).width * (loginTheme.isLandscape ? 14 : 38);
@@ -135,4 +87,19 @@ class _RoundedButtonState extends State<RoundedButton> {
   double get _buttonHeight =>
       widget.height ??
       DynamicSize(context).height * (loginTheme.isLandscape ? 9 : 7.3);
+
+  ButtonStyle _defaultButtonStyle(BuildContext context, bool isLandscape) =>
+      ButtonStyles(context).roundedStyle(
+        borderWidth: widget.borderWidth,
+        backgroundColor: widget.backgroundColor,
+        borderColor:
+            widget.borderColor ?? (isLandscape ? Colors.white : Colors.white),
+        borderRadius: widget.borderRadius,
+        size: Size(_buttonWidth(false), _buttonHeight),
+        textStyle: TextStyles(context).bodyStyle(
+          color: isLandscape ? Colors.white : Theme.of(context).primaryColor,
+          fontWeight: FontWeight.w500,
+        ),
+        foregroundColor: isLandscape ? Colors.white : Colors.red.shade700,
+      );
 }

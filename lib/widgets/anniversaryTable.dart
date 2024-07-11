@@ -6,8 +6,8 @@ import 'package:colorize_text_avatar/colorize_text_avatar.dart';
 import 'package:punch/models/anniversaryModel.dart';
 import 'package:punch/providers/anniversaryProvider.dart';
 
-class RecentUsers extends StatelessWidget {
-  const RecentUsers({
+class AnniversaryTable extends StatelessWidget {
+  const AnniversaryTable({
     Key? key,
   }) : super(key: key);
 
@@ -27,7 +27,7 @@ class RecentUsers extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Anniversaries",
+                "Anniversaries List",
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               SingleChildScrollView(

@@ -77,13 +77,15 @@ class _MiniInformationWidgetState extends State<MiniInformationWidget> {
               ),
             ],
           ),
-          Row(
+          Flex(
+            direction:   Axis.horizontal,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 widget.dailyData.title!,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                style: TextStyle(color:Colors.black),
               ),
               SizedBox(
                 height: 8,
@@ -110,14 +112,14 @@ class _MiniInformationWidgetState extends State<MiniInformationWidget> {
                 "${widget.dailyData.volumeData}",
                 style: Theme.of(context)
                     .textTheme
-                    .displaySmall!
-                    .copyWith(color: Colors.white70),
+                    .labelLarge!
+                    .copyWith(color: Colors.white70, ),
               ),
               Text(
                 widget.dailyData.totalStorage!,
                 style: Theme.of(context)
                     .textTheme
-                     .displaySmall!
+                     .labelLarge!
                     .copyWith(color: Colors.white),
               ),
             ],

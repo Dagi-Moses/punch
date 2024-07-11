@@ -6,6 +6,7 @@ class User {
   final  int ? loginId;
   final  int ?staffNo;
   final String role;
+  final String? token;
 
   User({
     required this.username,
@@ -14,6 +15,7 @@ class User {
     this.firstName,
      this.loginId,
      this.staffNo,
+     this.token, 
     required this.role,
   });
 
@@ -25,6 +27,7 @@ class User {
       firstName: json['first_name'] ?? '',
       loginId: json['login_id'] ?? '',
       staffNo: json['staff_no'],
+      token: json['token']?? '',
       role: json['role'],
     );
   }
@@ -37,6 +40,7 @@ class User {
       'first_name': firstName,
       'login_id': loginId,
       'staff_no': staffNo,
+      'token': token,
       'role': role,
     };
   }

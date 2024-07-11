@@ -47,10 +47,15 @@ class CalendarItem extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: getRoleColor(calendarItemData.position)
-                          .withOpacity(.2),
+                      // color: getRoleColor(calendarItemData.position)
+                      //     .withOpacity(.2),
+                      color: getRoleColor(1)
+                           .withOpacity(.2),
+                      // border: Border.all(
+                      //   color: getRoleColor(calendarItemData.position),
+                      // ),
                       border: Border.all(
-                        color: getRoleColor(calendarItemData.position),
+                        color: getRoleColor(2),
                       ),
                       borderRadius: BorderRadius.all(
                         Radius.circular(4.0),

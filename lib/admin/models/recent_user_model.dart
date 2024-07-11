@@ -5,7 +5,7 @@ class RecentUser {
       {this.icon, this.name, this.date, this.posts, this.role, this.email});
 }
 
-List recentUsers = [
+List<RecentUser> recentUsers = [
   RecentUser(
     icon: "assets/icons/xd_file.svg",
     name: "Deniz Çolak",

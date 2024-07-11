@@ -1,7 +1,9 @@
+import 'package:provider/provider.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/admin/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:punch/providers/authProvider.dart';
 
 class Header extends StatelessWidget {
   const Header({
@@ -10,6 +12,7 @@ class Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+      final user = Provider.of<AuthProvider>(context).user;
     return Row(
       children: [
         if (!Responsive.isDesktop(context))
@@ -23,7 +26,7 @@ class Header extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Hello, Deniz 👋",
+                "Hello ${user!.username}",
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               SizedBox(
@@ -51,6 +54,8 @@ class ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<AuthProvider>(context).user;
+   
     return Container(
       margin: EdgeInsets.only(left: defaultPadding),
       padding: EdgeInsets.symmetric(
@@ -71,7 +76,7 @@ class ProfileCard extends StatelessWidget {
             Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: defaultPadding / 2),
-              child: Text("Deniz Çolak"),
+              child: Text(user!.lastName!),
             ),
           Icon(Icons.keyboard_arrow_down),
         ],

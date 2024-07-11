@@ -1,10 +1,10 @@
-import 'package:punch/models/login_data.dart';
+
 import 'package:punch/models/signup_data.dart';
 import 'package:flutter/foundation.dart';
 
 /// The result should be the error message.
 /// Returning null indicates that the callback succeed.
-typedef LoginCallback = Future<String?> Function(LoginData loginData);
+typedef VoidCallback = Future<void> Function();
 
 /// The result should be the error message.
 /// Returning null indicates that the callback succeed.

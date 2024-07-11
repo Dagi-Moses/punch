@@ -57,8 +57,8 @@ DataRow recentUserDataRow(RecentUser userInfo) {
       DataCell(Container(
           padding: EdgeInsets.all(5),
           decoration: BoxDecoration(
-            color: getRoleColor(userInfo.role).withOpacity(.2),
-            border: Border.all(color: getRoleColor(userInfo.role)),
+            color: getRoleColor(1).withOpacity(.2),
+            border: Border.all(color: getRoleColor(1)),
             borderRadius: BorderRadius.all(Radius.circular(5.0) //
                 ),
           ),

@@ -41,6 +41,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.11.0"
+  badges:
+    dependency: transitive
+    description:
+      name: badges
+      sha256: a7b6bbd60dce418df0db3058b53f9d083c22cdb5132a052145dc267494df0b84
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.2"
   boolean_selector:
     dependency: transitive
     description:
@@ -193,6 +201,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.1"
+  easy_sidemenu:
+    dependency: "direct main"
+    description:
+      name: easy_sidemenu
+      sha256: "946e6846094a1be39a53065329ff54661b600f1769d9095c62e4c8c3ca4ffd58"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.0"
   equatable:
     dependency: transitive
     description:
@@ -263,6 +279,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  flutter_localizations:
+    dependency: transitive
+    description: flutter
+    source: sdk
+    version: "0.0.0"
   flutter_screenutil:
     dependency: "direct main"
     description:
@@ -325,10 +346,10 @@ packages:
     dependency: "direct main"
     description:
       name: google_fonts
-      sha256: e70521755a6b08c6bde14ddae27dff5bf21010033888fc61da6c595f8a9f58c1
+      sha256: b1ac0fe2832c9cc95e5e88b57d627c5e68c223b9657f4b96e1487aa9098c7b82
       url: "https://pub.dev"
     source: hosted
-    version: "2.3.3"
+    version: "6.2.1"
   graphs:
     dependency: transitive
     description:
@@ -341,10 +362,10 @@ packages:
     dependency: "direct main"
     description:
       name: http
-      sha256: "5895291c13fa8a3bd82e76d5627f69e0d85ca6a30dcac95c4ea19a5d555879c2"
+      sha256: "761a297c042deedc1ffbb156d6e2af13886bb305c2a343a4d972504cd67dd938"
       url: "https://pub.dev"
     source: hosted
-    version: "0.13.6"
+    version: "1.2.1"
   http_multi_server:
     dependency: transitive
     description:
@@ -365,10 +386,10 @@ packages:
     dependency: "direct main"
     description:
       name: intl
-      sha256: "910f85bce16fb5c6f614e117efa303e85a1731bb0081edf3604a2ae6e9a3cc91"
+      sha256: d6f56758b7d3014a48af9701c085700aac781a92a87a62b1333b46d8879661cf
       url: "https://pub.dev"
     source: hosted
-    version: "0.17.0"
+    version: "0.19.0"
   io:
     dependency: transitive
     description:
@@ -486,6 +507,14 @@ packages:
     description:
       name: package_config
       sha256: "1c5b77ccc91e4823a5af61ee74e6b972db1ef98c2ff5a18d3161c982a55448bd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
+  paged_datatable:
+    dependency: "direct main"
+    description:
+      name: paged_datatable
+      sha256: "540df02cc8d127f955bab37401cb77cf07434d969aab7e2b8e4a454d75ef3cd4"
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
@@ -770,10 +799,10 @@ packages:
     dependency: "direct main"
     description:
       name: table_calendar
-      sha256: "7f1270313c0cdb245b583ed8518982c01d4a7e95869b3c30abcbae3b642c45d0"
+      sha256: "4ca32b2fc919452c9974abd4c6ea611a63e33b9e4f0b8c38dba3ac1f4a6549d1"
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.8"
+    version: "3.1.2"
   term_glyph:
     dependency: transitive
     description:
@@ -798,6 +827,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  tuple:
+    dependency: "direct main"
+    description:
+      name: tuple
+      sha256: a97ce2013f240b2f3807bcbaf218765b6f301c3eff91092bcfa23a039e7dd151
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.2"
   typed_data:
     dependency: transitive
     description:

@@ -5,12 +5,14 @@ class _WebForm extends StatefulWidget {
   const _WebForm({
     required this.animationController,
     this.privacyPolicyChild,
-    Key? key,
+    Key? key, required this.formKey, required this.password, required this.email,
   }) : super(key: key);
 
   /// Main animation controller for the transition animation.
   final AnimationController animationController;
-
+   final GlobalKey<FormState> formKey;
+   final String password;
+   final String email;
   /// Privacy policy child widget
   final Widget? privacyPolicyChild;
 
@@ -106,18 +108,19 @@ class __WebFormState extends State<_WebForm> {
   Widget get _formColumn {
     final items = <Widget>[];
     for (final component in loginTheme.animatedComponentOrder) {
-      items.addAll(_orderedComponent(component.component));
+      items.addAll(_orderedComponent(component.component, ));
     }
     return Column(mainAxisAlignment: MainAxisAlignment.center, children: items);
   }
 
-  List<Widget> _orderedComponent(LoginComponents component) {
+  List<Widget> _orderedComponent(LoginComponents component,
+      ) {
     switch (component) {
       case LoginComponents.formTitle:
         return <Widget>[if (_isLandscape) const _FormTitle()];
-     
+
       case LoginComponents.form:
-        return <Widget>[const _Form()];
+        return <Widget>[ _Form(formKey: widget.formKey, password: widget.password, email: widget.email,)];
       case LoginComponents.policyCheckbox:
         return <Widget>[
           if (!_isAnimatedLogin)
@@ -126,12 +129,17 @@ class __WebFormState extends State<_WebForm> {
       case LoginComponents.forgotPassword:
         return <Widget>[if (_isAnimatedLogin) const _ForgotPassword()];
       case LoginComponents.actionButton:
-        return <Widget>[const _ActionButton()];
+        return <Widget>[
+          _ActionButton(
+            formKey: widget.formKey,
+          
+          )
+        ];
       case LoginComponents.title:
       case LoginComponents.description:
       case LoginComponents.logo:
-      // case LoginComponents.notHaveAnAccount:
-    //  case LoginComponents.changeActionButton:
+        // case LoginComponents.notHaveAnAccount:
+        //  case LoginComponents.changeActionButton:
         return <Widget>[Container()];
     }
   }
@@ -176,7 +184,7 @@ class _PolicyCheckboxRow extends StatelessWidget {
   }
 
   Widget _errorText(LoginTheme loginTheme) => Selector<Auth, bool>(
-        selector: (_, Auth authModel) => authModel.showCheckboxError,
+        selector: (_, Auth authModel) { return authModel.showCheckboxError;},
         builder: (BuildContext context, bool showError, __) => Visibility(
           visible: showError,
           child: Padding(
@@ -262,21 +270,32 @@ class _PolicyCheckboxRow extends StatelessWidget {
 }
 
 class _ActionButton extends StatelessWidget {
-  const _ActionButton({Key? key}) : super(key: key);
+  final GlobalKey<FormState> formKey;
+ 
+
+  const _ActionButton(
+      {Key? key,
+      required this.formKey,
+     })
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final loginTheme = context.watch<LoginTheme>();
     final loginTexts = context.read<LoginTexts>();
-    final isAnimatedLogin =
-        context.select<Auth, bool>((Auth auth) => auth.isAnimatedLogin);
+    // final isAnimatedLogin =
+    //     context.select<Auth, bool>((Auth auth) => auth.isAnimatedLogin);
     final isLandscape = loginTheme.isLandscape;
     return Padding(
       padding: loginTheme.actionButtonPadding ??
           EdgeInsets.symmetric(vertical: _customSpace(context, isLandscape)),
       child: RoundedButton(
-        buttonText:  loginTexts.login ,
-        onPressed:() => context.read<Auth>().action(context),
+        buttonText: loginTexts.login,
+        onPressed: () {
+          return context.read<AuthProvider>().action(
+            context: context,
+            formKey: formKey,
+           );},
         backgroundColor: isLandscape ? Colors.red.shade700 : Colors.white,
         buttonStyle: loginTheme.actionButtonStyle,
       ),
@@ -313,41 +332,11 @@ class _FormTitle extends StatelessWidget {
   }
 }
 
-class _SocialLoginOptions extends StatelessWidget {
-  const _SocialLoginOptions({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final loginTheme = context.watch<LoginTheme>();
-    final dynamicSize = DynamicSize(context);
-    return Padding(
-      padding: loginTheme.socialLoginPadding ??
-          EdgeInsets.symmetric(vertical: dynamicSize.height * 1.4),
-      child: Wrap(
-        spacing: context.read<LoginTheme>().socialLoginsSpacing ??
-            dynamicSize.responsiveSize * 10,
-        alignment: WrapAlignment.center,
-        children: _socialLoginButtons(context, loginTheme.isLandscape),
-      ),
-    );
-  }
-
-  List<Widget> _socialLoginButtons(BuildContext context, bool isLandscape) {
-    final auth = context.read<Auth>();
-    return List<Widget>.generate(
-      auth.socialLogins!.length,
-      (int index) => CircleWidget(
-        onTap: () async => auth.socialLoginCallback(index),
-        color: isLandscape ? null : Colors.white,
-        widthFactor: isLandscape ? 13 : 16,
-        child: Image.asset(auth.socialLogins![index].iconPath),
-      ),
-    );
-  }
-}
-
 class _Form extends StatefulWidget {
-  const _Form({Key? key}) : super(key: key);
+  final GlobalKey<FormState> formKey;
+  final String password;
+  final String email;
+  const _Form({Key? key, required this.formKey, required this.password, required this.email}) : super(key: key);
 
   @override
   State<_Form> createState() => _FormState();
@@ -390,6 +379,7 @@ class _FormState extends State<_Form> {
     final loginTexts = context.read<LoginTexts>();
     final isAnimatedLogin =
         context.select<Auth, bool>((Auth auth) => auth.isAnimatedLogin);
+    final authProvider =  context.read<AuthProvider>();
     return <Widget>[
       if (!isAnimatedLogin && auth.signUpMode != SignUpModes.confirmPassword)
         CustomTextFormField(
@@ -399,7 +389,8 @@ class _FormState extends State<_Form> {
           prefixWidget: loginTheme.nameIcon,
           validator: auth.nameValidator,
           textInputAction: TextInputAction.next,
-          onChanged: auth.setUsername,
+          onChanged: (value) { auth.setUsername(newUsername: value!);},
+       
           autofillHints: const <String>[
             AutofillHints.username,
             AutofillHints.newUsername,
@@ -416,7 +407,7 @@ class _FormState extends State<_Form> {
         prefixWidget: loginTheme.emailIcon,
         validator: auth.emailValidator,
         textInputAction: TextInputAction.next,
-        onChanged: auth.setEmail,
+      onChanged: (value) {auth.setEmail(newEmail: value!);},
         autofillHints: const <String>[AutofillHints.email],
         textInputType: TextInputType.emailAddress,
       ),
@@ -429,10 +420,12 @@ class _FormState extends State<_Form> {
         showPasswordVisibility: auth.showPasswordVisibility,
         textInputAction:
             auth.isSignup ? TextInputAction.next : TextInputAction.done,
-        onFieldSubmitted: (_) => auth.isSignup
-            ? _confirmPasswordFocus.requestFocus()
-            : auth.action(context),
-        onChanged: auth.setPassword,
+        // onFieldSubmitted: (_) { 
+        //     authProvider.action(
+        //     context: context,
+        //     formKey: widget.formKey,
+        //   ) ;},
+       onChanged: (value) {auth.setPassword(newPassword: value!);},
         validator: auth.passwordValidator,
       ),
       if (!isAnimatedLogin && auth.signUpMode != SignUpModes.name)
@@ -441,7 +434,7 @@ class _FormState extends State<_Form> {
           hintText: loginTexts.confirmPasswordHint,
           prefixIcon: Icons.password_outlined,
           showPasswordVisibility: auth.showPasswordVisibility,
-          onFieldSubmitted: (_) => auth.action(context),
+          onFieldSubmitted: (_) {authProvider;},
           focusNode: _confirmPasswordFocus,
           onChanged: auth.setConfirmPassword,
           validator: auth.passwordValidator,
@@ -480,7 +473,7 @@ class _ForgotPassword extends StatelessWidget {
       style: _defaultStyle(context, isLandscape)
           .copyWith(decoration: TextDecoration.underline)
           .merge(loginTheme.forgotPasswordStyle),
-      onPressed: () async => auth.onForgotPassword(auth.emailController.text),
+      onPressed: () async { auth.onForgotPassword(auth.emailController.text);},
     );
   }
 
