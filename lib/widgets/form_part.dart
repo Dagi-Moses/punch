@@ -5,14 +5,18 @@ class _WebForm extends StatefulWidget {
   const _WebForm({
     required this.animationController,
     this.privacyPolicyChild,
-    Key? key, required this.formKey, required this.password, required this.email,
+    Key? key,
+    required this.formKey,
+    required this.password,
+    required this.email,
   }) : super(key: key);
 
   /// Main animation controller for the transition animation.
   final AnimationController animationController;
-   final GlobalKey<FormState> formKey;
-   final String password;
-   final String email;
+  final GlobalKey<FormState> formKey;
+  final String password;
+  final String email;
+
   /// Privacy policy child widget
   final Widget? privacyPolicyChild;
 
@@ -108,19 +112,28 @@ class __WebFormState extends State<_WebForm> {
   Widget get _formColumn {
     final items = <Widget>[];
     for (final component in loginTheme.animatedComponentOrder) {
-      items.addAll(_orderedComponent(component.component, ));
+      items.addAll(_orderedComponent(
+        component.component,
+      ));
     }
     return Column(mainAxisAlignment: MainAxisAlignment.center, children: items);
   }
 
-  List<Widget> _orderedComponent(LoginComponents component,
-      ) {
+  List<Widget> _orderedComponent(
+    LoginComponents component,
+  ) {
     switch (component) {
       case LoginComponents.formTitle:
         return <Widget>[if (_isLandscape) const _FormTitle()];
 
       case LoginComponents.form:
-        return <Widget>[ _Form(formKey: widget.formKey, password: widget.password, email: widget.email,)];
+        return <Widget>[
+          _Form(
+            formKey: widget.formKey,
+            password: widget.password,
+            email: widget.email,
+          )
+        ];
       case LoginComponents.policyCheckbox:
         return <Widget>[
           if (!_isAnimatedLogin)
@@ -132,7 +145,6 @@ class __WebFormState extends State<_WebForm> {
         return <Widget>[
           _ActionButton(
             formKey: widget.formKey,
-          
           )
         ];
       case LoginComponents.title:
@@ -184,7 +196,9 @@ class _PolicyCheckboxRow extends StatelessWidget {
   }
 
   Widget _errorText(LoginTheme loginTheme) => Selector<Auth, bool>(
-        selector: (_, Auth authModel) { return authModel.showCheckboxError;},
+        selector: (_, Auth authModel) {
+          return authModel.showCheckboxError;
+        },
         builder: (BuildContext context, bool showError, __) => Visibility(
           visible: showError,
           child: Padding(
@@ -271,18 +285,17 @@ class _PolicyCheckboxRow extends StatelessWidget {
 
 class _ActionButton extends StatelessWidget {
   final GlobalKey<FormState> formKey;
- 
 
-  const _ActionButton(
-      {Key? key,
-      required this.formKey,
-     })
-      : super(key: key);
+  const _ActionButton({
+    Key? key,
+    required this.formKey,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final loginTheme = context.watch<LoginTheme>();
     final loginTexts = context.read<LoginTexts>();
+    final provider = Provider.of<AuthProvider>(context);
     // final isAnimatedLogin =
     //     context.select<Auth, bool>((Auth auth) => auth.isAnimatedLogin);
     final isLandscape = loginTheme.isLandscape;
@@ -291,11 +304,13 @@ class _ActionButton extends StatelessWidget {
           EdgeInsets.symmetric(vertical: _customSpace(context, isLandscape)),
       child: RoundedButton(
         buttonText: loginTexts.login,
-        onPressed: () {
-          return context.read<AuthProvider>().action(
+        onPressed: () async {
+          await provider.action(
             context: context,
             formKey: formKey,
-           );},
+          );
+          provider.setTextButtonLoading(false);
+        },
         backgroundColor: isLandscape ? Colors.red.shade700 : Colors.white,
         buttonStyle: loginTheme.actionButtonStyle,
       ),
@@ -323,9 +338,7 @@ class _FormTitle extends StatelessWidget {
       child: BaseText(
         loginTexts.loginFormTitle,
         style: TextStyles(context)
-            .titleStyle(
-                color:
-                    loginTheme.isLandscape ? Colors.red.shade700 : Colors.white)
+            .titleStyle(color: loginTheme.isLandscape ? punchRed : Colors.white)
             .merge(loginTheme.formTitleStyle),
       ),
     );
@@ -336,7 +349,12 @@ class _Form extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final String password;
   final String email;
-  const _Form({Key? key, required this.formKey, required this.password, required this.email}) : super(key: key);
+  const _Form(
+      {Key? key,
+      required this.formKey,
+      required this.password,
+      required this.email})
+      : super(key: key);
 
   @override
   State<_Form> createState() => _FormState();
@@ -379,7 +397,7 @@ class _FormState extends State<_Form> {
     final loginTexts = context.read<LoginTexts>();
     final isAnimatedLogin =
         context.select<Auth, bool>((Auth auth) => auth.isAnimatedLogin);
-    final authProvider =  context.read<AuthProvider>();
+    final authProvider = context.read<AuthProvider>();
     return <Widget>[
       if (!isAnimatedLogin && auth.signUpMode != SignUpModes.confirmPassword)
         CustomTextFormField(
@@ -388,9 +406,11 @@ class _FormState extends State<_Form> {
           prefixIcon: Icons.person_outline,
           prefixWidget: loginTheme.nameIcon,
           validator: auth.nameValidator,
+          
           textInputAction: TextInputAction.next,
-          onChanged: (value) { auth.setUsername(newUsername: value!);},
-       
+          onChanged: (value) {
+            auth.setUsername(newUsername: value!);
+          },
           autofillHints: const <String>[
             AutofillHints.username,
             AutofillHints.newUsername,
@@ -407,7 +427,9 @@ class _FormState extends State<_Form> {
         prefixWidget: loginTheme.emailIcon,
         validator: auth.emailValidator,
         textInputAction: TextInputAction.next,
-      onChanged: (value) {auth.setEmail(newEmail: value!);},
+        onChanged: (value) {
+          auth.setEmail(newEmail: value!);
+        },
         autofillHints: const <String>[AutofillHints.email],
         textInputType: TextInputType.emailAddress,
       ),
@@ -420,12 +442,14 @@ class _FormState extends State<_Form> {
         showPasswordVisibility: auth.showPasswordVisibility,
         textInputAction:
             auth.isSignup ? TextInputAction.next : TextInputAction.done,
-        // onFieldSubmitted: (_) { 
+        // onFieldSubmitted: (_) {
         //     authProvider.action(
         //     context: context,
         //     formKey: widget.formKey,
         //   ) ;},
-       onChanged: (value) {auth.setPassword(newPassword: value!);},
+        onChanged: (value) {
+          auth.setPassword(newPassword: value!);
+        },
         validator: auth.passwordValidator,
       ),
       if (!isAnimatedLogin && auth.signUpMode != SignUpModes.name)
@@ -434,7 +458,9 @@ class _FormState extends State<_Form> {
           hintText: loginTexts.confirmPasswordHint,
           prefixIcon: Icons.password_outlined,
           showPasswordVisibility: auth.showPasswordVisibility,
-          onFieldSubmitted: (_) {authProvider;},
+          onFieldSubmitted: (_) {
+            authProvider;
+          },
           focusNode: _confirmPasswordFocus,
           onChanged: auth.setConfirmPassword,
           validator: auth.passwordValidator,
@@ -471,9 +497,15 @@ class _ForgotPassword extends StatelessWidget {
     return BaseTextButton(
       text: context.read<LoginTexts>().forgotPassword,
       style: _defaultStyle(context, isLandscape)
-          .copyWith(decoration: TextDecoration.underline)
+          .copyWith(
+              decoration: TextDecoration.underline,
+              decorationColor: Colors.green, // Set the underline color
+              decorationThickness: 1.5,
+              color: Colors.green)
           .merge(loginTheme.forgotPasswordStyle),
-      onPressed: () async { auth.onForgotPassword(auth.emailController.text);},
+      onPressed: () async {
+        auth.onForgotPassword(auth.emailController.text);
+      },
     );
   }
 

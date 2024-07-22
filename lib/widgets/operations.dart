@@ -20,6 +20,7 @@ Widget operationsWidget(
             context: context,
             builder: (_) {
               return AlertDialog(
+                backgroundColor: Colors.white,
                 title: Center(
                   child: Column(
                     children: [
@@ -33,27 +34,47 @@ Widget operationsWidget(
                   height: 70,
                   child: Column(
                     children: [
-                      Text("Are you sure you want to delete '$itemName'?"),
+                      Text(
+                        "Are you sure you want to delete '$itemName'?",
+                      ),
                       SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           ElevatedButton.icon(
-                            icon: Icon(Icons.close, size: 14),
+                            icon: Icon(
+                              Icons.close,
+                              size: 14,
+                              color: Colors.white,
+                            ),
                             style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey),
+                                backgroundColor: Colors.blue),
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
-                            label: Text("Cancel"),
+                            label: Text(
+                              "Cancel",
+                              style: TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                           SizedBox(width: 20),
                           ElevatedButton.icon(
-                            icon: Icon(Icons.delete, size: 14),
+                            icon: Icon(
+                              Icons.delete,
+                              size: 14,
+                              color: Colors.white,
+                            ),
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red),
                             onPressed: onDelete,
-                            label: Text("Delete"),
+                            label: Text(
+                              "Delete",
+                              style: TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ],
                       ),

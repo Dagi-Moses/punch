@@ -3,6 +3,8 @@ import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/admin/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:punch/admin/screens/dashboard/components/mini_information_card.dart';
+import 'package:punch/admin/screens/dashboard/components/mini_information_card.dart';
 import 'package:punch/providers/authProvider.dart';
 
 class Header extends StatelessWidget {
@@ -17,7 +19,7 @@ class Header extends StatelessWidget {
       children: [
         if (!Responsive.isDesktop(context))
           IconButton(
-            icon: Icon(Icons.menu),
+            icon: const Icon(Icons.menu),
             onPressed: () {},
           ),
         if (!Responsive.isMobile(context))
@@ -25,23 +27,16 @@ class Header extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "Hello ${user!.username}",
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              SizedBox(
-                height: 8,
-              ),
-              Text(
-                "Wellcome to your dashboard",
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
+               MiniInformation(),
+             
+           
+             
             ],
           ),
         if (!Responsive.isMobile(context))
           Spacer(flex: Responsive.isDesktop(context) ? 2 : 1),
-        Expanded(child: SearchField()),
-        ProfileCard()
+        const Expanded(child: SearchField()),
+        const ProfileCard()
       ],
     );
   }
@@ -56,30 +51,33 @@ class ProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
    
-    return Container(
-      margin: EdgeInsets.only(left: defaultPadding),
-      padding: EdgeInsets.symmetric(
-        horizontal: defaultPadding,
-        vertical: defaultPadding / 2,
-      ),
-      decoration: BoxDecoration(
-        color: secondaryColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundImage: AssetImage("assets/images/profile_pic.png"),
-          ),
-          if (!Responsive.isMobile(context))
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: defaultPadding / 2),
-              child: Text(user!.lastName!),
+    return Card(
+      elevation: 4,
+      child: Container(
+        margin: const EdgeInsets.only(left: defaultPadding),
+        padding: const EdgeInsets.symmetric(
+          horizontal: defaultPadding,
+          vertical: defaultPadding / 2,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.all(Radius.circular(20)),
+          border: Border.all(color: Colors.white),
+        ),
+        child: Row(
+          children: [
+            const CircleAvatar(
+              backgroundImage: AssetImage("assets/images/profile_pic.png"),
             ),
-          Icon(Icons.keyboard_arrow_down),
-        ],
+            if (!Responsive.isMobile(context))
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: defaultPadding / 2),
+                child: Text(user!.lastName!),
+              ),
+            const Icon(Icons.keyboard_arrow_down),
+          ],
+        ),
       ),
     );
   }
@@ -92,26 +90,42 @@ class SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: "Search",
-        fillColor: secondaryColor,
-        filled: true,
-        border: OutlineInputBorder(
-          borderSide: BorderSide.none,
-          borderRadius: const BorderRadius.all(Radius.circular(10)),
-        ),
-        suffixIcon: InkWell(
-          onTap: () {},
-          child: Container(
-            padding: EdgeInsets.all(defaultPadding * 0.75),
-            margin: EdgeInsets.symmetric(horizontal: defaultPadding / 2),
-            decoration: BoxDecoration(
-              color: greenColor,
-              borderRadius: const BorderRadius.all(Radius.circular(10)),
-            ),
-            child: SvgPicture.asset(
-              "assets/icons/Search.svg",
+    return Card(
+      elevation: 4,
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: "Search",
+          fillColor: Colors.white,
+          filled: true,
+      
+          enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.white, width: 1.0),
+            borderRadius: BorderRadius.all(Radius.circular(20)),
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.white, width: 1.0),
+            borderRadius: BorderRadius.all(Radius.circular(20)),
+          ),
+          border: const OutlineInputBorder(
+      
+           borderSide: BorderSide(
+      
+            color: Colors.white, width: 1.0),
+            borderRadius: BorderRadius.all(Radius.circular(20)),
+          ),
+          
+          suffixIcon: InkWell(
+            onTap: () {},
+            child: Container(
+              padding: const EdgeInsets.all(defaultPadding * 0.75),
+              margin: const EdgeInsets.symmetric(horizontal: defaultPadding / 2),
+              decoration: const BoxDecoration(
+                color: punchRed,
+                borderRadius: BorderRadius.all(Radius.circular(20)),
+              ),
+              child: SvgPicture.asset(
+                "assets/icons/Search.svg",
+              ),
             ),
           ),
         ),

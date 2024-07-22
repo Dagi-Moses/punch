@@ -1,3 +1,4 @@
+import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/decorations/text_styles.dart';
 import 'package:punch/providers/login_theme.dart';
 import 'package:punch/responsiveness/dynamic_size.dart';
@@ -60,9 +61,11 @@ class InputDeco {
             loginTheme.enabledBorderColor,
             loginTheme.isLandscape,
             widthFactor: .4,
+            
           ),
       focusedBorder: loginTheme.focusedBorder ??
           _getOutlineBorder(
+            
             loginTheme.focusedBorderColor,
             loginTheme.isLandscape,
           ),
@@ -110,9 +113,12 @@ class InputDeco {
         borderSide: BorderSide(
           width: DynamicSize(context).responsiveSize * widthFactor,
           color: color ??
-              (isLandscape
-                  ? Theme.of(context).primaryColorLight
-                  : Colors.white),
+              (
+                // isLandscape
+                //   ? 
+                  punchRed.withOpacity(0.5)
+                  // : Colors.white
+                  ),
         ),
       );
 }

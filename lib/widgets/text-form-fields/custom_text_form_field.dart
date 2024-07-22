@@ -66,7 +66,9 @@ class CustomTextFormField extends StatelessWidget {
         controller: controller,
         textInputAction: textInputAction,
         validator: validator,
-        style: TextStyles(context).textFormStyle().merge(theme.textFormStyle),
+        style: TextStyles(context).textFormStyle( 
+          color: Colors.black
+        ).merge(theme.textFormStyle),
         decoration: theme.textFormFieldDeco ?? _getFormDeco(context),
         onChanged: onChanged,
         autofillHints: autofillHints,

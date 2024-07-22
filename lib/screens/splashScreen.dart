@@ -29,7 +29,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: secondaryColor,
       body: Center(
         child: SpinKitWave(
           color: Colors.white,

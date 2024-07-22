@@ -4,9 +4,7 @@ import 'package:punch/animated_login.dart';
 import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:punch/functions/login_functions.dart';
-import 'package:punch/providers/auth.dart';
 import 'package:punch/providers/authProvider.dart';
-import 'package:punch/providers/loginFormProvider.dart';
 import 'package:punch/utils/dialog_builders.dart';
 
 
@@ -42,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
     // print('Auth: $auth');
 
     return AnimatedLogin(
+      
       onLogin:(){
         return
        authProvider.action(context: context, formKey: formKey);},

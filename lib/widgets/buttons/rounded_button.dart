@@ -52,54 +52,56 @@ class _RoundedButtonState extends State<RoundedButton> {
           width: _buttonWidth(loading),
           height: _buttonHeight,
           duration: const Duration(milliseconds: 300),
-          child: _button(loading),
+          child: ElevatedButton(
+            style: widget.buttonStyle != null
+                ? widget.buttonStyle!
+                    .merge(_defaultButtonStyle(context, loginTheme.isLandscape))
+                : _defaultButtonStyle(context, loginTheme.isLandscape),
+            onPressed: widget.onPressed,
+            child: authProvider.textButtonLoading
+                ? SizedBox(
+                    height: _loadingSize(context),
+                    width: _loadingSize(context),
+                    child: CircularProgressIndicator(
+                        color: loginTheme.loadingButtonColor),
+                  )
+                : BaseText(widget.buttonText, forceDefaultStyle: true),
+          ),
         );
       },
     );
   }
 
-  Widget _button(bool loading) => ElevatedButton(
-        style: widget.buttonStyle != null
-            ? widget.buttonStyle!
-                .merge(_defaultButtonStyle(context, loginTheme.isLandscape))
-            : _defaultButtonStyle(context, loginTheme.isLandscape),
-        onPressed: widget.onPressed,
-        child: _buttonChild(loading),
-      );
+  double _loadingSize(BuildContext context) {
+    return loginTheme.loadingButtonSize ??
+        DynamicSize(context).responsiveSize * 10;
+  }
 
-  Widget _buttonChild(bool loading) => loading
-      ? SizedBox(
-          height: _loadingSize(context),
-          width: _loadingSize(context),
-          child:
-              CircularProgressIndicator(color: loginTheme.loadingButtonColor),
-        )
-      : BaseText(widget.buttonText, forceDefaultStyle: true);
+  double _buttonWidth(bool loading) {
+    return loading
+        ? _loadingSize(context) * 3.3
+        : widget.width ??
+            DynamicSize(context).width * (loginTheme.isLandscape ? 14 : 38);
+  }
 
-  double _loadingSize(BuildContext context) =>
-      loginTheme.loadingButtonSize ?? DynamicSize(context).responsiveSize * 10;
+  double get _buttonHeight {
+    return widget.height ??
+        DynamicSize(context).height * (loginTheme.isLandscape ? 9 : 7.3);
+  }
 
-  double _buttonWidth(bool loading) => loading
-      ? _loadingSize(context) * 3.3
-      : widget.width ??
-          DynamicSize(context).width * (loginTheme.isLandscape ? 14 : 38);
-
-  double get _buttonHeight =>
-      widget.height ??
-      DynamicSize(context).height * (loginTheme.isLandscape ? 9 : 7.3);
-
-  ButtonStyle _defaultButtonStyle(BuildContext context, bool isLandscape) =>
-      ButtonStyles(context).roundedStyle(
-        borderWidth: widget.borderWidth,
-        backgroundColor: widget.backgroundColor,
-        borderColor:
-            widget.borderColor ?? (isLandscape ? Colors.white : Colors.white),
-        borderRadius: widget.borderRadius,
-        size: Size(_buttonWidth(false), _buttonHeight),
-        textStyle: TextStyles(context).bodyStyle(
-          color: isLandscape ? Colors.white : Theme.of(context).primaryColor,
-          fontWeight: FontWeight.w500,
-        ),
-        foregroundColor: isLandscape ? Colors.white : Colors.red.shade700,
-      );
+  ButtonStyle _defaultButtonStyle(BuildContext context, bool isLandscape) {
+    return ButtonStyles(context).roundedStyle(
+      borderWidth: widget.borderWidth,
+      backgroundColor: widget.backgroundColor,
+      borderColor:
+          widget.borderColor ?? (isLandscape ? Colors.white : Colors.white),
+      borderRadius: widget.borderRadius,
+      size: Size(_buttonWidth(false), _buttonHeight),
+      textStyle: TextStyles(context).bodyStyle(
+        color: isLandscape ? Colors.white : Theme.of(context).primaryColor,
+        fontWeight: FontWeight.w500,
+      ),
+      foregroundColor: isLandscape ? Colors.white : Colors.red.shade700,
+    );
+  }
 }

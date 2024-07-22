@@ -92,7 +92,7 @@ class _ChangeActionButton extends StatelessWidget {
                loginTexts.login,
       onPressed: animate,
       borderColor: Colors.white,
-      backgroundColor: Colors.red.shade700,
+      backgroundColor: secondaryColor,
       buttonStyle: loginTheme.changeActionButtonStyle,
     );
   }

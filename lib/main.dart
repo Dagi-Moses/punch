@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,8 +18,8 @@ import 'package:paged_datatable/l10n/generated/l10n.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  
+  await WidgetsFlutterBinding.ensureInitialized();
+
   runApp(
     MultiProvider(
       providers: [
@@ -34,8 +35,6 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-  
-
   Widget _navigateBasedOnRole(String role) {
     switch (role) {
       case 'admin':
@@ -51,14 +50,16 @@ class MyApp extends StatelessWidget {
     return LoginScreen();
   }
 
-  const MyApp({Key? key,}) : super(key: key);
+  const MyApp({
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
         create: (_) => AuthProvider(),
         child: MaterialApp(
-            localizationsDelegates: const [
+          localizationsDelegates: const [
             // Add other localizationsDelegates here
             PagedDataTableLocalization.delegate,
           ],
@@ -66,37 +67,31 @@ class MyApp extends StatelessWidget {
             Locale('en', 'NG'), // Add other supported locales here
           ],
           title: 'Punch Anniversary',
-          theme: ThemeData.dark().copyWith(
-            appBarTheme: AppBarTheme(backgroundColor: bgColor, elevation: 0),
-            scaffoldBackgroundColor: bgColor,
-            primaryColor: greenColor,
-            dialogBackgroundColor: secondaryColor,
-            // buttonColor: greenColor,
-            textTheme:
-                GoogleFonts.openSansTextTheme(Theme.of(context).textTheme)
-                    .apply(bodyColor: Colors.white),
-            canvasColor: secondaryColor,
+              theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+            textTheme: kIsWeb ? GoogleFonts.robotoTextTheme() : null,
           ),
-          
-          // theme: ThemeData(
-          //   primaryColor: Colors.blue,
-          //   colorScheme: const ColorScheme.light(primary: Colors.blue),
-          //  useMaterial3: true,
-          // textTheme: Theme.of(context).textTheme.apply(
-          //     // Note: The below line is required due to a current bug in Flutter:
-          //   // https://github.com/flutter/flutter/issues/129553,
-          //     decorationColor: Colors.blue),
-          // inputDecorationTheme: const InputDecorationTheme(
-          //   prefixIconColor: Colors.black54,
-          //   suffixIconColor: Colors.black54,
-          //   iconColor: Colors.black54,
-          //   labelStyle: TextStyle(color: Colors.black54),
-          //   hintStyle: TextStyle(color: Colors.black54),
-          // ),
+        //  theme: ThemeData.light().copyWith(
+              // appBarTheme: AppBarTheme(
+              //   backgroundColor: bgColor,
+              //   elevation: 0,
+              // ),
+              // cardTheme: CardTheme(
+              //   color: Colors.white, // Set default card color to white
+              // ),
+              // scaffoldBackgroundColor: bgColor,
+              // primaryColor: punchRed,
 
-          // ),
+              // // buttonColor: punchRed,
+
+              // textTheme: GoogleFonts.openSansTextTheme(
+              //   Theme.of(context).textTheme,
+              // ).apply(bodyColor: Colors.black),
+
+              // iconTheme: IconThemeData(color: Colors.black),
+          //    ),
           debugShowCheckedModeBanner: false,
-          // initialRoute: '/admin',
           home: Consumer<AuthProvider?>(
             builder: (context, authProvider, _) {
               return StreamBuilder<User?>(

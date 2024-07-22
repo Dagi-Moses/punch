@@ -1,4 +1,5 @@
 class Anniversary {
+   String? id;
   int? anniversaryNo;
   String? name;
   int anniversaryTypeId;
@@ -12,6 +13,7 @@ class Anniversary {
   int? anniversaryYear;
 
   Anniversary({
+    this.id,
     this.anniversaryNo,
     this.name,
     required this.anniversaryTypeId,
@@ -28,6 +30,7 @@ class Anniversary {
   // Deserialize JSON to Anniversary object
   factory Anniversary.fromJson(Map<String, dynamic> json) {
     return Anniversary(
+      id: json['_id'] as String?,
       anniversaryNo: json['Anniversary_No'] as int?,
       name: json['Name'] as String?,
       anniversaryTypeId: json['Anniversary_Type_Id'] as int,
@@ -46,6 +49,7 @@ class Anniversary {
   // Serialize Anniversary object to JSON
   Map<String, dynamic> toJson() {
     return {
+      '_id': id,
       'Anniversary_No': anniversaryNo,
       'Name': name,
       'Anniversary_Type_Id': anniversaryTypeId,

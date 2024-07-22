@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
-import 'package:punch/admin/responsive.dart';
+import 'package:punch/admin/screens/dashboard/components/mini_information_card.dart';
 
-import 'package:punch/admin/screens/dashboard/components/user_details_widget.dart';
-import 'package:punch/widgets/anniversaryTable.dart';
-import 'package:punch/widgets/anniversaryTable2.dart';
-
-import '../admin/screens/dashboard/components/recent_forums.dart';
 import '../widgets/main View.dart';
 
 class AnniversaryList extends StatefulWidget {
@@ -19,15 +14,15 @@ class AnniversaryList extends StatefulWidget {
 class _AnniversaryListState extends State<AnniversaryList> {
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return const Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           flex: 5,
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-
-            //AnniversaryTable2(),
+            
             MainView(),
               // const SizedBox(height: defaultPadding),
               // const RecentDiscussions(),

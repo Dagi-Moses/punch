@@ -1,10 +1,11 @@
-import 'package:punch/admin/core/constants/color_constants.dart';
-import 'package:punch/admin/models/daily_info_model.dart';
+import 'package:provider/provider.dart';
+import 'package:punch/admin/core/widgets/tickets.dart';
 
-import 'package:punch/admin/responsive.dart';
-import 'package:punch/admin/screens/dashboard/components/mini_information_widget.dart';
-import 'package:punch/admin/screens/forms/input_form.dart';
 import 'package:flutter/material.dart';
+import 'package:punch/admin/responsive.dart';
+import 'package:punch/constants/constants.dart';
+import 'package:punch/providers/anniversaryProvider.dart';
+import 'package:punch/providers/authProvider.dart';
 
 class MiniInformation extends StatelessWidget {
   const MiniInformation({
@@ -13,78 +14,20 @@ class MiniInformation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Size _size = MediaQuery.of(context).size;
+    String anniversaries = Provider.of<AnniversaryProvider>(context).anniversaries.length.toString();
+    List<String> randomNumbers = [
+      anniversaries, "12", ];
     return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            SizedBox(
-              width: 10,
-            ),
-            ElevatedButton.icon(
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.green,
-                padding: EdgeInsets.symmetric(
-                  horizontal: defaultPadding * 1.5,
-                  vertical:
-                      defaultPadding / (Responsive.isMobile(context) ? 2 : 1),
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).push(new MaterialPageRoute<Null>(
-                    builder: (BuildContext context) {
-                      return new FormMaterial();
-                    },
-                    fullscreenDialog: true));
-              },
-              icon: Icon(Icons.add),
-              label: Text(
-                "Add New",
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: defaultPadding),
-        Responsive(
-          mobile: InformationCard(
-            crossAxisCount: _size.width < 650 ? 2 : 4,
-            childAspectRatio: _size.width < 650 ? 1.2 : 1,
-          ),
-          tablet: InformationCard(),
-          desktop: InformationCard(
-            childAspectRatio: _size.width < 1400 ? 1.2 : 1.4,
-          ),
-        ),
+      children: <Widget>[
+      Responsive.isMobile(context)
+            ? SizedBox()
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List<Widget>.generate(2, (i) {
+                  return tickets(Colors.white, context, icons[i],
+                      randomNumbers[i], newTexts[i]);
+                })),
       ],
-    );
-  }
-}
-
-class InformationCard extends StatelessWidget {
-  const InformationCard({
-    Key? key,
-    this.crossAxisCount = 5,
-    this.childAspectRatio = 1,
-  }) : super(key: key);
-
-  final int crossAxisCount;
-  final double childAspectRatio;
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      physics: NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: dailyDatas.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        crossAxisSpacing: defaultPadding,
-        mainAxisSpacing: defaultPadding,
-        childAspectRatio: childAspectRatio,
-      ),
-      itemBuilder: (context, index) =>
-          MiniInformationWidget(dailyData: dailyDatas[index]),
     );
   }
 }

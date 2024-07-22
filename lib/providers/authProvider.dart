@@ -20,8 +20,15 @@ class AuthProvider with ChangeNotifier {
 
   bool _textButtonLoading = false;
   bool get textButtonLoading => _textButtonLoading;
- 
-
+  
+  void setTextButtonLoading(bool value) {
+    if (_textButtonLoading != value) {
+      _textButtonLoading = value;
+      
+      notifyListeners();
+      print('textButton value' + value.toString());
+    }
+  }
   bool get validateEmail => _validateEmail;
   bool get validatePassword => _validatePassword;
 
@@ -54,34 +61,41 @@ class AuthProvider with ChangeNotifier {
     print('started');
     SharedPreferences preferences = await SharedPreferences.getInstance();
     String? token = preferences.getString('token');
-            print("token ${token} ");
-    if (token != null) {
-      final response = await http.post(
-        Uri.parse('$baseUrl/validateToken'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'token': token}),
-      );
-       print("response" + response.body);
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        print("token data" +data);
-        if (data['isValid']) {
-          _user = User.fromJson(data['user']);
-          _userController.add(_user);
+    print("token ${token} ");
 
-          notifyListeners();
-        } else {
-          _userController.add(null);
-          notifyListeners();
-        }
-      } else {
-        _userController.add(null);
-        notifyListeners();
-      }
-    } else {
-      _userController.add(null);
-      notifyListeners();
+    if (token == null) {
+      _updateUserController(null);
+      return;
     }
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/validateToken'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'token': token}),
+    );
+
+    print("response" + response.body);
+
+    if (response.statusCode != 200) {
+      _updateUserController(null);
+      return;
+    }
+
+    final data = json.decode(response.body);
+    print("token data" + data.toString());
+
+    if (data['isValid']) {
+      final userJson = data['user'];
+      _user = User.fromJson(userJson);
+      _updateUserController(_user);
+    } else {
+      _updateUserController(null);
+    }
+  }
+
+  void _updateUserController(User? user) {
+    _userController.add(user);
+    notifyListeners();
   }
 
   Future<void> _checkLoginStatus() async {
@@ -117,7 +131,7 @@ class AuthProvider with ChangeNotifier {
     required BuildContext context,
     required GlobalKey<FormState> formKey,
   }) async {
- _textButtonLoading = true;
+    _textButtonLoading = true;
 
     setValidationStatus(email: true, password: true, loading: true);
     FocusManager.instance.primaryFocus?.unfocus();
@@ -126,60 +140,81 @@ class AuthProvider with ChangeNotifier {
         await _loginResult(context: context, formKey: formKey);
       }
     } catch (e) {
+      _textButtonLoading = false;
+      notifyListeners();
       print('An error occurred: $e');
     } finally {
       _textButtonLoading = false;
+      notifyListeners();
       print('textButtonLoading value:' + textButtonLoading.toString());
       setValidationStatus(email: false, password: false, loading: true);
-      notifyListeners();
-    }
-
-
     
+    }
   }
 
- Future<void> _loginResult({
+  Future<void> _loginResult({
     required BuildContext context,
     required GlobalKey<FormState> formKey,
   }) async {
     final loginFormProvider = Provider.of<Auth>(context, listen: false);
     final prefs = await SharedPreferences.getInstance();
     final url = Uri.parse('$baseUrl/login');
-   
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'username': loginFormProvider.email,
-        'password': loginFormProvider.password,
-      }),
-    );
 
-    if (response.statusCode == 200) {
-       print('success user '+ response.body);
-    
-      final responseData = jsonDecode(response.body);
-     final user = User.fromJson(responseData['user']);
-      final token = responseData['token'];
-      _errorMessage = null;
-      await prefs.setString('token', token);
-      await prefs.setString('user', jsonEncode(user.toJson()));
-      _user = user;
-      _userController.add(_user);
-      print('added user ' + user.toString());
-          print('token ' + token);
-       _textButtonLoading = false;
-      notifyListeners();
-    } else {
-      final responseData = jsonDecode(response.body);
-      _errorMessage = 'Failed to sign in';
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'username': loginFormProvider.email,
+          'password': loginFormProvider.password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('success user ' + response.body);
+
+        final responseData = jsonDecode(response.body);
+        final user = User.fromJson(responseData['user']);
+        final token = responseData['token'];
+        _errorMessage = null;
+        final tokenData = await prefs.setString('token', token);
+        await prefs.setString('user', jsonEncode(user.toJson()));
+        _user = user;
+        _userController.add(_user);
+
+        print('token ' + token);
+        print('tokenData ' + tokenData.toString());
+
+        _textButtonLoading = false;
+        notifyListeners();
+      } else {
+        _textButtonLoading = false;
+
+        notifyListeners();
+        final responseData = jsonDecode(response.body);
+        _errorMessage = 'Failed to sign in';
+        _user = null;
+        final errorMessage = responseData['message'] ?? 'Unknown error';
+        print(errorMessage);
+        Fluttertoast.showToast(
+          msg: errorMessage,
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black54,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+
+        print('failure' + response.body);
+      }
+    } catch (error) {
+      _errorMessage = 'An error occurred';
       _user = null;
-      final errorMessage = responseData['message'] ?? 'Unknown error';
-      print(errorMessage);
       Fluttertoast.showToast(
-        msg: errorMessage,
+        msg: 'An error occurred. Please try again later.',
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 1,
@@ -187,11 +222,14 @@ class AuthProvider with ChangeNotifier {
         textColor: Colors.white,
         fontSize: 16.0,
       );
-       _textButtonLoading = false;
-      print('failure' + response.body);
+      _textButtonLoading = false;
+      notifyListeners();
+      print('Exception: ' + error.toString());
+    } finally {
+      formKey.currentState!.reset();
+      _textButtonLoading = false;
+      notifyListeners();
     }
-    formKey.currentState!.reset();
-     notifyListeners();
   }
 
   Future<void> logout() async {

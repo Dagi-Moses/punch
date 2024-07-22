@@ -1,17 +1,10 @@
 import 'package:provider/provider.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
-import 'package:punch/admin/responsive.dart';
 
-import 'package:punch/admin/screens/dashboard/components/mini_information_card.dart';
-
-import 'package:punch/admin/screens/dashboard/components/recent_forums.dart';
-import 'package:punch/admin/screens/dashboard/components/recent_users.dart';
-import 'package:punch/admin/screens/dashboard/components/user_details_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:punch/admin/screens/users.dart';
 import 'package:punch/providers/dashboardPageProvider.dart';
 import 'package:punch/screens/anniversaryList.dart';
-import 'package:punch/screens/dashHome.dart';
 
 import 'components/header.dart';
 
@@ -21,58 +14,41 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-
-
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.all(defaultPadding),
+        padding: const EdgeInsets.only(
+          top: 6,
+          bottom: 12,
+          left: 12,
+          right: 12
+        ),
         child: Column(
           children: [
             const Expanded(
               child: Column(
                 children: [
                   Header(),
-                  SizedBox(height: defaultPadding),
-                 
                 ],
               ),
             ),
-           
             Expanded(
               flex: 5,
               child: SizedBox(
                 child: Consumer<DashboardPageProvider>(
                     builder: (context, pageProvider, _) {
                   return PageView(
-                  
-                    controller:pageProvider.pageController,
-                       
+                    controller: pageProvider.pageController,
                     onPageChanged: (index) {
                       pageProvider.setPageIndex(index);
                     },
-                    children: [
-                       const AnniversaryList(),
-                      const DashHome(),
-                     
-                      const UsersScreen(),
-                     Container(
-                          color: Colors.yellow), // Example screen for "Pages"
-                      Container(
-                          color: Colors.black), // Example screen for "Pages"
-                      Container(color: Colors.green),
-                      Container(
-                          color: Colors.green), // Example screen for "Pages"
-                      Container(
-                          color: Colors.green), // Example screen for "Pages"
-                      Container(
-                          color: Colors.green), // Example screen for "Pages"
-                      Container(
-                          color: Colors.green), // Example screen for "Pages"
-                      Container(
-                          color: Colors.green), // Example screen for "Pages"
-                    
+                    children: const [
+                      // const DashHome(),
+
+                      AnniversaryList(),
+
+                      UsersScreen(),
                     ],
                   );
                 }),
@@ -83,7 +59,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-@override
+
+  @override
   void didUpdateWidget(covariant DashboardScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     final provider = Provider.of<DashboardPageProvider>(context, listen: false);

@@ -1,4 +1,4 @@
-import 'package:punch/animated_login.dart';
+
 import 'package:punch/decorations/text_styles.dart';
 import 'package:punch/providers/login_theme.dart';
 import 'package:punch/widgets/dialogs/animated_dialog.dart';

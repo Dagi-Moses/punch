@@ -111,7 +111,7 @@ DataRow recentUserDataRow(Anniversary anniversary, BuildContext context) {
         Row(
           children: [
             TextButton(
-              child: Text('View', style: TextStyle(color: greenColor)),
+              child: Text('View', style: TextStyle(color: punchRed)),
               onPressed: () {},
             ),
             SizedBox(

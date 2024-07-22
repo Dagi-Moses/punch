@@ -2,6 +2,7 @@ library animated_login;
 
 import 'dart:async';
 
+import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/providers/authProvider.dart';
 import 'package:punch/src/src_shelf.dart';
 import 'package:flutter/foundation.dart';
@@ -427,7 +428,8 @@ class __ViewState extends State<_View> with SingleTickerProviderStateMixin {
 
   Widget get _webWelcomeChild => Container(
         decoration: BoxDecoration(
-          color: loginTheme.backgroundColor,
+         // color: loginTheme.backgroundColor,
+         color: secondaryColor,
           image: widget.backgroundImage == null
               ? null
               : DecorationImage(
