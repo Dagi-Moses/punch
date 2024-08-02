@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/admin/responsive.dart';
+import 'package:punch/providers/authProvider.dart';
 import 'package:punch/providers/dashboardPageProvider.dart';
 import 'package:easy_sidemenu/easy_sidemenu.dart' as sideMenu;
+import 'package:punch/widgets/dialogs/dialogs/logout.dart';
 
 class SideMenu extends StatefulWidget {
   @override
@@ -11,11 +13,11 @@ class SideMenu extends StatefulWidget {
 }
 
 class _SideMenuState extends State<SideMenu> {
-   sideMenu.SideMenuController sidemenu = sideMenu.SideMenuController();
+  sideMenu.SideMenuController sidemenu = sideMenu.SideMenuController();
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<DashboardPageProvider>(context);
-   
+    final auth = Provider.of<AuthProvider>(context);
 
     return sideMenu.SideMenu(
       controller: sidemenu,
@@ -94,6 +96,21 @@ class _SideMenuState extends State<SideMenu> {
           onTap: (index, _) {
             provider.setPageIndex(index);
             sidemenu.changePage(index);
+          },
+        ),
+        sideMenu.SideMenuItem(
+          
+          badgeColor: Colors.red,
+          title: "Logout",
+          icon: const Icon(
+            Icons.logout,
+            color: Colors.red,
+          ),
+          onTap: (index, _) {
+            logOut(context, () {
+              Navigator.of(context).pop();
+              auth.logout();
+            });
           },
         ),
       ],

@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/admin/dialogs/add_anniversary_dialog.dart';
 
-import 'package:punch/models/anniversaryModel.dart';
+import 'package:punch/models/myModels/anniversaryModel.dart';
 import 'package:punch/providers/anniversaryProvider.dart';
 import 'package:punch/widgets/operations.dart';
 
@@ -37,6 +37,9 @@ class _MainViewState extends State<MainView> {
     await initializeDateFormatting('en');
     setState(() {
       _isInitialized = true;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      tableController.removeFilters();
     });
   }
 
@@ -68,22 +71,27 @@ class _MainViewState extends State<MainView> {
       child: PagedDataTableTheme(
         data: PagedDataTableThemeData(
           horizontalScrollbarVisibility: true,
-          verticalScrollbarVisibility: true,
+         
+
           borderRadius: BorderRadius.circular(10),
           filterBarHeight: 35,
+
           backgroundColor: Colors.white,
+
           cellTextStyle: const TextStyle(color: Colors.black),
-          chipTheme: ChipThemeData(
-              elevation: 4,
-              deleteIconColor: Colors.red,
-              backgroundColor: Colors.white, // Set background color of the chip
-              labelStyle: const TextStyle(
-                  color: Colors.black), // Set text color of the chip
-              iconTheme: const IconThemeData(color: Colors.black),
-              surfaceTintColor: Colors.white,
-              color: WidgetStateColor.resolveWith((_) {
-                return Colors.white;
-              })),
+
+          // chipTheme: ChipThemeData(
+          //     elevation: 4,
+
+          //     deleteIconColor: Colors.red,
+          //     backgroundColor: Colors.yellow, // Set background color of the chip
+          //     labelStyle: const TextStyle(
+          //         color: Colors.black), // Set text color of the chip
+          //     iconTheme: const IconThemeData(color: Colors.black),
+          //     surfaceTintColor: Colors.pink,
+          //     color: WidgetStateColor.resolveWith((_) {
+          //       return Colors.white;
+          //     })),
           elevation: 10,
           headerTextStyle: const TextStyle(color: Colors.black),
           footerTextStyle: const TextStyle(color: Colors.black),
@@ -139,6 +147,8 @@ class _MainViewState extends State<MainView> {
           }
           final pageSizes = calculatePageSizes(anniversaries.length);
           return PagedDataTable<String, Anniversary>(
+            fixedColumnCount: 1,
+
             controller: tableController,
 
             configuration: const PagedDataTableConfiguration(),
@@ -148,7 +158,56 @@ class _MainViewState extends State<MainView> {
               try {
                 int pageIndex = int.parse(pageToken ?? "0");
 
-                List<Anniversary> data = anniversaries
+                // Filter data based on filterModel
+                List<Anniversary> filteredData =
+                    anniversaries.where((anniversary) {
+                  // Text filter
+                  if (filterModel['content'] != null &&
+                      !anniversary.name!
+                          .toLowerCase()
+                          .contains(filterModel['content'].toLowerCase())) {
+                    return false;
+                  }
+
+                  if (filterModel['date'] != null) {
+                    DateTime selectedDate = filterModel['date'];
+
+                    if (anniversary.date == null ||
+                        DateTime(
+                              // anniversary.date!.year,
+                              anniversary.date!.month,
+                              anniversary.date!.day,
+                            ).compareTo(DateTime(
+                              // selectedDate.year,
+                              selectedDate.month,
+                              selectedDate.day,
+                            )) !=
+                            0) {
+                      return false;
+                    }
+                  }
+
+                  // Date range filter
+                  if (filterModel['dateRange'] != null) {
+                    DateTimeRange dateRange = filterModel['dateRange'];
+                    if (anniversary.date == null ||
+                        anniversary.date!.isBefore(dateRange.start) ||
+                        anniversary.date!.isAfter(dateRange.end)) {
+                      return false;
+                    }
+                  }
+                  if (filterModel['paperID'] != null &&
+                      !anniversary.paperId!
+                          .toString()
+                          .contains(filterModel['paperId'].toLowerCase())) {
+                    return false;
+                  }
+
+                  return true;
+                }).toList();
+
+                // Paginate the filtered data
+                List<Anniversary> data = filteredData
                     .skip(pageSize * pageIndex)
                     .take(pageSize)
                     .toList();
@@ -166,34 +225,49 @@ class _MainViewState extends State<MainView> {
             filters: [
               TextTableFilter(
                 id: "content",
-                chipFormatter: (value) => 'Content has "$value"',
-                name: "Content",
+                chipFormatter: (value) {
+                  return 'content has "$value"';
+                },
+                name: "Title",
+                enabled: true,
               ),
               DateTimePickerTableFilter(
+                initialDate: DateTime.now(),
                 id: "date",
-                name: "Select Date",
-                chipFormatter: (value) => 'Anniversaries on "$value"',
+                name: "Upcoming Date",
+                chipFormatter: (value) {
+                  return 'Anniversaries on "$value"';
+                },
                 enabled: true,
                 dateFormat: DateFormat('dd/MM/yyyy'),
-                initialValue: DateTime.now(),
+                initialValue: null,
                 firstDate: DateTime(1880),
                 lastDate: DateTime(DateTime.now().year + 1),
               ),
               DateRangePickerTableFilter(
                 id: "dateRange",
-                name: "Select Date Range",
-                chipFormatter: (value) =>
-                    'Anniversaries from "${value?.start != null ? DateFormat('dd/MM/yyyy').format(value!.start) : 'N/A'} to ${value?.end != null ? DateFormat('dd/MM/yyyy').format(value!.end) : 'N/A'}"',
+                name: "Date Range",
+                chipFormatter: (value) {
+                  return 'Anniversaries from "${value?.start != null ? DateFormat('dd/MM/yyyy').format(value!.start) : 'N/A'} to ${value?.end != null ? DateFormat('dd/MM/yyyy').format(value!.end) : 'N/A'}"';
+                },
                 enabled: true,
-                initialValue:
-                    DateTimeRange(start: DateTime.now(), end: DateTime.now()),
+                initialValue: null,
                 firstDate: DateTime(1880),
                 lastDate: DateTime(DateTime.now().year + 1),
                 formatter: (dateRange) {
                   return 'Anniversaries from "${DateFormat('dd/MM/yyyy').format(dateRange.start)} to ${DateFormat('dd/MM/yyyy').format(dateRange.end)}"';
                 },
               ),
+              TextTableFilter(
+                id: "paperId",
+                chipFormatter: (value) {
+                  return 'Id has "$value"';
+                },
+                name: "Paper Id",
+                enabled: true,
+              ),
             ],
+
             filterBarChild: IconTheme(
               data: const IconThemeData(color: Colors.black),
               child: PopupMenuButton(
@@ -207,6 +281,18 @@ class _MainViewState extends State<MainView> {
                           WidgetsBinding.instance.addPostFrameCallback((_) {
                             showAddAnniversaryDialog(context);
                           });
+                        },
+                      ),
+                      PopupMenuItem(
+                        child: const Text("Add Test anniversary"),
+                        onTap: () {
+                          anniversaryProvider.addTestAnniversary();
+                        },
+                      ),
+                      PopupMenuItem(
+                        child: const Text("Refresh"),
+                        onTap: () {
+                          anniversaryProvider.fetchAnniversaries();
                         },
                       ),
                       PopupMenuItem(
@@ -249,10 +335,13 @@ class _MainViewState extends State<MainView> {
 
             columns: [
               if (anniversaryProvider.isRowsSelected) RowSelectorColumn(),
+              // RowSelectorColumn(),
               LargeTextTableColumn(
                 title: const Text("Title"),
-                size: const MaxColumnSize(
-                    FractionalColumnSize(.25), FixedColumnSize(100)),
+                id: "Title",
+                
+                size:   const MaxColumnSize(
+                     FractionalColumnSize(.3), FixedColumnSize(300)),
                 getter: (item, index) => item.name ?? "N/A",
                 fieldLabel: "Title",
                 setter: (item, newValue, index) async {
@@ -262,9 +351,12 @@ class _MainViewState extends State<MainView> {
                 },
               ),
               LargeTextTableColumn(
+                
+                 id: "upcomingDate",
                 title: const Text("Upcoming Date"),
                 size: const MaxColumnSize(
-                    FractionalColumnSize(.2), FixedColumnSize(150)),
+                    FractionalColumnSize(.15), FixedColumnSize(150)),
+                // size: const FractionalColumnSize(.2),
                 getter: (item, index) {
                   if (item.date == null) {
                     return 'N/A';
@@ -304,8 +396,11 @@ class _MainViewState extends State<MainView> {
               ),
               LargeTextTableColumn(
                 title: const Text("Date Placed"),
+                sortable: true,
+                id: 'datePlaced',
                 size: const MaxColumnSize(
-                    FractionalColumnSize(.2), FixedColumnSize(150)),
+                    FractionalColumnSize(.12), FixedColumnSize(150)),
+                // size: const FixedColumnSize(150),
                 getter: (item, index) => item.date != null
                     ? DateFormat('dd/MM/yyyy').format(item.date!)
                     : 'N/A',
@@ -316,10 +411,15 @@ class _MainViewState extends State<MainView> {
                 },
                 fieldLabel: 'Date',
               ),
+             
               LargeTextTableColumn(
+                 sortable: true,
+                 id: "placedBy",
                 title: const Text("Placed By"),
                 size: const MaxColumnSize(
-                    FractionalColumnSize(.3), FixedColumnSize(280)),
+                    FractionalColumnSize(.25), FixedColumnSize(300)),
+             
+                    
                 getter: (item, index) => item.placedByName,
                 fieldLabel: "Placed By",
                 setter: (item, newValue, index) async {
@@ -328,14 +428,16 @@ class _MainViewState extends State<MainView> {
                   return true;
                 },
               ),
+            
               TableColumn(
                 title: const Text("Operations"),
-                size: const RemainingColumnSize(),
+                 size: const RemainingColumnSize(),
                 cellBuilder: (context, item, index) =>
                     operationsWidget(context, item.name ?? "N?A", () {}, () {
-                  anniversaryProvider.deleteAnniversary(context,item.id!);
+                  anniversaryProvider.deleteAnniversary(context, item.id!);
                 }),
               ),
+         
             ],
           );
         }),

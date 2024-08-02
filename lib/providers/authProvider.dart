@@ -1,34 +1,85 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:punch/models/userModel.dart';
+import 'package:punch/models/myModels/userModel.dart';
+import 'package:punch/models/myModels/userRecordModel.dart';
+import 'package:punch/models/myModels/userWithRecord.dart';
 import 'package:punch/providers/auth.dart';
-import 'package:punch/providers/loginFormProvider.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:punch/widgets/showToast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class AuthProvider with ChangeNotifier {
   final String baseUrl = 'http://localhost:3000';
+  final String userUrl = 'http://localhost:3000/users';
+  final String userRecordUrl = 'http://localhost:3000/userRecords';
   User? _user;
   final StreamController<User?> _userController =
       StreamController<User?>.broadcast();
   Stream<User?> get userStream => _userController.stream;
+  bool _isRowsSelected = false; // Default value
+  bool get isRowsSelected => _isRowsSelected;
+
+  setBoolValue(bool newValue) {
+    _isRowsSelected = newValue;
+    notifyListeners();
+  }
+
+  List<User> _users = [];
+  late WebSocketChannel channel;
+  List<User> get users => _users;
+  List<UserRecord> _userRecords = [];
+  List<UserRecord> get userRecords => _userRecords;
+  List<UserWithRecord> _mergedUsersWithRecords = [];
+  List<UserWithRecord> get mergedUsersWithRecords => _mergedUsersWithRecords;
+  List<User> getSortedUsersByLoginDate() {
+    Map<String, DateTime?> latestLoginMap = {};
+    // Build a map of userId to the latest loginDateTime
+    for (var record in userRecords) {
+      if (record.recordId != null) {
+        final userId = record.recordId.toString();
+        final loginDateTime = record.loginDateTime;
+
+        if (loginDateTime != null) {
+          if (latestLoginMap[userId] == null ||
+              loginDateTime.isAfter(latestLoginMap[userId]!)) {
+            latestLoginMap[userId] = loginDateTime;
+          }
+        }
+      }
+    }
+
+    // Sort users based on the latest loginDateTime from the map
+    users.sort((a, b) {
+      final loginDateA =
+          latestLoginMap[a.id] ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final loginDateB =
+          latestLoginMap[b.id] ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return loginDateB.compareTo(loginDateA);
+    });
+
+    return users;
+  }
+
   bool _validateEmail = false;
   bool _validatePassword = false;
 
   bool _textButtonLoading = false;
   bool get textButtonLoading => _textButtonLoading;
-  
+
   void setTextButtonLoading(bool value) {
     if (_textButtonLoading != value) {
       _textButtonLoading = value;
-      
+
       notifyListeners();
-      print('textButton value' + value.toString());
     }
   }
+
   bool get validateEmail => _validateEmail;
   bool get validatePassword => _validatePassword;
 
@@ -48,7 +99,131 @@ class AuthProvider with ChangeNotifier {
   }
 
   AuthProvider() {
-    _checkToken();
+    _initialize();
+  }
+  Future<void> _initialize() async {
+    await Future.wait([
+      _checkToken(),
+      fetchUsers(),
+      fetchUserRecords(), // Temporarily comment out to isolate
+      setupWebSocket(),
+    ]);
+
+    _mergeUsersAndRecords();
+  }
+
+  Future<void> setupWebSocket() async {
+    channel = WebSocketChannel.connect(Uri.parse('ws://localhost:3000'));
+
+    channel.stream.listen(
+      (message) {
+        try {
+          final decodedMessage = jsonDecode(message);
+          handleWebSocketMessage(decodedMessage);
+          // Fixed print statement
+        } catch (e) {}
+      },
+      onError: (error) => print('WebSocket error: $error'),
+      onDone: () => print('WebSocket closed'),
+    );
+  }
+
+  void handleWebSocketMessage(dynamic message) {
+    final type = message['type'];
+    final data = message['data'];
+
+    switch (type) {
+      case 'ADD':
+        // _anniversaries.add(Anniversary.fromJson(data));
+
+        fetchUsers();
+        notifyListeners();
+        break;
+      case 'UPDATE':
+        final index = _users.indexWhere((a) => a.id == data['id']);
+        if (index != -1) {
+          _users[index] = User.fromJson(data);
+          notifyListeners();
+        }
+        break;
+      case 'DELETE':
+        // _anniversaries.removeWhere((a) => a.id == data);
+        fetchUsers();
+        notifyListeners();
+        break;
+    }
+    notifyListeners();
+  }
+
+  Future<void> fetchUsers() async {
+    try {
+      final response = await http.get(Uri.parse(userUrl));
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body);
+        _users = data.map((json) => User.fromJson(json)).toList();
+        notifyListeners();
+      } else {
+        throw Exception('Failed to load users');
+      }
+    } catch (error) {
+      // Optionally rethrow or handle the error
+      throw error;
+    }
+  }
+
+  Future<void> fetchUserRecords() async {
+    try {
+      final response = await http.get(Uri.parse(userRecordUrl));
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body);
+        _userRecords = data.map((json) => UserRecord.fromJson(json)).toList();
+
+        print("user Record" + _userRecords.toString());
+        showToaster(
+          "User Record fetched successfully!",
+          Toast.LENGTH_LONG,
+          Colors.green,
+        );
+
+        notifyListeners();
+      } else {
+        print("error getting user Record");
+        showToaster(
+          "error getting user Record",
+          Toast.LENGTH_LONG,
+          Colors.red,
+        );
+
+        throw Exception('Failed to load User Records');
+      }
+    } catch (error) {
+      print("error getting user Record" + error.toString());
+      showToaster(
+        error.toString(),
+        Toast.LENGTH_LONG,
+        Colors.red,
+      );
+      throw error;
+    }
+  }
+
+  Future<void> _mergeUsersAndRecords() async {
+    _mergedUsersWithRecords = _users.map((user) {
+      // Attempt to find the matching user record
+      final userRecord = _userRecords.firstWhere(
+          (record) => record.recordId == int.tryParse(user.id ?? ''),
+          orElse: () {
+        print('No matching record found for user ID: ${user.id}');
+        return UserRecord(); // This will be empty or default
+      });
+
+      // Print the found record for debugging
+      print('Matching record for user ID ${user.id}: ${userRecord.toJson()}');
+
+      return UserWithRecord(userModel: user, userRecordModel: userRecord);
+    }).toList();
+
+    notifyListeners();
   }
 
   User? get user => _user;
@@ -58,10 +233,8 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _checkToken() async {
-    print('started');
     SharedPreferences preferences = await SharedPreferences.getInstance();
     String? token = preferences.getString('token');
-    print("token ${token} ");
 
     if (token == null) {
       _updateUserController(null);
@@ -74,15 +247,12 @@ class AuthProvider with ChangeNotifier {
       body: json.encode({'token': token}),
     );
 
-    print("response" + response.body);
-
     if (response.statusCode != 200) {
       _updateUserController(null);
       return;
     }
 
     final data = json.decode(response.body);
-    print("token data" + data.toString());
 
     if (data['isValid']) {
       final userJson = data['user'];
@@ -103,23 +273,16 @@ class AuthProvider with ChangeNotifier {
     String? token = prefs.getString('token');
     String? userJson = prefs.getString('user');
 
-    print('Retrieved token: $token');
-    print('Retrieved userJson: $userJson');
-
     if (token != null && userJson != null) {
       try {
-        print('trying to add to stream: $_user');
         final userMap = jsonDecode(userJson);
         _user = User.fromJson(userMap);
         _userController.add(_user);
-        print('User successfully decoded and added to stream: $_user');
       } catch (e) {
-        print('Error decoding userJson: $e');
         _user = null;
         _userController.add(null);
       }
     } else {
-      print('Token or userJson is null. Adding null to stream.');
       _user = null;
       _userController.add(null);
     }
@@ -142,13 +305,10 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       _textButtonLoading = false;
       notifyListeners();
-      print('An error occurred: $e');
     } finally {
       _textButtonLoading = false;
       notifyListeners();
-      print('textButtonLoading value:' + textButtonLoading.toString());
       setValidationStatus(email: false, password: false, loading: true);
-    
     }
   }
 
@@ -158,11 +318,11 @@ class AuthProvider with ChangeNotifier {
   }) async {
     final loginFormProvider = Provider.of<Auth>(context, listen: false);
     final prefs = await SharedPreferences.getInstance();
-    final url = Uri.parse('$baseUrl/login');
+    final loginUrl = Uri.parse('$baseUrl/login');
 
     try {
       final response = await http.post(
-        url,
+        loginUrl,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -173,63 +333,100 @@ class AuthProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        print('success user ' + response.body);
-
         final responseData = jsonDecode(response.body);
         final user = User.fromJson(responseData['user']);
         final token = responseData['token'];
-        _errorMessage = null;
-        final tokenData = await prefs.setString('token', token);
+
+        await prefs.setString('token', token);
         await prefs.setString('user', jsonEncode(user.toJson()));
         _user = user;
         _userController.add(_user);
 
-        print('token ' + token);
-        print('tokenData ' + tokenData.toString());
+        // Store or update the user record
+        await _storeUserRecord(user);
 
         _textButtonLoading = false;
         notifyListeners();
       } else {
-        _textButtonLoading = false;
-
-        notifyListeners();
-        final responseData = jsonDecode(response.body);
-        _errorMessage = 'Failed to sign in';
-        _user = null;
-        final errorMessage = responseData['message'] ?? 'Unknown error';
-        print(errorMessage);
-        Fluttertoast.showToast(
-          msg: errorMessage,
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.black54,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-
-        print('failure' + response.body);
+        _handleLoginError(response);
       }
     } catch (error) {
-      _errorMessage = 'An error occurred';
-      _user = null;
-      Fluttertoast.showToast(
-        msg: 'An error occurred. Please try again later.',
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.black54,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-      _textButtonLoading = false;
-      notifyListeners();
-      print('Exception: ' + error.toString());
+      _handleLoginException(error);
     } finally {
       formKey.currentState!.reset();
       _textButtonLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _storeUserRecord(User user) async {
+    final userRecordUrl = Uri.parse('$baseUrl/userRecords');
+    final computerName = await getDeviceName();
+    final recordId = int.tryParse(user.id ?? '');
+
+    // Check if the recordId was correctly parsed
+    if (recordId == null) {
+      print('Error: Unable to parse user ID into recordId.');
+      return;
+    }
+
+    final userRecord = UserRecord(
+      recordId: recordId,
+      staffNo: user.staffNo,
+      loginDateTime: DateTime.now(),
+      computerName: computerName,
+    );
+
+    try {
+      final response = await http.post(
+        userRecordUrl,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${user.token}',
+        },
+        body: jsonEncode(userRecord.toJson()),
+      );
+
+      if (response.statusCode != 201) {
+        throw Exception('Failed to store user record');
+      } else {
+        print('User record stored successfully: ${response.body}');
+      }
+    } catch (error) {
+      print('Error storing user record: $error');
+    }
+  }
+
+  void _handleLoginError(http.Response response) {
+    final responseData = jsonDecode(response.body);
+    _errorMessage = 'Failed to sign in';
+    _user = null;
+    final errorMessage = responseData['message'] ?? 'Unknown error';
+    Fluttertoast.showToast(
+      msg: errorMessage,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.black54,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
+
+  void _handleLoginException(dynamic error) {
+    _errorMessage = 'An error occurred';
+    _user = null;
+    Fluttertoast.showToast(
+      msg: 'An error occurred. Please try again later.',
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.black54,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+    _textButtonLoading = false;
+    notifyListeners();
   }
 
   Future<void> logout() async {
@@ -239,5 +436,60 @@ class AuthProvider with ChangeNotifier {
     _user = null;
     _userController.add(null);
     notifyListeners();
+  }
+
+  Future<String> getDeviceName() async {
+    final deviceInfo = DeviceInfoPlugin();
+    final webInfo = await deviceInfo.webBrowserInfo;
+    final appVersion = RegExp(r'5.0 \(.*?\)')
+            .firstMatch(webInfo.appVersion ?? "unknown")
+            ?.group(0) ??
+        'Unknown';
+    return '''
+    Browser: ${webInfo.browserName.name}
+    Platform: ${webInfo.platform}
+    App Version: $appVersion
+    Vendor: ${webInfo.vendor}
+  ''';
+  }
+
+  Future<void> addTestUser() async {
+    DateTime today = DateTime.now();
+    DateTime previousYear = DateTime(today.year - 1, today.month, today.day);
+    var random = Random();
+    int randomNumber = random.nextInt(30);
+    User test = User(
+      firstName: "Test User",
+      lastName: "Test last Name",
+      password: "password",
+      staffNo: 123,
+      role: UserRole.user,
+    );
+    try {
+      final response = await http.post(
+        Uri.parse(baseUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(test.toJson()),
+      );
+      if (response.statusCode == 201) {
+        showToaster(
+          "Anniversary added successfully!",
+          Toast.LENGTH_LONG,
+          Colors.green,
+        );
+
+        notifyListeners();
+      } else {
+        throw Exception(response.body);
+      }
+    } catch (error) {
+      showToaster(
+        error.toString(),
+        Toast.LENGTH_LONG,
+        Colors.red,
+      );
+
+      throw error;
+    }
   }
 }

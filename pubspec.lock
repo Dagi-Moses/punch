@@ -201,6 +201,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.1"
+  device_info_plus:
+    dependency: "direct main"
+    description:
+      name: device_info_plus
+      sha256: eead12d1a1ed83d8283ab4c2f3fca23ac4082f29f25f29dff0f758f57d06ec91
+      url: "https://pub.dev"
+    source: hosted
+    version: "10.1.0"
+  device_info_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: device_info_plus_platform_interface
+      sha256: d3b01d5868b50ae571cd1dc6e502fc94d956b665756180f7b16ead09e836fd64
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.0.0"
   easy_sidemenu:
     dependency: "direct main"
     description:
@@ -514,10 +530,10 @@ packages:
     dependency: "direct main"
     description:
       name: paged_datatable
-      sha256: "540df02cc8d127f955bab37401cb77cf07434d969aab7e2b8e4a454d75ef3cd4"
+      sha256: "2e70de29a0bd0c6ed94a73f01c2ce139568c09e20c8b7f60661b1fe3d7ee25ea"
       url: "https://pub.dev"
     source: hosted
-    version: "2.1.0"
+    version: "2.1.1"
   path:
     dependency: transitive
     description:
@@ -955,6 +971,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.5.1"
+  win32_registry:
+    dependency: transitive
+    description:
+      name: win32_registry
+      sha256: "723b7f851e5724c55409bb3d5a32b203b3afe8587eaf5dafb93a5fed8ecda0d6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.4"
   xdg_directories:
     dependency: transitive
     description:

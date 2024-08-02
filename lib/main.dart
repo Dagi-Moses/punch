@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:punch/admin/screens/home/home_screen.dart';
-import 'package:punch/models/userModel.dart';
+import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/anniversaryProvider.dart';
 import 'package:punch/providers/auth.dart';
 
@@ -35,11 +35,11 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-  Widget _navigateBasedOnRole(String role) {
+  Widget _navigateBasedOnRole(UserRole role) {
     switch (role) {
-      case 'admin':
+      case UserRole.admin:
         return AdminHome();
-      case 'library':
+      case UserRole.library:
         return LibraryScreen();
       default:
         return UserHome();
@@ -67,30 +67,12 @@ class MyApp extends StatelessWidget {
             Locale('en', 'NG'), // Add other supported locales here
           ],
           title: 'Punch Anniversary',
-              theme: ThemeData(
+          theme: ThemeData(
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             textTheme: kIsWeb ? GoogleFonts.robotoTextTheme() : null,
+           
           ),
-        //  theme: ThemeData.light().copyWith(
-              // appBarTheme: AppBarTheme(
-              //   backgroundColor: bgColor,
-              //   elevation: 0,
-              // ),
-              // cardTheme: CardTheme(
-              //   color: Colors.white, // Set default card color to white
-              // ),
-              // scaffoldBackgroundColor: bgColor,
-              // primaryColor: punchRed,
-
-              // // buttonColor: punchRed,
-
-              // textTheme: GoogleFonts.openSansTextTheme(
-              //   Theme.of(context).textTheme,
-              // ).apply(bodyColor: Colors.black),
-
-              // iconTheme: IconThemeData(color: Colors.black),
-          //    ),
           debugShowCheckedModeBanner: false,
           home: Consumer<AuthProvider?>(
             builder: (context, authProvider, _) {
@@ -100,7 +82,7 @@ class MyApp extends StatelessWidget {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return SplashScreen();
                   } else if (snapshot.hasData && snapshot.data != null) {
-                    return _navigateBasedOnRole(snapshot.data!.role);
+                    return _navigateBasedOnRole(snapshot.data!.role!);
                   } else {
                     return const LoginScreen();
                   }

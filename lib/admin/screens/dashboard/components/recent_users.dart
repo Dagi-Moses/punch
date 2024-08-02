@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/admin/core/utils/colorful_tag.dart';
 import 'package:colorize_text_avatar/colorize_text_avatar.dart';
-import 'package:punch/models/anniversaryModel.dart';
+import 'package:punch/models/myModels/anniversaryModel.dart';
 import 'package:punch/providers/anniversaryProvider.dart';
 
 class RecentUsers extends StatelessWidget {

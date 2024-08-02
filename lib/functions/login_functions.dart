@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:punch/animated_login.dart';
 import 'package:flutter/material.dart';
 import 'package:punch/constants/constants.dart';
-import 'package:punch/models/userModel.dart';
+import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/authProvider.dart';
 import 'package:punch/utils/dialog_builders.dart';
 import 'package:http/http.dart' as http;

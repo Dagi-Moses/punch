@@ -15,8 +15,11 @@ class MiniInformation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String anniversaries = Provider.of<AnniversaryProvider>(context).anniversaries.length.toString();
+    // String user = Provider.of<AuthProvider>(context).users;
+     final authProvider = Provider.of<AuthProvider>(context);
+    final users = authProvider.mergedUsersWithRecords;
     List<String> randomNumbers = [
-      anniversaries, "12", ];
+      anniversaries, users.length.toString(), ];
     return Column(
       children: <Widget>[
       Responsive.isMobile(context)

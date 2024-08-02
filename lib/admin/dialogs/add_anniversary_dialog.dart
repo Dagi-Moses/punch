@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:punch/models/anniversaryModel.dart';
+import 'package:punch/models/myModels/anniversaryModel.dart';
 import 'package:punch/providers/anniversaryProvider.dart';
 
 void showAddAnniversaryDialog(BuildContext context) {

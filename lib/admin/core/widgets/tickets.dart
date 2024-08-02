@@ -8,16 +8,19 @@ import 'package:punch/admin/core/constants/color_constants.dart';
 Widget tickets(Color color, BuildContext context, IconData icon,
     String ticketsNumber, String newCount) {
   return Card(
-    elevation: 4,
+  
+   elevation: 4,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(20),
+    ),
     child: Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: color,
       ),
       padding: const EdgeInsets.all(16),
-      width: MediaQuery.of(context).size.width < 1300
-          ? MediaQuery.of(context).size.width - 100
-          : MediaQuery.of(context).size.width / 6,
+      width:
+           MediaQuery.of(context).size.width / 6,
       height: MediaQuery.of(context).size.height / 7,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -1,3 +1,4 @@
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/admin/responsive.dart';
@@ -14,7 +15,8 @@ class Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-      final user = Provider.of<AuthProvider>(context).user;
+    final authProvider = Provider.of<AuthProvider>(context);
+        final users = authProvider.mergedUsersWithRecords;
     return Row(
       children: [
         if (!Responsive.isDesktop(context))
@@ -23,20 +25,21 @@ class Header extends StatelessWidget {
             onPressed: () {},
           ),
         if (!Responsive.isMobile(context))
-          Column(
+          const Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               MiniInformation(),
-             
-           
-             
+              MiniInformation(),
             ],
           ),
         if (!Responsive.isMobile(context))
           Spacer(flex: Responsive.isDesktop(context) ? 2 : 1),
         const Expanded(child: SearchField()),
-        const ProfileCard()
+        GestureDetector(
+          onTap: () {
+        // print(user.users.first.firstName ?? " Null" + "this is the first name");
+          },
+          child: const ProfileCard())
       ],
     );
   }
@@ -50,11 +53,14 @@ class ProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
-   
+
     return Card(
       elevation: 4,
+      margin: const EdgeInsets.only(left: defaultPadding),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Container(
-        margin: const EdgeInsets.only(left: defaultPadding),
         padding: const EdgeInsets.symmetric(
           horizontal: defaultPadding,
           vertical: defaultPadding / 2,
@@ -92,12 +98,14 @@ class SearchField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: TextField(
         decoration: InputDecoration(
           hintText: "Search",
           fillColor: Colors.white,
           filled: true,
-      
           enabledBorder: const OutlineInputBorder(
             borderSide: BorderSide(color: Colors.white, width: 1.0),
             borderRadius: BorderRadius.all(Radius.circular(20)),
@@ -107,18 +115,15 @@ class SearchField extends StatelessWidget {
             borderRadius: BorderRadius.all(Radius.circular(20)),
           ),
           border: const OutlineInputBorder(
-      
-           borderSide: BorderSide(
-      
-            color: Colors.white, width: 1.0),
+            borderSide: BorderSide(color: Colors.white, width: 1.0),
             borderRadius: BorderRadius.all(Radius.circular(20)),
           ),
-          
           suffixIcon: InkWell(
             onTap: () {},
             child: Container(
               padding: const EdgeInsets.all(defaultPadding * 0.75),
-              margin: const EdgeInsets.symmetric(horizontal: defaultPadding / 2),
+              margin:
+                  const EdgeInsets.symmetric(horizontal: defaultPadding / 2),
               decoration: const BoxDecoration(
                 color: punchRed,
                 borderRadius: BorderRadius.all(Radius.circular(20)),
