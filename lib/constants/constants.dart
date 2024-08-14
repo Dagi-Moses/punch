@@ -10,7 +10,7 @@ List<MaterialColor> colors = [
   Colors.lightBlue,
 ];
 List<String> newTexts = [
-  "Anniversaries",
+  "Anniversaries: ",
   "Users",
 
 ];

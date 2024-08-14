@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:punch/admin/screens/users.dart';
 import 'package:punch/providers/dashboardPageProvider.dart';
 import 'package:punch/screens/anniversaryList.dart';
+import 'package:punch/screens/companyScreen.dart';
 
 import 'components/header.dart';
 
@@ -18,21 +19,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.only(
-          top: 6,
-          bottom: 12,
-          left: 12,
-          right: 12
-        ),
+        padding: const EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 12),
         child: Column(
           children: [
-            const Expanded(
-              child: Column(
-                children: [
-                  Header(),
-                ],
-              ),
-            ),
             Expanded(
               flex: 5,
               child: SizedBox(
@@ -45,9 +34,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     },
                     children: const [
                       // const DashHome(),
-
                       AnniversaryList(),
-
+                      CompanyScreen(),
                       UsersScreen(),
                     ],
                   );

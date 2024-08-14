@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/models/myModels/userRecordModel.dart';
 import 'package:punch/models/myModels/userWithRecord.dart';
+import 'package:punch/models/myModels/web_socket_manager.dart';
 import 'package:punch/providers/auth.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:punch/widgets/showToast.dart';
@@ -24,6 +25,9 @@ class AuthProvider with ChangeNotifier {
   Stream<User?> get userStream => _userController.stream;
   bool _isRowsSelected = false; // Default value
   bool get isRowsSelected => _isRowsSelected;
+
+  late WebSocketManager _webSocketManager;
+  final String webSocketUrl = 'ws://localhost:3000?channel=auth';
 
   setBoolValue(bool newValue) {
     _isRowsSelected = newValue;
@@ -100,7 +104,52 @@ class AuthProvider with ChangeNotifier {
 
   AuthProvider() {
     _initialize();
+    channel =
+        WebSocketChannel.connect(Uri.parse('ws://localhost:3000?channel=auth'));
+
+    _initializeWebSocket();
   }
+
+  void _initializeWebSocket() {
+    _webSocketManager = WebSocketManager(
+      webSocketUrl,
+      _handleWebSocketMessage,
+      _reconnectWebSocket,
+    );
+    _webSocketManager.connect();
+  }
+
+  void _reconnectWebSocket() {
+    print("reconnected");
+  }
+
+  void _handleWebSocketMessage(dynamic message) async {
+    final type = message['type'];
+    final data = message['data'];
+
+    switch (type) {
+      case 'ADD':
+        await fetchUsers();
+        print('socket refreshed Users');
+        notifyListeners();
+        break;
+      case 'UPDATE':
+        final index = _users.indexWhere((a) => a.id == data['id']);
+        if (index != -1) {
+          _users[index] = User.fromJson(data);
+          print('socket updated User');
+          notifyListeners();
+        }
+        break;
+      case 'DELETE':
+        await fetchUsers();
+        print('socket refreshed Users');
+        notifyListeners();
+        break;
+    }
+    notifyListeners();
+  }
+
   Future<void> _initialize() async {
     await Future.wait([
       _checkToken(),
@@ -172,13 +221,13 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> fetchUserRecords() async {
+    final userRecordUrl = Uri.parse('$baseUrl/userRecords');
     try {
-      final response = await http.get(Uri.parse(userRecordUrl));
+      final response = await http.get(userRecordUrl);
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
         _userRecords = data.map((json) => UserRecord.fromJson(json)).toList();
 
-        print("user Record" + _userRecords.toString());
         showToaster(
           "User Record fetched successfully!",
           Toast.LENGTH_LONG,
@@ -210,17 +259,20 @@ class AuthProvider with ChangeNotifier {
   Future<void> _mergeUsersAndRecords() async {
     _mergedUsersWithRecords = _users.map((user) {
       // Attempt to find the matching user record
-      final userRecord = _userRecords.firstWhere(
-          (record) => record.recordId == int.tryParse(user.id ?? ''),
-          orElse: () {
-        print('No matching record found for user ID: ${user.id}');
-        return UserRecord(); // This will be empty or default
-      });
+      final matchingRecord = _userRecords.firstWhere(
+        (record) => record.recordId == user.id,
+        orElse: () =>
+            UserRecord(), // Return an empty UserRecord if no match is found
+      );
 
-      // Print the found record for debugging
-      print('Matching record for user ID ${user.id}: ${userRecord.toJson()}');
-
-      return UserWithRecord(userModel: user, userRecordModel: userRecord);
+      // Check if the matchingRecord is not empty
+      if (matchingRecord.recordId != null) {
+        // If a matching record was found, merge it with the user
+        return UserWithRecord(userModel: user, userRecordModel: matchingRecord);
+      } else {
+        // If no matching record was found, just return the user with an empty UserRecord
+        return UserWithRecord(userModel: user, userRecordModel: UserRecord());
+      }
     }).toList();
 
     notifyListeners();
@@ -343,15 +395,17 @@ class AuthProvider with ChangeNotifier {
         _userController.add(_user);
 
         // Store or update the user record
-        await _storeUserRecord(user);
+        await _storeUserRecord(_user!);
 
         _textButtonLoading = false;
         notifyListeners();
       } else {
         _handleLoginError(response);
+        print(response);
       }
     } catch (error) {
       _handleLoginException(error);
+      print(error);
     } finally {
       formKey.currentState!.reset();
       _textButtonLoading = false;
@@ -362,16 +416,15 @@ class AuthProvider with ChangeNotifier {
   Future<void> _storeUserRecord(User user) async {
     final userRecordUrl = Uri.parse('$baseUrl/userRecords');
     final computerName = await getDeviceName();
-    final recordId = int.tryParse(user.id ?? '');
 
     // Check if the recordId was correctly parsed
-    if (recordId == null) {
-      print('Error: Unable to parse user ID into recordId.');
+    if (user.id == null) {
+      print('Error: null user id.');
       return;
     }
 
     final userRecord = UserRecord(
-      recordId: recordId,
+      recordId: user.id,
       staffNo: user.staffNo,
       loginDateTime: DateTime.now(),
       computerName: computerName,

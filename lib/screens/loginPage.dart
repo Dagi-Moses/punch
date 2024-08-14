@@ -1,4 +1,4 @@
-
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:punch/animated_login.dart';
 import 'package:async/async.dart';
@@ -7,9 +7,7 @@ import 'package:punch/functions/login_functions.dart';
 import 'package:punch/providers/authProvider.dart';
 import 'package:punch/utils/dialog_builders.dart';
 
-
 class LoginScreen extends StatefulWidget {
- 
   /// with the help of [LoginTexts] class.
   const LoginScreen({Key? key}) : super(key: key);
 
@@ -18,21 +16,18 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
- 
-
   /// Current auth mode, default is [AuthMode.login].
   AuthMode currentMode = AuthMode.login;
- 
+
   CancelableOperation? _operation;
 //  final TextEditingController passwordController = TextEditingController();
-
 
 //   final TextEditingController emailController = TextEditingController();
   final GlobalKey<FormState> formKey = GlobalKey();
   @override
   Widget build(BuildContext context) {
-      final authProvider = Provider.of<AuthProvider>(context);
-   
+    final authProvider = Provider.of<AuthProvider>(context);
+
     //  assert(authProvider != null, 'AuthProvider is null');
     //  assert(auth != null, 'Auth is null');
     // // Debug prints
@@ -40,35 +35,44 @@ class _LoginScreenState extends State<LoginScreen> {
     // print('Auth: $auth');
 
     return AnimatedLogin(
-      
-      onLogin:(){
-        return
-       authProvider.action(context: context, formKey: formKey);},
+      onLogin: () {
+        return authProvider.action(context: context, formKey: formKey);
+      },
       onForgotPassword: _onForgotPassword,
-      logo: Image.network('assets/images/punch_logo.png'),
-     //  backgroundImage: 'images/background_image.jpg',
+      logo: kIsWeb
+          ? Image.network(
+              "assets/images/punch_logo.png",
+              scale: 5,
+            )
+          : Image.asset(
+              "assets/images/punch_logo.png",
+              scale: 5,
+            ),
+      //  backgroundImage: 'images/background_image.jpg',
       signUpMode: SignUpModes.both,
       // emailController: emailController,
       // passwordController: passwordController,
-      
+
       formKey: formKey,
       loginDesktopTheme: _desktopTheme,
       loginMobileTheme: _mobileTheme,
       loginTexts: _loginTexts,
-      
-      emailController: TextEditingController(),
-      passwordController:
-          TextEditingController(),
 
-      emailValidator: ValidatorModel(
-          validatorCallback: (String? email) { return 'What an email! $email';}),
-          //  validatorCallback: (String? email) =>
-          // authProvider.validateEmail ? 'Invalid email' : null,
+      emailController: TextEditingController(),
+      passwordController: TextEditingController(),
+
+      emailValidator: ValidatorModel(validatorCallback: (String? email) {
+        return 'What an email! $email';
+      }),
+      //  validatorCallback: (String? email) =>
+      // authProvider.validateEmail ? 'Invalid email' : null,
       initialMode: currentMode,
       onAuthModeChange: (AuthMode newMode) async {
         currentMode = newMode;
         await _operation?.cancel();
-      }, validateEmail: authProvider.validateEmail , validatePassword:  authProvider.validatePassword,
+      },
+      validateEmail: authProvider.validateEmail,
+      validatePassword: authProvider.validatePassword,
     );
   }
 
@@ -125,12 +129,12 @@ class _LoginScreenState extends State<LoginScreen> {
           AnimatedComponent(component: LoginComponents.title),
           AnimatedComponent(component: LoginComponents.description),
           AnimatedComponent(component: LoginComponents.formTitle),
-        
+
           AnimatedComponent(component: LoginComponents.form),
-  
+
           AnimatedComponent(component: LoginComponents.forgotPassword),
           AnimatedComponent(component: LoginComponents.policyCheckbox),
-         // AnimatedComponent(component: LoginComponents.changeActionButton),
+          // AnimatedComponent(component: LoginComponents.changeActionButton),
           AnimatedComponent(component: LoginComponents.actionButton),
         ],
         privacyPolicyStyle: const TextStyle(color: Colors.white70),
@@ -140,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   LoginTexts get _loginTexts => LoginTexts(
         nameHint: 'Username',
-       // login: 'Login',
+        // login: 'Login',
         signUp: 'Sign Up',
         // signupEmailHint: 'Signup Email',
         // loginEmailHint: 'Login Email',
@@ -150,12 +154,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// You can adjust the texts in the screen according to the current language
   /// With the help of [LoginTexts], you can create a multilanguage scren.
- 
+
   /// Social login options, you should provide callback function and icon path.
   /// Icon paths should be the full path in the assets
   /// Don't forget to also add the icon folder to the "pubspec.yaml" file.
-  
-  
 }
 
 /// Example forgot password screen

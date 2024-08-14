@@ -16,7 +16,7 @@ class Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-        final users = authProvider.mergedUsersWithRecords;
+    final users = authProvider.mergedUsersWithRecords;
     return Row(
       children: [
         if (!Responsive.isDesktop(context))
@@ -36,10 +36,10 @@ class Header extends StatelessWidget {
           Spacer(flex: Responsive.isDesktop(context) ? 2 : 1),
         const Expanded(child: SearchField()),
         GestureDetector(
-          onTap: () {
-        // print(user.users.first.firstName ?? " Null" + "this is the first name");
-          },
-          child: const ProfileCard())
+            onTap: () {
+              // print(user.users.first.firstName ?? " Null" + "this is the first name");
+            },
+            child: const ProfileCard())
       ],
     );
   }
@@ -56,17 +56,18 @@ class ProfileCard extends StatelessWidget {
 
     return Card(
       elevation: 4,
-      margin: const EdgeInsets.only(left: defaultPadding),
+      margin: const EdgeInsets.only(left: defaultPadding, right: defaultPadding, bottom: defaultPadding),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
       child: Container(
+        height: 60,
         padding: const EdgeInsets.symmetric(
           horizontal: defaultPadding,
           vertical: defaultPadding / 2,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.grey,
           borderRadius: const BorderRadius.all(Radius.circular(20)),
           border: Border.all(color: Colors.white),
         ),
@@ -79,7 +80,15 @@ class ProfileCard extends StatelessWidget {
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: defaultPadding / 2),
-                child: Text(user!.lastName!),
+                child: Column(
+                  children: [
+                     Text(
+                      user!.role.toString().split('.').last,
+                    ),
+                    Text(user.lastName!),
+                    
+                  ],
+                ),
               ),
             const Icon(Icons.keyboard_arrow_down),
           ],

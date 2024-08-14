@@ -1,57 +1,64 @@
 import 'dart:convert';
-import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:punch/models/myModels/anniversaryModel.dart';
-import 'package:punch/widgets/showToast.dart';
+import 'package:punch/models/myModels/anniversarySector.dart';
+import 'package:punch/models/myModels/web_socket_manager.dart';
+
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class AnniversaryProvider with ChangeNotifier {
   final String baseUrl = 'http://localhost:3000/anniversaries';
-  List<Anniversary> _anniversaries = [];
+  final String base = "http://localhost:3000";
   late WebSocketChannel channel;
+  List<Anniversary> _anniversaries = [];
   List<Anniversary> get anniversaries => _anniversaries;
-  AnniversaryProvider() {
-    fetchAnniversaries();
-    setupWebSocket();
-  }
-  bool _isRowsSelected = false; // Default value
+  List<AnniversarySector> _anniversarySectors = [];
+  List<AnniversarySector> get anniversarySectors => _anniversarySectors;
+  final String webSocketUrl = 'ws://localhost:3000?channel=anniversary';
+  bool _loading = false; // Default value
 
+  bool get loading => _loading;
+  //  Uri.parse('ws://localhost:3000?channel=anniversary'),
+ 
+  bool _isRowsSelected = false; // Default value
   bool get isRowsSelected => _isRowsSelected;
 
   setBoolValue(bool newValue) {
     _isRowsSelected = newValue;
     notifyListeners();
   }
+  late WebSocketManager _webSocketManager;
 
-  void setupWebSocket() {
-    channel = WebSocketChannel.connect(Uri.parse('ws://localhost:3000'));
-
-    channel.stream.listen(
-      (message) {
-        try {
-          final decodedMessage = jsonDecode(message);
-          handleWebSocketMessage(decodedMessage);
-          print('decodedMessage: $decodedMessage'); // Fixed print statement
-        } catch (e) {
-          print('Error decoding message: $e');
-        }
-      },
-      onError: (error) => print('WebSocket error: $error'),
-      onDone: () => print('WebSocket closed'),
-    );
+  AnniversaryProvider() {
+    channel = WebSocketChannel.connect(
+        Uri.parse('ws://localhost:3000?channel=anniversary'));
+    fetchAnniversaries();
+    _initializeWebSocket();
   }
 
-  void handleWebSocketMessage(dynamic message) {
+  void _initializeWebSocket() {
+    _webSocketManager = WebSocketManager(
+      webSocketUrl,
+      _handleWebSocketMessage,
+      _reconnectWebSocket,
+    );
+    _webSocketManager.connect();
+  }
+
+  void _reconnectWebSocket() {
+    print("reconnected");
+  }
+
+  void _handleWebSocketMessage(dynamic message) async {
     final type = message['type'];
     final data = message['data'];
 
     switch (type) {
       case 'ADD':
-        // _anniversaries.add(Anniversary.fromJson(data));
-
-        fetchAnniversaries();
+        await fetchAnniversaries();
         print('socket refreshed anniversaries');
         notifyListeners();
         break;
@@ -59,13 +66,12 @@ class AnniversaryProvider with ChangeNotifier {
         final index = _anniversaries.indexWhere((a) => a.id == data['id']);
         if (index != -1) {
           _anniversaries[index] = Anniversary.fromJson(data);
-          print('socket refreshed anniversaries');
+          print('socket updated anniversary');
           notifyListeners();
         }
         break;
       case 'DELETE':
-        // _anniversaries.removeWhere((a) => a.id == data);
-        fetchAnniversaries();
+        await fetchAnniversaries();
         print('socket refreshed anniversaries');
         notifyListeners();
         break;
@@ -90,11 +96,29 @@ class AnniversaryProvider with ChangeNotifier {
     }
   }
 
+  Future<void> fetchAnniversarySectors() async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/anniversarySectors"));
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body);
+        _anniversarySectors =
+            data.map((json) => AnniversarySector.fromJson(json)).toList();
+        notifyListeners();
+      } else {
+        throw Exception('Failed to load anniversary sectors');
+      }
+    } catch (error) {
+      print('Error fetching anniversary sectors: $error');
+     
+    }
+  }
+
   Future<void> addAnniversary(
     Anniversary anniversary,
     List<TextEditingController> controllers,
   ) async {
     try {
+      _loading = true;
       final response = await http.post(
         Uri.parse(baseUrl),
         headers: {'Content-Type': 'application/json'},
@@ -116,7 +140,7 @@ class AnniversaryProvider with ChangeNotifier {
 
         notifyListeners();
       } else {
-        throw Exception('Failed to add anniversary');
+        throw Exception('Failed to add anniversary' + response.body);
       }
     } catch (error) {
       Fluttertoast.showToast(
@@ -127,67 +151,23 @@ class AnniversaryProvider with ChangeNotifier {
         textColor: Colors.white,
       );
       print('Error adding anniversary: $error');
-      throw error;
+    } finally {
+      _loading = false;
     }
   }
 
-  Future<void> addTestAnniversary() async {
-    DateTime today = DateTime.now();
-    DateTime previousYear = DateTime(today.year - 1, today.month, today.day);
-    var random = Random();
-    int randomNumber = random.nextInt(30);
-    Anniversary anniversary = Anniversary(
-        placedByName: "test",
-        paperId: randomNumber,
-        friends: "test",
-        placedByPhone: '08181304896',
-        placedByAddress: "test",
-        name: "TestName",
-        date: previousYear,
-        associates: "Test associates",
-        anniversaryYear: 2023,
-        anniversaryNo: randomNumber,
-        anniversaryTypeId: randomNumber);
-    try {
-      final response = await http.post(
-        Uri.parse(baseUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(anniversary.toJson()),
-      );
-      if (response.statusCode == 201) {
-        showToaster(
-          "Anniversary added successfully!",
-          Toast.LENGTH_LONG,
-          Colors.green,
-        );
-
-        notifyListeners();
-      } else {
-        print(response.body);
-        throw Exception(response.body);
-      }
-    } catch (error) {
-      showToaster(
-        error.toString(),
-        Toast.LENGTH_LONG,
-        Colors.red,
-      );
-
-      throw error;
-    }
-  }
-
-  Future<void> updateAnniversary(String id, Anniversary anniversary) async {
+  Future<void> updateAnniversary(Anniversary anniversary) async {
     try {
       final response = await http.patch(
-        Uri.parse('$baseUrl/$id'),
+        Uri.parse('$baseUrl/${anniversary.id}'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(anniversary.toJson()),
       );
       if (response.statusCode == 200) {
         print('Success');
+        notifyListeners();
       } else {
-        throw Exception('Failed to update anniversary');
+        throw Exception(response.body);
       }
     } catch (error) {
       print('Error updating anniversary: $error');
@@ -197,21 +177,19 @@ class AnniversaryProvider with ChangeNotifier {
 
   Future<void> deleteAnniversary(BuildContext context, String id) async {
     try {
-      print("aniversary id" + id);
       final response = await http.delete(Uri.parse('$baseUrl/$id'));
       if (response.statusCode == 200) {
-        //  Navigator.pop(context);
         Fluttertoast.showToast(
-          msg: "deleted",
+          msg: "Deleted",
           toastLength: Toast.LENGTH_LONG,
           gravity: ToastGravity.BOTTOM,
           backgroundColor: Colors.red,
           textColor: Colors.white,
         );
+        Navigator.pop(context);
         notifyListeners();
       } else {
-        print(response.body);
-        throw Exception('Failed to delete anniversary');
+        throw Exception('Failed to delete anniversary ' + response.body);
       }
     } catch (error) {
       Fluttertoast.showToast(
@@ -221,13 +199,12 @@ class AnniversaryProvider with ChangeNotifier {
         backgroundColor: Colors.red,
         textColor: Colors.white,
       );
-      print(error.toString());
+      print('Error deleting anniversary: $error');
       throw error;
     }
   }
 
   DateTime? _selectedDate;
-
   DateTime? get selectedDate => _selectedDate;
 
   void setDate(DateTime date) {

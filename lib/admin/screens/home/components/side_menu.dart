@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/admin/responsive.dart';
+import 'package:punch/admin/screens/dashboard/components/header.dart';
 import 'package:punch/providers/authProvider.dart';
 import 'package:punch/providers/dashboardPageProvider.dart';
 import 'package:easy_sidemenu/easy_sidemenu.dart' as sideMenu;
@@ -20,6 +22,18 @@ class _SideMenuState extends State<SideMenu> {
     final auth = Provider.of<AuthProvider>(context);
 
     return sideMenu.SideMenu(
+      footer:    const Row(
+            
+            children: [
+              ProfileCard(),
+                
+              Expanded(
+                child: SizedBox(
+                
+                ),
+              ),
+             
+          ],),
       controller: sidemenu,
       style: sideMenu.SideMenuStyle(
         displayMode: sideMenu.SideMenuDisplayMode.auto,
@@ -63,17 +77,19 @@ class _SideMenuState extends State<SideMenu> {
         children: [
           const SizedBox(height: defaultPadding),
           Center(
-            child: Image.network(
-              "assets/images/punch_logo.png",
-              scale: 5,
-            ),
+           child: kIsWeb
+                ? Image.network(
+                    "assets/images/punch_logo.png",
+                    scale: 5,
+                  )
+                : Image.asset(
+                    "assets/images/punch_logo.png",
+                    scale: 5,
+                  ),
           ),
           const SizedBox(height: defaultPadding),
-          const Text(
-            'MOSES ',
-            style: TextStyle(color: Colors.white),
-          ),
-          const SizedBox(height: defaultPadding),
+       
+        
         ],
       ),
       items: [
@@ -85,6 +101,16 @@ class _SideMenuState extends State<SideMenu> {
           onTap: (index, _) {
             provider.setPageIndex(index);
 
+            sidemenu.changePage(index);
+          },
+        ),
+        sideMenu.SideMenuItem(
+          title: "Company",
+          icon: const Icon(
+            Icons.business,
+          ),
+          onTap: (index, _) {
+            provider.setPageIndex(index);
             sidemenu.changePage(index);
           },
         ),

@@ -1,8 +1,8 @@
 class Anniversary {
-   String? id;
+  String? id;
   int? anniversaryNo;
   String? name;
-  int anniversaryTypeId;
+  AnniversaryType anniversaryTypeId;
   DateTime? date;
   String? placedByName;
   String? placedByAddress;
@@ -29,11 +29,20 @@ class Anniversary {
 
   // Deserialize JSON to Anniversary object
   factory Anniversary.fromJson(Map<String, dynamic> json) {
+    int anniversaryTypeIndex = json['Anniversary_Type_Id'] as int;
+    AnniversaryType anniversaryTypeId;
+
+    if (anniversaryTypeIndex >= 0 &&
+        anniversaryTypeIndex < AnniversaryType.values.length) {
+      anniversaryTypeId = AnniversaryType.values[anniversaryTypeIndex];
+    } else {
+      anniversaryTypeId = AnniversaryType.other;
+    }
     return Anniversary(
       id: json['_id'] as String?,
       anniversaryNo: json['Anniversary_No'] as int?,
       name: json['Name'] as String?,
-      anniversaryTypeId: json['Anniversary_Type_Id'] as int,
+      anniversaryTypeId: anniversaryTypeId,
       date:
           json['Date'] != null ? DateTime.parse(json['Date'] as String) : null,
       placedByName: json['Placed_By_Name'] as String?,
@@ -52,7 +61,7 @@ class Anniversary {
       '_id': id,
       'Anniversary_No': anniversaryNo,
       'Name': name,
-      'Anniversary_Type_Id': anniversaryTypeId,
+      'Anniversary_Type_Id': anniversaryTypeId.index,
       'Date': date?.toIso8601String(),
       'Placed_By_Name': placedByName,
       'Placed_By_Address': placedByAddress,
@@ -62,5 +71,85 @@ class Anniversary {
       'Paper_Id': paperId,
       'Anniversary_Year': anniversaryYear,
     };
+  }
+}
+
+enum AnniversaryType {
+  other,
+  wedding,
+  obituary,
+  coronation,
+  chieftancyTitle,
+  birthday,
+  election,
+  remembranceObituary,
+  san,
+  awardsHonours,
+  nill,
+  winner,
+  lecture,
+}
+
+extension AnniversaryTypeExtension on AnniversaryType {
+  String get description {
+    switch (this) {
+      case AnniversaryType.other:
+        return "Other";
+      case AnniversaryType.wedding:
+        return "Wedding";
+      case AnniversaryType.obituary:
+        return "Obituary";
+      case AnniversaryType.coronation:
+        return "Coronation";
+      case AnniversaryType.chieftancyTitle:
+        return "Chieftancy Title";
+      case AnniversaryType.birthday:
+        return "BirthDay";
+      case AnniversaryType.election:
+        return "Election";
+      case AnniversaryType.remembranceObituary:
+        return "Remembrance Obituary";
+      case AnniversaryType.san:
+        return "SAN";
+      case AnniversaryType.awardsHonours:
+        return "Awards/Honours";
+      case AnniversaryType.nill:
+        return " ";
+      case AnniversaryType.winner:
+        return "Winner";
+      case AnniversaryType.lecture:
+        return "Lecture";
+    }
+  }
+}
+
+String getAnniversaryEvent(AnniversaryType type) {
+  switch (type) {
+    case AnniversaryType.other:
+      return "Other";
+    case AnniversaryType.wedding:
+      return "Wedding";
+    case AnniversaryType.obituary:
+      return "Obituary";
+    case AnniversaryType.coronation:
+      return "Coronation";
+    case AnniversaryType.chieftancyTitle:
+      return "Chieftancy Title";
+    case AnniversaryType.birthday:
+      return "BirthDay";
+    case AnniversaryType.election:
+      return "Election";
+    case AnniversaryType.remembranceObituary:
+      return "Remembrance Obituary";
+    case AnniversaryType.san:
+      return "SAN";
+    case AnniversaryType.awardsHonours:
+      return "Awards/Honours";
+    case AnniversaryType.nill:
+      return " ";
+    case AnniversaryType.winner:
+      return "Winner";
+    case AnniversaryType.lecture:
+      return "Lecture";
   }
 }

@@ -8,6 +8,7 @@ import 'package:punch/providers/anniversaryProvider.dart';
 import 'package:punch/providers/auth.dart';
 
 import 'package:punch/providers/authProvider.dart';
+import 'package:punch/providers/companyProvider.dart';
 import 'package:punch/providers/dashboardPageProvider.dart';
 import 'package:punch/screens/libraryScreen.dart';
 import 'package:punch/screens/loginPage.dart';
@@ -26,10 +27,11 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => DashboardPageProvider()),
         ChangeNotifierProvider(create: (_) => AnniversaryProvider()),
+        ChangeNotifierProvider(create: (_) => CompanyProvider()),
         ChangeNotifierProvider(create: (_) => Auth()),
         // Add other providers here
       ],
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
@@ -40,14 +42,14 @@ class MyApp extends StatelessWidget {
       case UserRole.admin:
         return AdminHome();
       case UserRole.library:
-        return LibraryScreen();
+        return const LibraryScreen();
       default:
         return UserHome();
     }
   }
 
   Widget _navigateToLogin() {
-    return LoginScreen();
+    return const LoginScreen();
   }
 
   const MyApp({
