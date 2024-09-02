@@ -4,46 +4,9 @@ import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/admin/responsive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:punch/admin/screens/dashboard/components/mini_information_card.dart';
-import 'package:punch/admin/screens/dashboard/components/mini_information_card.dart';
+
 import 'package:punch/providers/authProvider.dart';
 
-class Header extends StatelessWidget {
-  const Header({
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final users = authProvider.mergedUsersWithRecords;
-    return Row(
-      children: [
-        if (!Responsive.isDesktop(context))
-          IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () {},
-          ),
-        if (!Responsive.isMobile(context))
-          const Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              MiniInformation(),
-            ],
-          ),
-        if (!Responsive.isMobile(context))
-          Spacer(flex: Responsive.isDesktop(context) ? 2 : 1),
-        const Expanded(child: SearchField()),
-        GestureDetector(
-            onTap: () {
-              // print(user.users.first.firstName ?? " Null" + "this is the first name");
-            },
-            child: const ProfileCard())
-      ],
-    );
-  }
-}
 
 class ProfileCard extends StatelessWidget {
   const ProfileCard({
@@ -54,17 +17,28 @@ class ProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
 
+    // Determine sizes based on the device's screen size
+    double cardHeight = Responsive.isMobile(context) ? 50 : 60;
+    double horizontalPadding =
+        Responsive.isMobile(context) ? defaultPadding / 2 : defaultPadding/1.4;
+    double verticalPadding =
+        Responsive.isMobile(context) ? defaultPadding / 4 : defaultPadding / 2;
+
     return Card(
       elevation: 4,
-      margin: const EdgeInsets.only(left: defaultPadding, right: defaultPadding, bottom: defaultPadding),
+      margin: EdgeInsets.only(
+        left: horizontalPadding,
+        right: horizontalPadding,
+        bottom: defaultPadding,
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
       child: Container(
-        height: 60,
-        padding: const EdgeInsets.symmetric(
-          horizontal: defaultPadding,
-          vertical: defaultPadding / 2,
+        height: cardHeight,
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: verticalPadding,
         ),
         decoration: BoxDecoration(
           color: Colors.grey,
@@ -73,20 +47,31 @@ class ProfileCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const CircleAvatar(
+              if (Responsive.isDesktop(context)) CircleAvatar(
               backgroundImage: AssetImage("assets/images/profile_pic.png"),
             ),
-            if (!Responsive.isMobile(context))
+            if (!Responsive.isTablet(context))
               Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: defaultPadding / 2),
+                    EdgeInsets.symmetric(horizontal: horizontalPadding / 2),
                 child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start, // Align text to the left
+                  mainAxisAlignment:
+                      MainAxisAlignment.center, // Center text vertically
                   children: [
-                     Text(
-                      user!.role.toString().split('.').last,
+                    Text(
+                      user!.loginId.toString().split('.').last,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium, // Adjust the text style
                     ),
-                    Text(user.lastName!),
-                    
+                    Text(
+                      user.lastName!,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium, // Adjust the text style
+                    ),
                   ],
                 ),
               ),

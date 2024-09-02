@@ -4,10 +4,11 @@ import 'dart:math';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:paged_datatable/paged_datatable.dart';
 import 'package:provider/provider.dart';
 import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/models/myModels/userRecordModel.dart';
-import 'package:punch/models/myModels/userWithRecord.dart';
+
 import 'package:punch/models/myModels/web_socket_manager.dart';
 import 'package:punch/providers/auth.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -25,7 +26,9 @@ class AuthProvider with ChangeNotifier {
   Stream<User?> get userStream => _userController.stream;
   bool _isRowsSelected = false; // Default value
   bool get isRowsSelected => _isRowsSelected;
+  bool _loading = false; // Default value
 
+  bool get loading => _loading;
   late WebSocketManager _webSocketManager;
   final String webSocketUrl = 'ws://localhost:3000?channel=auth';
 
@@ -37,38 +40,7 @@ class AuthProvider with ChangeNotifier {
   List<User> _users = [];
   late WebSocketChannel channel;
   List<User> get users => _users;
-  List<UserRecord> _userRecords = [];
-  List<UserRecord> get userRecords => _userRecords;
-  List<UserWithRecord> _mergedUsersWithRecords = [];
-  List<UserWithRecord> get mergedUsersWithRecords => _mergedUsersWithRecords;
-  List<User> getSortedUsersByLoginDate() {
-    Map<String, DateTime?> latestLoginMap = {};
-    // Build a map of userId to the latest loginDateTime
-    for (var record in userRecords) {
-      if (record.recordId != null) {
-        final userId = record.recordId.toString();
-        final loginDateTime = record.loginDateTime;
-
-        if (loginDateTime != null) {
-          if (latestLoginMap[userId] == null ||
-              loginDateTime.isAfter(latestLoginMap[userId]!)) {
-            latestLoginMap[userId] = loginDateTime;
-          }
-        }
-      }
-    }
-
-    // Sort users based on the latest loginDateTime from the map
-    users.sort((a, b) {
-      final loginDateA =
-          latestLoginMap[a.id] ?? DateTime.fromMillisecondsSinceEpoch(0);
-      final loginDateB =
-          latestLoginMap[b.id] ?? DateTime.fromMillisecondsSinceEpoch(0);
-      return loginDateB.compareTo(loginDateA);
-    });
-
-    return users;
-  }
+  Map<int, List<UserRecord>> userRecordsMap = {};
 
   bool _validateEmail = false;
   bool _validatePassword = false;
@@ -102,6 +74,8 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  final tableController = PagedDataTableController<String, User>();
+
   AuthProvider() {
     _initialize();
     channel =
@@ -129,79 +103,65 @@ class AuthProvider with ChangeNotifier {
 
     switch (type) {
       case 'ADD':
-        await fetchUsers();
-        print('socket refreshed Users');
-        notifyListeners();
-        break;
-      case 'UPDATE':
-        final index = _users.indexWhere((a) => a.id == data['id']);
-        if (index != -1) {
-          _users[index] = User.fromJson(data);
-          print('socket updated User');
+        print('Received ADD event with data: $data');
+        final newUser = User.fromJson(data);
+        if (newUser != null) {
+          print('Parsed new user: $newUser');
+          _users.add(newUser);
+          tableController.insert(newUser);
+          tableController.refresh();
+          print('socket added new User');
           notifyListeners();
+        } else {
+          print('Failed to parse user from data');
         }
         break;
+
+      case 'UPDATE':
+        try {
+          final index = _users.indexWhere((a) => a.id == data['_id']);
+          print(data);
+          if (index != -1) {
+            print("hmm");
+            _users[index] = User.fromJson(data);
+            tableController.refresh();
+            tableController.replace(index, _users[index]);
+
+            print('socket updated client');
+            notifyListeners();
+          }
+        } catch (e) {
+          print(e);
+        }
+        break;
+
       case 'DELETE':
-        await fetchUsers();
-        print('socket refreshed Users');
+        print('Received DELETE message: $data');
+        final idToDelete = data;
+        final userToRemove = _users.firstWhere(
+          (a) => a.id == idToDelete,
+          orElse: () {
+            throw Exception('User not found for id: $idToDelete');
+          },
+        );
+        if (userToRemove != null) {
+          _users.remove(userToRemove);
+              
+          tableController.removeRow(userToRemove);
+      tableController.refresh();
+          print('socket removed User');
+        } else {
+          print('User not found for id: $idToDelete');
+        }
         notifyListeners();
         break;
     }
-    notifyListeners();
   }
 
   Future<void> _initialize() async {
-    await Future.wait([
-      _checkToken(),
-      fetchUsers(),
-      fetchUserRecords(), // Temporarily comment out to isolate
-      setupWebSocket(),
-    ]);
-
-    _mergeUsersAndRecords();
-  }
-
-  Future<void> setupWebSocket() async {
-    channel = WebSocketChannel.connect(Uri.parse('ws://localhost:3000'));
-
-    channel.stream.listen(
-      (message) {
-        try {
-          final decodedMessage = jsonDecode(message);
-          handleWebSocketMessage(decodedMessage);
-          // Fixed print statement
-        } catch (e) {}
-      },
-      onError: (error) => print('WebSocket error: $error'),
-      onDone: () => print('WebSocket closed'),
-    );
-  }
-
-  void handleWebSocketMessage(dynamic message) {
-    final type = message['type'];
-    final data = message['data'];
-
-    switch (type) {
-      case 'ADD':
-        // _anniversaries.add(Anniversary.fromJson(data));
-
-        fetchUsers();
-        notifyListeners();
-        break;
-      case 'UPDATE':
-        final index = _users.indexWhere((a) => a.id == data['id']);
-        if (index != -1) {
-          _users[index] = User.fromJson(data);
-          notifyListeners();
-        }
-        break;
-      case 'DELETE':
-        // _anniversaries.removeWhere((a) => a.id == data);
-        fetchUsers();
-        notifyListeners();
-        break;
-    }
-    notifyListeners();
+    _checkToken();
+    fetchUsers();
+    fetchUsersRecord(); // Temporarily comment out to isolate
   }
 
   Future<void> fetchUsers() async {
@@ -220,62 +180,49 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchUserRecords() async {
-    final userRecordUrl = Uri.parse('$baseUrl/userRecords');
+// Fetch user records and store them in the map
+  Future<void> fetchUsersRecord() async {
     try {
-      final response = await http.get(userRecordUrl);
+      final response = await http.get(Uri.parse(userRecordUrl));
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
-        _userRecords = data.map((json) => UserRecord.fromJson(json)).toList();
 
-        showToaster(
-          "User Record fetched successfully!",
-          Toast.LENGTH_LONG,
-          Colors.green,
-        );
+        // Clear the existing map to prevent old data from lingering
+        userRecordsMap.clear();
 
+        // Populate the map with the fetched data
+        for (var json in data) {
+          final userRecord = UserRecord.fromJson(json);
+          if (userRecord.staffNo != null) {
+            userRecordsMap
+                .putIfAbsent(userRecord.staffNo!, () => [])
+                .add(userRecord);
+          }
+        }
+        print("userRecord " + userRecordsMap.length.toString());
+        // Notify listeners about the change
         notifyListeners();
       } else {
-        print("error getting user Record");
-        showToaster(
-          "error getting user Record",
-          Toast.LENGTH_LONG,
-          Colors.red,
-        );
-
-        throw Exception('Failed to load User Records');
+        print(response.body);
+        throw Exception('Failed to load user records: ${response.body}');
       }
     } catch (error) {
-      print("error getting user Record" + error.toString());
-      showToaster(
-        error.toString(),
-        Toast.LENGTH_LONG,
-        Colors.red,
-      );
+      print('Error fetching user Record: $error');
       throw error;
     }
   }
 
-  Future<void> _mergeUsersAndRecords() async {
-    _mergedUsersWithRecords = _users.map((user) {
-      // Attempt to find the matching user record
-      final matchingRecord = _userRecords.firstWhere(
-        (record) => record.recordId == user.id,
-        orElse: () =>
-            UserRecord(), // Return an empty UserRecord if no match is found
-      );
+// Method to retrieve all records for a particular user
+  List<UserRecord>? getUserRecordsByStaffNo(int? staffNo) {
+    return userRecordsMap[staffNo];
+  }
 
-      // Check if the matchingRecord is not empty
-      if (matchingRecord.recordId != null) {
-        // If a matching record was found, merge it with the user
-        return UserWithRecord(userModel: user, userRecordModel: matchingRecord);
-      } else {
-        // If no matching record was found, just return the user with an empty UserRecord
-        return UserWithRecord(userModel: user, userRecordModel: UserRecord());
-      }
-    }).toList();
-
-    notifyListeners();
+// Optional: Method to add or update a UserRecord
+  void addOrUpdateUserRecord(UserRecord userRecord) {
+    if (userRecord.staffNo != null) {
+      userRecordsMap.putIfAbsent(userRecord.staffNo!, () => []).add(userRecord);
+      notifyListeners();
+    }
   }
 
   User? get user => _user;
@@ -424,7 +371,6 @@ class AuthProvider with ChangeNotifier {
     }
 
     final userRecord = UserRecord(
-      recordId: user.id,
       staffNo: user.staffNo,
       loginDateTime: DateTime.now(),
       computerName: computerName,
@@ -494,55 +440,199 @@ class AuthProvider with ChangeNotifier {
   Future<String> getDeviceName() async {
     final deviceInfo = DeviceInfoPlugin();
     final webInfo = await deviceInfo.webBrowserInfo;
-    final appVersion = RegExp(r'5.0 \(.*?\)')
-            .firstMatch(webInfo.appVersion ?? "unknown")
-            ?.group(0) ??
-        'Unknown';
+
+    // Get IP address using an external API
+    String ipAddress = 'Unknown';
+    try {
+      final response =
+          await http.get(Uri.parse('https://api.ipify.org?format=json'));
+      if (response.statusCode == 200) {
+        ipAddress = jsonDecode(response.body)['ip'];
+      }
+    } catch (e) {
+      // Handle errors or exceptions
+      print('Failed to get IP address: $e');
+    }
+
     return '''
     Browser: ${webInfo.browserName.name}
     Platform: ${webInfo.platform}
-    App Version: $appVersion
-    Vendor: ${webInfo.vendor}
+    IP Address: $ipAddress
   ''';
   }
 
-  Future<void> addTestUser() async {
-    DateTime today = DateTime.now();
-    DateTime previousYear = DateTime(today.year - 1, today.month, today.day);
-    var random = Random();
-    int randomNumber = random.nextInt(30);
-    User test = User(
-      firstName: "Test User",
-      lastName: "Test last Name",
-      password: "password",
-      staffNo: 123,
-      role: UserRole.user,
-    );
+  Future<void> addUser(
+    User user,
+    List<TextEditingController> controllers,
+    void Function() clearSelectedType,
+  ) async {
     try {
+      _loading = true;
       final response = await http.post(
-        Uri.parse(baseUrl),
+        Uri.parse(userUrl),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(test.toJson()),
+        body: jsonEncode(user.toJson()),
       );
       if (response.statusCode == 201) {
-        showToaster(
-          "Anniversary added successfully!",
-          Toast.LENGTH_LONG,
-          Colors.green,
+        Fluttertoast.showToast(
+          msg: "User added successfully!",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
         );
 
+        // Clear all controllers
+        for (var controller in controllers) {
+          controller.clear();
+        }
+        clearSelectedType();
         notifyListeners();
       } else {
         throw Exception(response.body);
       }
     } catch (error) {
-      showToaster(
-        error.toString(),
-        Toast.LENGTH_LONG,
-        Colors.red,
+      Fluttertoast.showToast(
+        msg: error.toString(),
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
       );
+    } finally {
+      _loading = false;
+    }
+  }
 
+  Future<bool> updateUser(
+      User user, Function onSuccess, BuildContext context) async {
+    try {
+      print("updating" + user.toJson().toString());
+      final response = await http.patch(
+        Uri.parse('$userUrl/${user.id}'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(user.toJson()),
+      );
+      if (response.statusCode == 200) {
+        onSuccess();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User updated successfully!')),
+        );
+        notifyListeners();
+        return true;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update user ')),
+        );
+        print('Failed to update anniversary: ${response.body}');
+        return false;
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update user ')),
+      );
+      print('Error updating user: $error');
+
+      return false;
+    }
+  }
+
+  Future<void> deleteSelectedUsers(
+      BuildContext context, List<User> selectedUsers) async {
+    try {
+      print("selectedClients ${selectedUsers.length.toString()}");
+      // Iterate over the selected clients
+      for (var user in selectedUsers) {
+        // Await the deletion of the client
+        deleteUser(context, user);
+      }
+
+      // Notify listeners after all deletions are completed
+      notifyListeners();
+    } catch (error) {
+      print('Error deleting selected clients and their extras: $error');
+    }
+  }
+
+  Future<void> deleteUser(BuildContext context, User duser) async {
+    try {
+      // Delete the user
+      final userResponse = await http.delete(Uri.parse('$userUrl/${duser.id}'));
+
+      if (userResponse.statusCode == 200) {
+        // Attempt to delete associated user records
+        final userRecordResponse =
+            await http.delete(Uri.parse('$userRecordUrl/${duser.staffNo}'));
+
+        if (userRecordResponse.statusCode == 200) {
+          Fluttertoast.showToast(
+            msg: "User and associated records deleted",
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
+        } else {
+          Fluttertoast.showToast(
+            msg: "User deleted, but failed to delete associated records",
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.orange,
+            textColor: Colors.white,
+          );
+          print(
+              'Error deleting user records: Status ${userRecordResponse.statusCode}, Body: ${userRecordResponse.body}');
+        }
+        
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+        notifyListeners();
+      } else {
+        // Log the error body and response status code
+        print(
+            'Error deleting user: Status ${userResponse.statusCode}, Body: ${userResponse.body}');
+        throw Exception('Failed to delete user: ${userResponse.body}');
+      }
+    } catch (error) {
+      Fluttertoast.showToast(
+        msg: 'Error deleting user: $error',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      print('Error deleting user: $error');
       throw error;
+    }
+  }
+
+  Future<void> checkUserAndDelete(BuildContext context, User user) async {
+    try {
+      print('trying to delete' + user.id!);
+      //
+      //Check if the user exists
+      final checkResponse = await http.get(Uri.parse('$userUrl/${user.id}'));
+      if (checkResponse.statusCode == 404) {
+        Fluttertoast.showToast(
+          msg: "User not found",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+        return;
+      }
+      // If user exists, proceed to delete
+      await deleteUser(context, user);
+    } catch (error) {
+      Fluttertoast.showToast(
+        msg: 'Error checking user: $error',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
     }
   }
 }

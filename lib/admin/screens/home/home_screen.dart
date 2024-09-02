@@ -9,26 +9,27 @@ class AdminHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgColor,
-      //key: context.read<MenuController>().scaffoldKey,
+    //  backgroundColor: bgColor,
+
+     
       drawer: SideMenu(),
       body: SafeArea(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // We want this side menu only for large screen
-            if (Responsive.isDesktop(context))
-              Expanded(
+        ///    if (Responsive.isDesktop(context))
+              
                 // default flex = 1
                 // and it takes 1/6 part of the screen
-                flex: 1,
+              
                 // default flex = 1
                 // and it takes 1/6 part of the screen
-                child: SideMenu(),
-              ),
+               SideMenu(),
+              
             Expanded(
               // It takes 5/6 part of the screen
-              flex: 5,
+             
               child: DashboardScreen(),
             ),
           ],

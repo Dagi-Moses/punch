@@ -8,6 +8,8 @@ import 'package:punch/providers/anniversaryProvider.dart';
 import 'package:punch/providers/auth.dart';
 
 import 'package:punch/providers/authProvider.dart';
+import 'package:punch/providers/clientExtraProvider.dart';
+import 'package:punch/providers/clientProvider.dart';
 import 'package:punch/providers/companyProvider.dart';
 import 'package:punch/providers/dashboardPageProvider.dart';
 import 'package:punch/screens/libraryScreen.dart';
@@ -28,6 +30,8 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => DashboardPageProvider()),
         ChangeNotifierProvider(create: (_) => AnniversaryProvider()),
         ChangeNotifierProvider(create: (_) => CompanyProvider()),
+        ChangeNotifierProvider(create: (_) => ClientProvider()),
+        ChangeNotifierProvider(create: (_) => ClientExtraProvider()),
         ChangeNotifierProvider(create: (_) => Auth()),
         // Add other providers here
       ],
@@ -36,6 +40,19 @@ Future<void> main() async {
   );
 }
 
+
+
+UserRole mapUsertoRole(int Id) {
+  switch (Id) {
+    case 1:
+      return UserRole.admin;
+    case 2:
+      return UserRole.library;
+   
+    default:
+      return UserRole.user; // Default case for unrecognized title IDs
+  }
+}
 class MyApp extends StatelessWidget {
   Widget _navigateBasedOnRole(UserRole role) {
     switch (role) {
@@ -58,6 +75,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final clientExtra =    Provider.of<ClientExtraProvider>(context, listen: false);
     return ChangeNotifierProvider(
         create: (_) => AuthProvider(),
         child: MaterialApp(
@@ -84,7 +102,8 @@ class MyApp extends StatelessWidget {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return SplashScreen();
                   } else if (snapshot.hasData && snapshot.data != null) {
-                    return _navigateBasedOnRole(snapshot.data!.role!);
+                  //  return _navigateBasedOnRole(snapshot.data!.loginId!);
+                  return AdminHome();
                   } else {
                     return const LoginScreen();
                   }

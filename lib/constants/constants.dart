@@ -11,12 +11,14 @@ List<MaterialColor> colors = [
 ];
 List<String> newTexts = [
   "Anniversaries: ",
-  "Users",
+  "Clients: ",
+  "Users: ",
 
 ];
 
 List<IconData> icons = [
   Icons.article,
+  Icons.group,
   Icons.person,
   
 ];

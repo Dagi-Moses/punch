@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
-import 'package:punch/admin/screens/dashboard/components/mini_information_card.dart';
 
-import '../widgets/main View.dart';
+import 'package:punch/screens/main%20View.dart';
+
+
 
 class AnniversaryList extends StatefulWidget {
   const AnniversaryList({super.key});

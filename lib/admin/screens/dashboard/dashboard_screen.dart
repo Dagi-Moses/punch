@@ -2,7 +2,10 @@ import 'package:provider/provider.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
 
 import 'package:flutter/material.dart';
-import 'package:punch/admin/screens/users.dart';
+import 'package:punch/models/myModels/userModel.dart';
+import 'package:punch/providers/authProvider.dart';
+import 'package:punch/screens/clientScreen.dart';
+import 'package:punch/screens/users.dart';
 import 'package:punch/providers/dashboardPageProvider.dart';
 import 'package:punch/screens/anniversaryList.dart';
 import 'package:punch/screens/companyScreen.dart';
@@ -17,9 +20,12 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+    final isAdmin = auth.user?.loginId == UserRole.admin;
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 12),
+        padding:
+            const EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 12),
         child: Column(
           children: [
             Expanded(
@@ -32,11 +38,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onPageChanged: (index) {
                       pageProvider.setPageIndex(index);
                     },
-                    children: const [
+                    children: [
                       // const DashHome(),
-                      AnniversaryList(),
-                      CompanyScreen(),
-                      UsersScreen(),
+                      const AnniversaryList(),
+                      const ClientScreen(),
+                      const CompanyScreen(),
+                      if (isAdmin) UsersScreen(),
                     ],
                   );
                 }),

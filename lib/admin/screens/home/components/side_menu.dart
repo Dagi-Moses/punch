@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/admin/responsive.dart';
 import 'package:punch/admin/screens/dashboard/components/header.dart';
+import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/authProvider.dart';
 import 'package:punch/providers/dashboardPageProvider.dart';
 import 'package:easy_sidemenu/easy_sidemenu.dart' as sideMenu;
@@ -21,25 +22,25 @@ class _SideMenuState extends State<SideMenu> {
     final provider = Provider.of<DashboardPageProvider>(context);
     final auth = Provider.of<AuthProvider>(context);
 
+    final isAdmin = auth.user?.loginId == UserRole.admin;
+
     return sideMenu.SideMenu(
-      footer:    const Row(
-            
-            children: [
-              ProfileCard(),
-                
-              Expanded(
-                child: SizedBox(
-                
-                ),
-              ),
-             
-          ],),
+
+      footer: const Row(
+        children: [
+          ProfileCard(),
+          Expanded(
+            child: SizedBox(),
+          ),
+        ],
+      ),
       controller: sidemenu,
       style: sideMenu.SideMenuStyle(
-        displayMode: sideMenu.SideMenuDisplayMode.auto,
+      
         decoration: const BoxDecoration(),
-        openSideMenuWidth: 200,
-        compactSideMenuWidth: 40,
+
+        openSideMenuWidth:Responsive.isDesktop(context) ? 190: 130,
+        compactSideMenuWidth: 60,
         hoverColor: Colors.red[200],
         selectedColor: punchRed,
         selectedIconColor: Colors.white,
@@ -52,7 +53,8 @@ class _SideMenuState extends State<SideMenu> {
           Radius.circular(5.0),
         ),
         showTooltip: true,
-        showHamburger: Responsive.isDesktop(context) ? false : true,
+
+        showHamburger: Responsive.isMobile(context) ? true : false,
         itemHeight: 50.0,
         selectedHoverColor: Colors.red[400],
         itemInnerSpacing: 8.0,
@@ -67,8 +69,8 @@ class _SideMenuState extends State<SideMenu> {
         selectedIconColorExpandable: Colors.white, // Adjust the color as needed
         unselectedIconColorExpandable:
             Colors.black54, // Adjust the color as needed
-        arrowCollapse: Colors.blueGrey, // Adjust the color as needed
-        arrowOpen: Colors.lightBlueAccent, // Adjust the color as needed
+        arrowCollapse: Colors.yellow, // Adjust the color as needed
+        arrowOpen: Colors.yellow, // Adjust the color as needed
         iconSizeExpandable: 24.0, // Adjust the size as needed
       ),
       title: Column(
@@ -77,7 +79,7 @@ class _SideMenuState extends State<SideMenu> {
         children: [
           const SizedBox(height: defaultPadding),
           Center(
-           child: kIsWeb
+            child: kIsWeb
                 ? Image.network(
                     "assets/images/punch_logo.png",
                     scale: 5,
@@ -88,8 +90,6 @@ class _SideMenuState extends State<SideMenu> {
                   ),
           ),
           const SizedBox(height: defaultPadding),
-       
-        
         ],
       ),
       items: [
@@ -97,6 +97,17 @@ class _SideMenuState extends State<SideMenu> {
           title: "Anniversary List",
           icon: const Icon(
             Icons.article,
+          ),
+          onTap: (index, _) {
+            provider.setPageIndex(index);
+
+            sidemenu.changePage(index);
+          },
+        ),
+        sideMenu.SideMenuItem(
+          title: "Client",
+          icon: const Icon(
+            Icons.group,
           ),
           onTap: (index, _) {
             provider.setPageIndex(index);
@@ -114,18 +125,18 @@ class _SideMenuState extends State<SideMenu> {
             sidemenu.changePage(index);
           },
         ),
-        sideMenu.SideMenuItem(
-          title: "Users",
-          icon: const Icon(
-            Icons.people,
+        if (isAdmin)
+          sideMenu.SideMenuItem(
+            title: "Users",
+            icon: const Icon(
+              Icons.people,
+            ),
+            onTap: (index, _) {
+              provider.setPageIndex(index);
+              sidemenu.changePage(index);
+            },
           ),
-          onTap: (index, _) {
-            provider.setPageIndex(index);
-            sidemenu.changePage(index);
-          },
-        ),
         sideMenu.SideMenuItem(
-          
           badgeColor: Colors.red,
           title: "Logout",
           icon: const Icon(

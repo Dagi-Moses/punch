@@ -6,13 +6,17 @@ import 'package:intl/intl.dart';
 import 'package:paged_datatable/paged_datatable.dart';
 import 'package:provider/provider.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
-import 'package:punch/admin/dialogs/add_anniversary_dialog.dart';
+
 import 'package:punch/admin/dialogs/add_company_dialog.dart';
 
-import 'package:punch/models/myModels/companyModel.dart';
+import 'package:punch/models/myModels/companyWithExtra.dart';
+import 'package:punch/models/myModels/userModel.dart';
+import 'package:punch/providers/authProvider.dart';
 
 import 'package:punch/providers/companyProvider.dart';
-import 'package:punch/screens/anniversaryView.dart';
+
+import 'package:punch/screens/companyView.dart';
+import 'package:punch/screens/manageCompanySectors.dart';
 import 'package:punch/widgets/operations.dart';
 
 class CompanyScreen extends StatefulWidget {
@@ -46,7 +50,7 @@ class _CompanyScreenState extends State<CompanyScreen> {
     });
   }
 
-  final tableController = PagedDataTableController<String, Company>();
+  final tableController = PagedDataTableController<String, CompanyWithExtra>();
   List<int> calculatePageSizes(int totalItems) {
     if (totalItems < 10) {
       return [totalItems];
@@ -61,7 +65,11 @@ class _CompanyScreenState extends State<CompanyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_isInitialized) {
+         final auth = Provider.of<AuthProvider>(context);
+
+    final isUser = auth.user?.loginId == UserRole.user;
+    if (!_isInitialized ||
+        Provider.of<CompanyProvider>(context).loadingMerged) {
       return const Center(
         child: SpinKitWave(
           color: punchRed,
@@ -84,15 +92,15 @@ class _CompanyScreenState extends State<CompanyScreen> {
         ),
         child: Consumer<CompanyProvider>(
             builder: (context, companyProvider, child) {
-          final companies = companyProvider.companies;
-companies.sort((a, b) {
-            if (a.date == null && b.date == null)
-              return 0; // Both dates are null
-            if (a.date == null) return 1; // a is null, place a after b
-            if (b.date == null) return -1; // b is null, place b after a
-            return a.date!
-                .compareTo(b.date!); // Both dates are not null, compare normally
-          });
+          final companies = companyProvider.mergedCompanyWithExtras;
+          // companies.sort((a, b) {
+          //   if (a.company.date! == null && b.company.date == null)
+          //     return 0; // Both dates are null
+          //   if (a.company.date == null) return 1; // a is null, place a after b
+          //   if (b.company.date == null) return -1; // b is null, place b after a
+          //   return a.company.date!.compareTo(
+          //       b.company.date!); // Both dates are not null, compare normally
+          // });
 
           if (companies.isEmpty) {
             return const Center(
@@ -103,7 +111,7 @@ companies.sort((a, b) {
             );
           }
           final pageSizes = calculatePageSizes(companies.length);
-          return PagedDataTable<String, Company>(
+          return PagedDataTable<String, CompanyWithExtra>(
             fixedColumnCount: 1,
 
             controller: tableController,
@@ -116,23 +124,30 @@ companies.sort((a, b) {
                 int pageIndex = int.parse(pageToken ?? "0");
 
                 // Filter data based on filterModel
-                List<Company> filteredData = companies.where((company) {
+                List<CompanyWithExtra> filteredData =
+                    companies.where((company) {
                   // Text filter
                   if (filterModel['content'] != null &&
-                      !company.name!
+                      !company.company.name!
                           .toLowerCase()
                           .contains(filterModel['content'].toLowerCase())) {
+                    return false;
+                  }
+                  if (filterModel['address'] != null &&
+                      !company.company.address!
+                          .toLowerCase()
+                          .contains(filterModel['address'].toLowerCase())) {
                     return false;
                   }
 
                   if (filterModel['date'] != null) {
                     DateTime selectedDate = filterModel['date'];
 
-                    if (company.date == null ||
+                    if (company.company.date == null ||
                         DateTime(
-                              company.date!.year,
-                              company.date!.month,
-                              company.date!.day,
+                              company.company.date!.year,
+                              company.company.date!.month,
+                              company.company.date!.day,
                             ).compareTo(DateTime(
                               selectedDate.year,
                               selectedDate.month,
@@ -143,27 +158,23 @@ companies.sort((a, b) {
                     }
                   }
 
-                  // Date range filter
-                  if (filterModel['dateRange'] != null) {
-                    DateTimeRange dateRange = filterModel['dateRange'];
-                    if (company.date == null ||
-                        company.date!.isBefore(dateRange.start) ||
-                        company.date!.isAfter(dateRange.end)) {
-                      return false;
+                  if (filterModel['companyNo'] != null) {
+                    String filterInput = filterModel['companyNo'].trim();
+                    int? filterStaffNo = int.tryParse(filterInput);
+
+                    if (filterStaffNo != null &&
+                        company.company.companyNo == filterStaffNo) {
+                      return true; // Include this user in the filtered results
+                    } else {
+                      return false; // Exclude users that do not match the filter
                     }
-                  }
-                  if (filterModel['companyNo'] != null &&
-                      !company.companyNo!
-                          .toString()
-                          .contains(filterModel['companyNo'].toLowerCase())) {
-                    return false;
                   }
 
                   return true;
                 }).toList();
 
                 // Paginate the filtered data
-                List<Company> data = filteredData
+                List<CompanyWithExtra> data = filteredData
                     .skip(pageSize * pageIndex)
                     .take(pageSize)
                     .toList();
@@ -200,26 +211,20 @@ companies.sort((a, b) {
                 firstDate: DateTime(1880),
                 lastDate: DateTime(DateTime.now().year + 1),
               ),
-              DateRangePickerTableFilter(
-                id: "dateRange",
-                name: "Date Range",
-                chipFormatter: (value) {
-                  return 'Anniversaries from "${value?.start != null ? DateFormat('dd/MM/yyyy').format(value!.start) : 'N/A'} to ${value?.end != null ? DateFormat('dd/MM/yyyy').format(value!.end) : 'N/A'}"';
-                },
-                enabled: true,
-                initialValue: null,
-                firstDate: DateTime(1880),
-                lastDate: DateTime(DateTime.now().year + 1),
-                formatter: (dateRange) {
-                  return 'Anniversaries from "${DateFormat('dd/MM/yyyy').format(dateRange.start)} to ${DateFormat('dd/MM/yyyy').format(dateRange.end)}"';
-                },
-              ),
               TextTableFilter(
                 id: "companyNo",
                 chipFormatter: (value) {
                   return 'Id has "$value"';
                 },
                 name: "Company No:",
+                enabled: true,
+              ),
+              TextTableFilter(
+                id: "address",
+                chipFormatter: (value) {
+                  return 'Address has "$value"';
+                },
+                name: "Address",
                 enabled: true,
               ),
             ],
@@ -231,14 +236,26 @@ companies.sort((a, b) {
                   icon: const Icon(Icons.more_vert_outlined),
                   itemBuilder: (context) {
                     return <PopupMenuEntry>[
+                      if(!isUser)
                       PopupMenuItem(
                         child: const Text("Add Company"),
                         onTap: () {
                           // WidgetsBinding.instance.addPostFrameCallback((_) {
                           //   showAddAnniversaryDialog(context);
                           // });
-                          Navigator.push(context, MaterialPageRoute(builder: (_){
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (_) {
                             return AddCompanyPage();
+                          }));
+                        },
+                      ),
+          if (!isUser)
+                         PopupMenuItem(
+                        child: const Text("Edit Company Sectors"),
+                        onTap: () {
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (_) {
+                            return ManageCompanySectorsPage();
                           }));
                         },
                       ),
@@ -249,13 +266,13 @@ companies.sort((a, b) {
                           tableController.refresh();
                         },
                       ),
-                      PopupMenuItem(
+                     if (!isUser)    PopupMenuItem(
                         child: const Text("Select Rows"),
                         onTap: () {
                           companyProvider.setBoolValue(true);
                         },
                       ),
-                      PopupMenuItem(
+                     if (!isUser)    PopupMenuItem(
                         child: const Text("Select all rows"),
                         onTap: () {
                           companyProvider.setBoolValue(true);
@@ -264,14 +281,14 @@ companies.sort((a, b) {
                           });
                         },
                       ),
-                      PopupMenuItem(
+                     if (!isUser)    PopupMenuItem(
                         child: const Text("Unselect all rows"),
                         onTap: () {
                           tableController.unselectAllRows();
                           companyProvider.setBoolValue(false);
                         },
                       ),
-                      if (companyProvider.isRowsSelected)
+                      if (companyProvider.isRowsSelected && !isUser)
                         PopupMenuItem(
                           child: const Text("Delete Selected rows"),
                           onTap: () {},
@@ -295,11 +312,16 @@ companies.sort((a, b) {
                 id: "Title",
                 size: const MaxColumnSize(
                     FractionalColumnSize(.3), FixedColumnSize(300)),
-                getter: (item, index) => item.name ?? "N/A",
+                getter: (item, index) {
+                  if (item.company.name == null) {
+                    return 'N/A'; // Handle null value for company name
+                  }
+                  return item.company.name!;
+                },
                 fieldLabel: "Title",
                 setter: (item, newValue, index) async {
                   await Future.delayed(const Duration(seconds: 2));
-                  item.name = newValue;
+                  item.company.name = newValue;
                   return true;
                 },
               ),
@@ -311,12 +333,12 @@ companies.sort((a, b) {
                 size: const MaxColumnSize(
                     FractionalColumnSize(.12), FixedColumnSize(150)),
                 // size: const FixedColumnSize(150),
-                getter: (item, index) => item.date != null
-                    ? DateFormat('dd/MM/yyyy').format(item.date!)
+                getter: (item, index) => item.company.date != null
+                    ? DateFormat('dd/MM/yyyy').format(item.company.date!)
                     : 'N/A',
                 setter: (item, newValue, index) async {
                   await Future.delayed(const Duration(seconds: 2));
-                  item.date = newValue as DateTime?;
+                  item.company.date = newValue as DateTime?;
                   return true;
                 },
                 fieldLabel: 'Date',
@@ -326,8 +348,13 @@ companies.sort((a, b) {
                 id: "CompanyNo",
                 size: const MaxColumnSize(
                     FractionalColumnSize(.15), FixedColumnSize(150)),
-                getter: (item, index) => item.companyNo.toString(),
-                fieldLabel: "Title",
+                getter: (item, index) {
+                  if (item.company.companyNo == null) {
+                    return 'N/A'; // Handle null value for company name
+                  }
+                  return item.company.companyNo.toString();
+                },
+                fieldLabel: "Company No",
                 setter: (item, newValue, index) async {
                   await Future.delayed(const Duration(seconds: 2));
                   //   item.companyNo = newValue;
@@ -340,11 +367,16 @@ companies.sort((a, b) {
                 title: const Text("Address"),
                 size: const MaxColumnSize(
                     FractionalColumnSize(.25), FixedColumnSize(300)),
-                getter: (item, index) => item.address,
+                getter: (item, index) {
+                  if (item.company.address == null) {
+                    return 'N/A'; // Handle null value for company name
+                  }
+                  return item.company.address!;
+                },
                 fieldLabel: "Address",
                 setter: (item, newValue, index) async {
                   await Future.delayed(const Duration(seconds: 2));
-                  item.address = newValue;
+                  item.company.address = newValue;
                   return true;
                 },
               ),
@@ -353,15 +385,14 @@ companies.sort((a, b) {
                 title: const Text("Operations"),
                 size: const RemainingColumnSize(),
                 cellBuilder: (context, item, index) =>
-                    operationsWidget(context, item.name ?? "N?A", () {
-                  // Navigator.push(context, MaterialPageRoute(builder: (_) {
-
-                  //   return AnniversaryDetailView(
-                  //     anniversary: item,
-                  //   );
-                  // }));
+                    operationsWidget(context, item.company.name ?? "N/A", () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) {
+                    return CompanyDetailView(
+                      company: item,
+                    );
+                  }));
                 }, () {
-                  // anniversaryProvider.deleteAnniversary(context, item.id!);
+                  //anniversaryProvider.deleteAnniversary(context, item.id!);
                 }),
               ),
             ],

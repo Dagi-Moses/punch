@@ -1,7 +1,7 @@
 class UserRecord {
   String? id;
 
-  String? recordId;
+  int? recordId;
   int? staffNo;
   DateTime? loginDateTime;
   String? computerName;
@@ -16,9 +16,9 @@ class UserRecord {
 
   factory UserRecord.fromJson(Map<String, dynamic> json) {
     return UserRecord(
-      id: json['_id'] as String? ?? "N/A",
-      recordId: json['Record_Id'] ?? 'N/A',
-      staffNo: json['staff_no'] ?? "N/A",
+      id: json['_id'] as String? ,
+      recordId: json['Record_Id'] as int?,
+      staffNo: json['staff_no'] ,
       loginDateTime: json['login_date_time'] != null
           ? DateTime.parse(json['login_date_time'] as String)
           : null,

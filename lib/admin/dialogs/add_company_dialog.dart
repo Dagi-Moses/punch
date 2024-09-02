@@ -47,7 +47,12 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
 
   final TextEditingController directorsController = TextEditingController();
 
-  CompanySectorType? selectedType;
+  int? selectedType;
+  void clearSelectedType() {
+    setState(() {
+      selectedType = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,25 +89,26 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
                       _buildTextField(
                           'Name', 'Enter company name', nameController),
                       const SizedBox(height: 16),
-                      DropdownButtonFormField<CompanySectorType>(
+                      DropdownButtonFormField<int>(
                         value: selectedType,
-                        onChanged: (CompanySectorType? newValue) {
+                        onChanged: (int? newValue) {
                           setState(() {
                             selectedType = newValue!;
                           });
                         },
-                        items: CompanySectorType.values
-                            .map((CompanySectorType type) {
-                          return DropdownMenuItem<CompanySectorType>(
-                            value: type,
-                            child: Text(type.description),
+                        items:
+                            companyProvider.companySectors.entries.map((entry) {
+                          return DropdownMenuItem<int>(
+                            value: entry.key,
+                            child: Text(
+                              entry.value,
+                              overflow: TextOverflow.clip,
+                              style: const TextStyle(fontSize: 14),
+                            ),
                           );
                         }).toList(),
                         decoration: InputDecoration(
                           labelText: "Company Sector",
-                          focusedBorder: const OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.teal),
-                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -183,7 +189,6 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
                       _buildTextField('Directors', 'Enter directors details',
                           directorsController),
                       const SizedBox(height: 32),
-                     
                     ],
                   );
                 }),
@@ -193,37 +198,37 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-       backgroundColor: Colors.teal,
+        backgroundColor: Colors.teal,
         hoverColor: Colors.teal[200],
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(50),
         ),
-          child: Provider.of<CompanyProvider>(context).loading
+        child: Provider.of<CompanyProvider>(context).loading
             ? const CircularProgressIndicator(color: Colors.white)
             : const Icon(Icons.add),
-          onPressed: () async {
-            final companyProvider =
+        onPressed: () async {
+          final companyProvider =
               Provider.of<CompanyProvider>(context, listen: false);
 
-            final newCompany = Company(
-              name: nameController.text,
-              companySectorId: selectedType!,
-              date: companyProvider.selectedDate,
-              startDate: companyProvider.selectedStartDate,
-              email: emailController.text,
-              address: addressController.text,
-              phone: phoneController.text,
-              fax: faxController.text,
-            );
-            final newCompanyExtra = CompanyExtra(
-                managingDirector: managingDirectorController.text,
-                corporateAffairs: corporateAffairsController.text,
-                mediaManager: mediaManagerController.text,
-                friends: friendsController.text,
-                competitors: competitorsController.text,
-                directors: directorsController.text);
-            if (!companyProvider.loading) {
-              await companyProvider.addCompany(
+          final newCompany = Company(
+            name: nameController.text,
+            companySectorId: selectedType!,
+            date: companyProvider.selectedDate,
+            startDate: companyProvider.selectedStartDate,
+            email: emailController.text,
+            address: addressController.text,
+            phone: phoneController.text,
+            fax: faxController.text,
+          );
+          final newCompanyExtra = CompanyExtra(
+              managingDirector: managingDirectorController.text,
+              corporateAffairs: corporateAffairsController.text,
+              mediaManager: mediaManagerController.text,
+              friends: friendsController.text,
+              competitors: competitorsController.text,
+              directors: directorsController.text);
+          if (!companyProvider.loading) {
+            await companyProvider.addCompany(
                 newCompany,
                 newCompanyExtra,
                 [
@@ -241,12 +246,9 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
                   startDateController,
                   dateController
                 ],
-              );
-            }
-          },
-         
-          
-      
+                clearSelectedType);
+          }
+        },
       ),
     );
   }
