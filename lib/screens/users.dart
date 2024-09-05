@@ -87,6 +87,7 @@ class _UsersScreenState extends State<UsersScreen> {
           final users = authProvider.users;
              users.sort((a, b) {
             return (a.username ?? '\uFFFF').compareTo(b.username ?? '\uFFFF');
+            
           });
           final pageSizes = calculatePageSizes(users.length);
           return PagedDataTable<String, User>(

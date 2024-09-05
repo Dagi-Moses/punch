@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
@@ -8,7 +9,7 @@ import 'package:paged_datatable/paged_datatable.dart';
 import 'package:provider/provider.dart';
 import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/models/myModels/userRecordModel.dart';
-
+import 'dart:html' as html;
 import 'package:punch/models/myModels/web_socket_manager.dart';
 import 'package:punch/providers/auth.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -146,9 +147,9 @@ class AuthProvider with ChangeNotifier {
         );
         if (userToRemove != null) {
           _users.remove(userToRemove);
-              
+
           tableController.removeRow(userToRemove);
-      tableController.refresh();
+          tableController.refresh();
           print('socket removed User');
         } else {
           print('User not found for id: $idToDelete');
@@ -417,7 +418,7 @@ class AuthProvider with ChangeNotifier {
     _user = null;
     Fluttertoast.showToast(
       msg: 'An error occurred. Please try again later.',
-      toastLength: Toast.LENGTH_SHORT,
+      toastLength: Toast.LENGTH_LONG,
       gravity: ToastGravity.BOTTOM,
       timeInSecForIosWeb: 1,
       backgroundColor: Colors.black54,
@@ -435,6 +436,25 @@ class AuthProvider with ChangeNotifier {
     _user = null;
     _userController.add(null);
     notifyListeners();
+
+    // Clear cookies if on web
+    if (kIsWeb) {
+      clearCookies();
+      clearLocalStorage();
+    }
+  }
+
+  void clearLocalStorage() {
+    html.window.localStorage.clear();
+  }
+
+  void clearCookies() {
+    final cookies = html.document.cookie?.split(';') ?? [];
+    for (final cookie in cookies) {
+      final eqPos = cookie.indexOf('=');
+      final name = eqPos > 0 ? cookie.substring(0, eqPos) : cookie;
+      html.document.cookie = '$name=;expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
   }
 
   Future<String> getDeviceName() async {
@@ -583,10 +603,11 @@ class AuthProvider with ChangeNotifier {
           print(
               'Error deleting user records: Status ${userRecordResponse.statusCode}, Body: ${userRecordResponse.body}');
         }
-        
+
         if (Navigator.canPop(context)) {
           Navigator.pop(context);
         }
+        fetchUsersRecord();
         notifyListeners();
       } else {
         // Log the error body and response status code

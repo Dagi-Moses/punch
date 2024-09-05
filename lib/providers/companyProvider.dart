@@ -82,10 +82,8 @@ class CompanyProvider with ChangeNotifier {
         try {
           final index = _companies.indexWhere((a) => a.id == data['_id']);
           if (index != -1) {
-              tableController.refresh();
-            print("hmm");
             _companies[index] = Company.fromJson(data);
-          
+             tableController.refresh();
             tableController.replace(index, _companies[index]);
 
             print('socket updated company ');

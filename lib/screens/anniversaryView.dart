@@ -191,11 +191,13 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
                             ),
                           ),
                         )
-                      : Text(
-                          'Name: ${widget.anniversary.name}',
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
+                      : Flexible(
+                        child: Text(
+                            'Name: ${widget.anniversary.name}',
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                      ),
                 ],
               ),
               const SizedBox(height: 8.0),
@@ -242,33 +244,35 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
             ),
           )
         
-                      : RichText(
-                          text: TextSpan(
-                            children: [
-                              const TextSpan(
-                                text: 'Anniversary Type: ',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontStyle: FontStyle.italic,
-                                  color: Colors
-                                      .black, // Amber color for the 'UserRole:' text
+                      : Flexible(
+                        child: RichText(
+                            text: TextSpan(
+                              children: [
+                                const TextSpan(
+                                  text: 'Anniversary Type: ',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors
+                                        .black, // Amber color for the 'UserRole:' text
+                                  ),
                                 ),
-                              ),
-                              TextSpan(
-                                text: anniversaryProvider
-                                    .getAnniversaryTypeDescription(
-                                        widget.anniversary.anniversaryTypeId),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  fontStyle: FontStyle.italic,
-                                  color: Colors
-                                      .amber, // Black color for the role value
+                                TextSpan(
+                                  text: anniversaryProvider
+                                      .getAnniversaryTypeDescription(
+                                          widget.anniversary.anniversaryTypeId),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors
+                                        .amber, // Black color for the role value
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
+                      ),
                 ],
               ),
               const SizedBox(height: 8.0),
