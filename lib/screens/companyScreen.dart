@@ -8,8 +8,11 @@ import 'package:provider/provider.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
 
 import 'package:punch/admin/dialogs/add_company_dialog.dart';
+import 'package:punch/admin/responsive.dart';
+import 'package:punch/constants/constants.dart';
+import 'package:punch/models/myModels/companyModel.dart';
 
-import 'package:punch/models/myModels/companyWithExtra.dart';
+
 import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/authProvider.dart';
 
@@ -46,11 +49,13 @@ class _CompanyScreenState extends State<CompanyScreen> {
       _isInitialized = true;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      tableController.removeFilters();
+      Provider.of<CompanyProvider>(context, listen: false)
+          .tableController
+          .removeFilters();
     });
   }
 
-  final tableController = PagedDataTableController<String, CompanyWithExtra>();
+  
   List<int> calculatePageSizes(int totalItems) {
     if (totalItems < 10) {
       return [totalItems];
@@ -65,11 +70,12 @@ class _CompanyScreenState extends State<CompanyScreen> {
 
   @override
   Widget build(BuildContext context) {
+      final tableController =
+        Provider.of<CompanyProvider>(context, listen: false).tableController;
          final auth = Provider.of<AuthProvider>(context);
 
     final isUser = auth.user?.loginId == UserRole.user;
-    if (!_isInitialized ||
-        Provider.of<CompanyProvider>(context).loadingMerged) {
+    if (!_isInitialized ) {
       return const Center(
         child: SpinKitWave(
           color: punchRed,
@@ -92,16 +98,10 @@ class _CompanyScreenState extends State<CompanyScreen> {
         ),
         child: Consumer<CompanyProvider>(
             builder: (context, companyProvider, child) {
-          final companies = companyProvider.mergedCompanyWithExtras;
-          // companies.sort((a, b) {
-          //   if (a.company.date! == null && b.company.date == null)
-          //     return 0; // Both dates are null
-          //   if (a.company.date == null) return 1; // a is null, place a after b
-          //   if (b.company.date == null) return -1; // b is null, place b after a
-          //   return a.company.date!.compareTo(
-          //       b.company.date!); // Both dates are not null, compare normally
-          // });
-
+          final companies = companyProvider.companies;
+            companies.sort((a, b) {
+            return (a.name ?? '\uFFFF').compareTo(b.name ?? '\uFFFF');
+          });
           if (companies.isEmpty) {
             return const Center(
               child: SpinKitWave(
@@ -111,7 +111,7 @@ class _CompanyScreenState extends State<CompanyScreen> {
             );
           }
           final pageSizes = calculatePageSizes(companies.length);
-          return PagedDataTable<String, CompanyWithExtra>(
+          return PagedDataTable<String, Company>(
             fixedColumnCount: 1,
 
             controller: tableController,
@@ -124,17 +124,17 @@ class _CompanyScreenState extends State<CompanyScreen> {
                 int pageIndex = int.parse(pageToken ?? "0");
 
                 // Filter data based on filterModel
-                List<CompanyWithExtra> filteredData =
+                List<Company> filteredData =
                     companies.where((company) {
                   // Text filter
                   if (filterModel['content'] != null &&
-                      !company.company.name!
+                      !company.name!
                           .toLowerCase()
                           .contains(filterModel['content'].toLowerCase())) {
                     return false;
                   }
                   if (filterModel['address'] != null &&
-                      !company.company.address!
+                      !company.address!
                           .toLowerCase()
                           .contains(filterModel['address'].toLowerCase())) {
                     return false;
@@ -143,11 +143,11 @@ class _CompanyScreenState extends State<CompanyScreen> {
                   if (filterModel['date'] != null) {
                     DateTime selectedDate = filterModel['date'];
 
-                    if (company.company.date == null ||
+                    if (company.date == null ||
                         DateTime(
-                              company.company.date!.year,
-                              company.company.date!.month,
-                              company.company.date!.day,
+                              company.date!.year,
+                              company.date!.month,
+                              company.date!.day,
                             ).compareTo(DateTime(
                               selectedDate.year,
                               selectedDate.month,
@@ -163,7 +163,7 @@ class _CompanyScreenState extends State<CompanyScreen> {
                     int? filterStaffNo = int.tryParse(filterInput);
 
                     if (filterStaffNo != null &&
-                        company.company.companyNo == filterStaffNo) {
+                        company.companyNo == filterStaffNo) {
                       return true; // Include this user in the filtered results
                     } else {
                       return false; // Exclude users that do not match the filter
@@ -174,7 +174,7 @@ class _CompanyScreenState extends State<CompanyScreen> {
                 }).toList();
 
                 // Paginate the filtered data
-                List<CompanyWithExtra> data = filteredData
+                List<Company> data = filteredData
                     .skip(pageSize * pageIndex)
                     .take(pageSize)
                     .toList();
@@ -291,7 +291,9 @@ class _CompanyScreenState extends State<CompanyScreen> {
                       if (companyProvider.isRowsSelected && !isUser)
                         PopupMenuItem(
                           child: const Text("Delete Selected rows"),
-                          onTap: () {},
+                          onTap: () {
+                            print("omoo");
+                            companyProvider.deleteSelectedCompanies(context, tableController.selectedItems);},
                         ),
                       PopupMenuItem(
                         child: const Text("Clear filters"),
@@ -304,24 +306,69 @@ class _CompanyScreenState extends State<CompanyScreen> {
             ),
             // fixedColumnCount: 2,
 
+             footer: DefaultFooter<String, Company>(
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                child: !Responsive.isMobile(context)
+                    ? Container(
+                        width: Responsive.isTablet(context)
+                            ? MediaQuery.of(context).size.width / 12
+                            : MediaQuery.of(context).size.width / 15,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            Expanded(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Icon(
+                                    icons[2],
+                                    size: 22,
+                                    color: secondaryColor,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Text(
+                                  companies.length.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 19,
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Raleway',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      )
+                    : const SizedBox(),
+              ),
+            ),
+
             columns: [
               if (companyProvider.isRowsSelected) RowSelectorColumn(),
               // RowSelectorColumn(),
               LargeTextTableColumn(
                 title: const Text("Title"),
                 id: "Title",
-                size: const MaxColumnSize(
-                    FractionalColumnSize(.3), FixedColumnSize(300)),
+                size: FixedColumnSize(300),
                 getter: (item, index) {
-                  if (item.company.name == null) {
+                  if (item.name == null) {
                     return 'N/A'; // Handle null value for company name
                   }
-                  return item.company.name!;
+                  return item.name!;
                 },
                 fieldLabel: "Title",
                 setter: (item, newValue, index) async {
                   await Future.delayed(const Duration(seconds: 2));
-                  item.company.name = newValue;
+                  item.name = newValue;
                   return true;
                 },
               ),
@@ -330,15 +377,14 @@ class _CompanyScreenState extends State<CompanyScreen> {
                 title: const Text("Date "),
                 sortable: true,
                 id: 'date',
-                size: const MaxColumnSize(
-                    FractionalColumnSize(.12), FixedColumnSize(150)),
+                size:  FixedColumnSize(150),
                 // size: const FixedColumnSize(150),
-                getter: (item, index) => item.company.date != null
-                    ? DateFormat('dd/MM/yyyy').format(item.company.date!)
+                getter: (item, index) => item.date != null
+                    ? DateFormat('dd/MM/yyyy').format(item.date!)
                     : 'N/A',
                 setter: (item, newValue, index) async {
                   await Future.delayed(const Duration(seconds: 2));
-                  item.company.date = newValue as DateTime?;
+                  item.date = newValue as DateTime?;
                   return true;
                 },
                 fieldLabel: 'Date',
@@ -346,13 +392,12 @@ class _CompanyScreenState extends State<CompanyScreen> {
               LargeTextTableColumn(
                 title: const Text("Company No:"),
                 id: "CompanyNo",
-                size: const MaxColumnSize(
-                    FractionalColumnSize(.15), FixedColumnSize(150)),
+                size:FixedColumnSize(150),
                 getter: (item, index) {
-                  if (item.company.companyNo == null) {
+                  if (item.companyNo == null) {
                     return 'N/A'; // Handle null value for company name
                   }
-                  return item.company.companyNo.toString();
+                  return item.companyNo.toString();
                 },
                 fieldLabel: "Company No",
                 setter: (item, newValue, index) async {
@@ -365,34 +410,33 @@ class _CompanyScreenState extends State<CompanyScreen> {
                 sortable: true,
                 id: "address",
                 title: const Text("Address"),
-                size: const MaxColumnSize(
-                    FractionalColumnSize(.25), FixedColumnSize(300)),
+                size: FixedColumnSize(300),
                 getter: (item, index) {
-                  if (item.company.address == null) {
+                  if (item.address == null) {
                     return 'N/A'; // Handle null value for company name
                   }
-                  return item.company.address!;
+                  return item.address!;
                 },
                 fieldLabel: "Address",
                 setter: (item, newValue, index) async {
                   await Future.delayed(const Duration(seconds: 2));
-                  item.company.address = newValue;
+                  item.address = newValue;
                   return true;
                 },
               ),
 
               TableColumn(
                 title: const Text("Operations"),
-                size: const RemainingColumnSize(),
+                size: const FixedColumnSize(160),
                 cellBuilder: (context, item, index) =>
-                    operationsWidget(context, item.company.name ?? "N/A", () {
+                    operationsWidget(context, item.name ?? "N/A", () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) {
                     return CompanyDetailView(
                       company: item,
                     );
                   }));
                 }, () {
-                  //anniversaryProvider.deleteAnniversary(context, item.id!);
+                  companyProvider.deleteCompany(context, item);
                 }),
               ),
             ],

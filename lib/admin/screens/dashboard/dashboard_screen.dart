@@ -5,9 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/authProvider.dart';
 import 'package:punch/screens/clientScreen.dart';
+import 'package:punch/screens/main%20View.dart';
 import 'package:punch/screens/users.dart';
 import 'package:punch/providers/dashboardPageProvider.dart';
-import 'package:punch/screens/anniversaryList.dart';
+
 import 'package:punch/screens/companyScreen.dart';
 
 import 'components/header.dart';
@@ -39,11 +40,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       pageProvider.setPageIndex(index);
                     },
                     children: [
-                      // const DashHome(),
-                      const AnniversaryList(),
+                      const MainView(),
                       const ClientScreen(),
                       const CompanyScreen(),
-                      if (isAdmin) UsersScreen(),
+                      if (isAdmin) const UsersScreen(),
                     ],
                   );
                 }),

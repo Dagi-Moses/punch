@@ -218,9 +218,9 @@ class LoginTexts extends ChangeNotifier {
  
 
   static const String _defaultNameHint = 'Name';
-  static const String _defaultSignupEmailHint = 'Email';
+  static const String _defaultSignupEmailHint = 'Username';
   static const String _defaultSignupPasswordHint = 'Password';
-  static const String _defaultLoginEmailHint = 'Email';
+  static const String _defaultLoginEmailHint = 'Username';
   static const String _defaultLoginPasswordHint = 'Password';
   static const String _defaultConfirmPasswordHint = 'Confirm Password';
 

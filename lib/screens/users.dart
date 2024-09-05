@@ -6,6 +6,7 @@ import 'package:paged_datatable/paged_datatable.dart';
 import 'package:provider/provider.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/admin/dialogs/add_user_dialog.dart';
+import 'package:punch/admin/responsive.dart';
 import 'package:punch/constants/constants.dart';
 import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/authProvider.dart';
@@ -84,6 +85,9 @@ class _UsersScreenState extends State<UsersScreen> {
         ),
         child: Consumer<AuthProvider>(builder: (context, authProvider, child) {
           final users = authProvider.users;
+             users.sort((a, b) {
+            return (a.username ?? '\uFFFF').compareTo(b.username ?? '\uFFFF');
+          });
           final pageSizes = calculatePageSizes(users.length);
           return PagedDataTable<String, User>(
             fixedColumnCount: 1,
@@ -149,55 +153,49 @@ class _UsersScreenState extends State<UsersScreen> {
                 enabled: true,
               ),
             ],
-            footer: DefaultFooter<String, User>(
+           footer: DefaultFooter<String, User>(
               child: Align(
                 alignment: Alignment.bottomLeft,
-                child: Container(
-                  width: MediaQuery.of(context).size.width / 8,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: <Widget>[
-                      Expanded(
+                child: !Responsive.isMobile(context)
+                    ? Container(
+                        width: Responsive.isTablet(context)
+                            ? MediaQuery.of(context).size.width / 12
+                            : MediaQuery.of(context).size.width / 15,
                         child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
-                            Icon(
-                              icons.last,
-                              size: 22,
-                              color: secondaryColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              newTexts.last,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'HelveticaNeue',
+                            Expanded(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Icon(
+                                    icons.last,
+                                    size: 22,
+                                    color: secondaryColor,
+                                  ),
+                                ],
                               ),
-                            )
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Text(
+                                  users.length.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 19,
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Raleway',
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Text(
-                            users.length.toString(),
-                            style: const TextStyle(
-                              fontSize: 19,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Raleway',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                      )
+                    : const SizedBox(),
               ),
             ),
             filterBarChild: IconTheme(
@@ -280,8 +278,7 @@ class _UsersScreenState extends State<UsersScreen> {
               LargeTextTableColumn(
                 title: const Text("Username"),
                 id: "username",
-                size: const MaxColumnSize(
-                    FractionalColumnSize(.2), FixedColumnSize(250)),
+                size:FixedColumnSize(250),
                 getter: (item, index) => item.username ?? "N/A",
                 fieldLabel: "username",
                 setter: (item, newValue, index) async {
@@ -299,8 +296,7 @@ class _UsersScreenState extends State<UsersScreen> {
               LargeTextTableColumn(
                 title: const Text("First Name"),
                 id: "firstName",
-                size: const MaxColumnSize(
-                    FractionalColumnSize(.2), FixedColumnSize(250)),
+                size:  FixedColumnSize(250),
                 getter: (item, index) => item.firstName ?? "N/A",
                 fieldLabel: "First Name",
                 setter: (item, newValue, index) async {
@@ -319,8 +315,7 @@ class _UsersScreenState extends State<UsersScreen> {
                 sortable: true,
                 id: "staffNo",
                 title: const Text("Staff No"),
-                size: const MaxColumnSize(
-                    FractionalColumnSize(.2), FixedColumnSize(250)),
+                size: FixedColumnSize(250),
                 getter: (item, index) => item.staffNo.toString(),
                 fieldLabel: "Staff No",
                 setter: (item, newValue, index) async {
@@ -342,35 +337,16 @@ class _UsersScreenState extends State<UsersScreen> {
                     ),
                   );
                 }).toList(),
-                size: const MaxColumnSize(
-                    FractionalColumnSize(.2), FixedColumnSize(250)),
+                size: FixedColumnSize(250),
                 getter: (item, index) => item.loginId,
                 setter: (item, newValue, index) async {
-                  // if (newValue != null && newValue != item.user.loginId) {
-                  //   // Create a copy of the item with the updated anniversaryTypeId
-                  //   // final updatedItem = User.fromJson(item..toJson())
-                  //   //   ..anniversaryTypeId = newValue;
-
-                  //   // // Call the updateAnniversary function with the updated item
-                  //   // final success = await anniversaryProvider
-                  //   //     .updateAnniversary(updatedItem);
-
-                  //   // // Only update the local value if the backend update was successful
-                  //   // if (success) {
-                  //   //   item.anniversaryTypeId = newValue;
-                  //   //   return true;
-                  //   // } else {
-                  //     // Optionally, show an error message or revert the UI here
-                  //     return false;
-                  //   }
-                  // }
-                  // return false; //
+             
                   return false;
                 },
               ),
               TableColumn(
                 title: const Text("Operations"),
-                size: const RemainingColumnSize(),
+                size: const FixedColumnSize(160),
                 cellBuilder: (context, item, index) =>
                     operationsWidget(context, item.username ?? "N?A", () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) {

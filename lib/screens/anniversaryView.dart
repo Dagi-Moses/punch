@@ -213,7 +213,6 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
                     !anniversaryProvider.anniversaryTypes.keys.contains(value)) {
                   value = null; // or set to a default value that exists in your list
                 }
-
                 return DropdownButtonFormField<int>(
                   value: value,
                   decoration: InputDecoration(

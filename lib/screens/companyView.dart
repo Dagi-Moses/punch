@@ -5,16 +5,16 @@ import 'package:provider/provider.dart';
 
 import 'package:punch/models/myModels/companyExtraModel.dart';
 import 'package:punch/models/myModels/companyModel.dart';
-import 'package:punch/models/myModels/companyWithExtra.dart';
+
 import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/authProvider.dart';
 
 import 'package:punch/providers/companyProvider.dart';
 
 class CompanyDetailView extends StatefulWidget {
-  final CompanyWithExtra company;
+  Company company;
 
-  const CompanyDetailView({
+  CompanyDetailView({
     Key? key,
     required this.company,
   }) : super(key: key);
@@ -24,6 +24,7 @@ class CompanyDetailView extends StatefulWidget {
 }
 
 class _CompanyDetailViewState extends State<CompanyDetailView> {
+  CompanyExtra? companyExtra;
   late TextEditingController nameController;
   late TextEditingController dateController;
   late TextEditingController addressController;
@@ -38,41 +39,53 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
   late TextEditingController competitorsController;
   late TextEditingController directorsController;
   late ValueNotifier<int?> _companySectorTypeNotifier;
+
   bool isEditing = false;
   @override
   void initState() {
     super.initState();
 
-    nameController = TextEditingController(text: widget.company.company.name);
+    nameController = TextEditingController(text: widget.company.name ?? "");
     dateController = TextEditingController(
-      text: widget.company.company.date != null
-          ? DateFormat('dd/MM/yyyy').format(widget.company.company.date!)
+      text: widget.company.date != null
+          ? DateFormat('dd/MM/yyyy').format(widget.company.date!)
           : 'N/A',
     );
     addressController =
-        TextEditingController(text: widget.company.company.address);
-    emailController = TextEditingController(text: widget.company.company.email);
-    phoneController = TextEditingController(text: widget.company.company.phone);
-    faxController = TextEditingController(text: widget.company.company.fax);
+        TextEditingController(text: widget.company.address ?? "");
+    emailController = TextEditingController(text: widget.company.email ?? "");
+    phoneController = TextEditingController(text: widget.company.phone ?? "");
+    faxController = TextEditingController(text: widget.company.fax ?? "");
     startDateController = TextEditingController(
-      text: widget.company.company.startDate != null
-          ? DateFormat('dd/MM/yyyy').format(widget.company.company.startDate!)
+      text: widget.company.startDate != null
+          ? DateFormat('dd/MM/yyyy').format(widget.company.startDate!)
           : 'N/A',
     );
-    managingDirectorController = TextEditingController(
-        text: widget.company.companyExtra.managingDirector);
-    corporateAffairsController = TextEditingController(
-        text: widget.company.companyExtra.corporateAffairs);
-    mediaManagerController =
-        TextEditingController(text: widget.company.companyExtra.mediaManager);
-    friendsController =
-        TextEditingController(text: widget.company.companyExtra.friends);
-    competitorsController =
-        TextEditingController(text: widget.company.companyExtra.competitors);
-    directorsController =
-        TextEditingController(text: widget.company.companyExtra.directors);
-    _companySectorTypeNotifier =
-        ValueNotifier(widget.company.company.companySectorId);
+    managingDirectorController = TextEditingController();
+    corporateAffairsController = TextEditingController();
+    mediaManagerController = TextEditingController();
+    friendsController = TextEditingController();
+    competitorsController = TextEditingController();
+    directorsController = TextEditingController();
+    _companySectorTypeNotifier = ValueNotifier(widget.company.companySectorId);
+    _fetchCompanyExtra();
+  }
+
+  Future<void> _fetchCompanyExtra() async {
+    final clientExtraProvider =
+        Provider.of<CompanyProvider>(context, listen: false);
+    companyExtra = await clientExtraProvider
+        .getCompanyExtraByCompanyNo(widget.company.companyNo!);
+    if (companyExtra != null) {
+      setState(() {
+        managingDirectorController.text = companyExtra?.managingDirector ?? "";
+        corporateAffairsController.text = companyExtra?.corporateAffairs ?? "";
+        mediaManagerController.text = companyExtra?.mediaManager ?? "";
+        friendsController.text = companyExtra?.friends ?? "";
+        competitorsController.text = companyExtra?.competitors ?? "";
+        directorsController.text = companyExtra?.directors ?? "";
+      });
+    }
   }
 
   @override
@@ -112,15 +125,30 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
               onPressed: () async {
                 if (isEditing) {
                   DateTime? selectedDate;
-                  selectedDate =
-                      DateFormat('dd/MM/yyyy').parse(dateController.text);
                   DateTime? selectedStartDate;
-                  selectedStartDate =
-                      DateFormat('dd/MM/yyyy').parse(startDateController.text);
+
+// Check if the dateController text is empty before parsing
+                  try {
+                    if (dateController.text.isNotEmpty) {
+                      selectedDate =
+                          DateFormat('dd/MM/yyyy').parse(dateController.text);
+                    }
+                  } catch (e) {
+                    selectedDate = null;
+                  }
+
+                  try {
+                    if (startDateController.text.isNotEmpty) {
+                      selectedStartDate = DateFormat('dd/MM/yyyy')
+                          .parse(startDateController.text);
+                    }
+                  } catch (e) {
+                    selectedStartDate = null;
+                  }
 
                   Company company = Company(
-                    id: widget.company.company.id.toString(),
-                    companyNo: widget.company.company.companyNo,
+                    id: widget.company.id,
+                    companyNo: widget.company.companyNo,
                     name: nameController.text,
                     address: addressController.text,
                     email: emailController.text,
@@ -131,19 +159,26 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
                     companySectorId: _companySectorTypeNotifier.value,
                   );
 
-                  CompanyExtra companyExtra = CompanyExtra(
-                    companyNo: widget.company.company.companyNo,
+                  CompanyExtra _companyExtra = CompanyExtra(
+                    companyNo: widget.company.companyNo,
                     competitors: competitorsController.text,
                     corporateAffairs: corporateAffairsController.text,
                     directors: directorsController.text,
                     friends: friendsController.text,
-                    id: widget.company.company.id,
+                    id: companyExtra?.id,
                     managingDirector: managingDirectorController.text,
                     mediaManager: mediaManagerController.text,
                   );
 
                   try {
-                    await companyProvider.updateCompany(company, companyExtra);
+                    
+                    await companyProvider.updateCompany(company, _companyExtra,
+                        () {
+                      setState(() {
+                        widget.company = company;
+                        isEditing = false;
+                      });
+                    }, context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                           content: Text('Company updated successfully!')),
@@ -205,7 +240,7 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
                           ),
                         )
                       : Text(
-                          'Name: ${widget.company.company.name}',
+                          'Name: ${widget.company.name}',
                           style: const TextStyle(
                             fontSize: 16,
                           ),
@@ -215,7 +250,7 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
               const SizedBox(height: 8.0),
               Row(
                 children: [
-                  const Icon(Icons.vpn_key, size: 20),
+                  const Icon(Icons.print, size: 20),
                   const SizedBox(width: 8.0),
                   isEditing
                       ? Expanded(
@@ -233,32 +268,7 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
                           ),
                         )
                       : Text(
-                          'Fax: ${widget.company.company.fax}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                ],
-              ),
-              const SizedBox(height: 8.0),
-              Row(
-                children: [
-                  const Icon(Icons.vpn_key, size: 20),
-                  const SizedBox(width: 8.0),
-                  isEditing
-                      ? Expanded(
-                          child: TextFormField(
-                            controller: directorsController,
-                            decoration: InputDecoration(
-                              labelText: 'Directors',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Directors: ${widget.company.companyExtra.directors}',
+                          'Fax: ${widget.company.fax}',
                           style: const TextStyle(
                             fontSize: 16,
                           ),
@@ -270,10 +280,10 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
                   ? SizedBox()
                   : Row(
                       children: [
-                        const Icon(Icons.vpn_key, size: 20),
+                        const Icon(Icons.key, size: 20),
                         const SizedBox(width: 8.0),
                         Text(
-                          'Company No: ${widget.company.company.companyNo}',
+                          'Company No: ${widget.company.companyNo}',
                           style: const TextStyle(
                             fontSize: 16,
                           ),
@@ -288,35 +298,43 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
                   isEditing
                       ? Expanded(
                           child: ValueListenableBuilder<int?>(
-                          valueListenable: _companySectorTypeNotifier,
-                          builder: (context, value, child) {
-                            return DropdownButtonFormField<int>(
-                              value: value,
-                              decoration: InputDecoration(
-                                labelText: 'Company Sector',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                            valueListenable: _companySectorTypeNotifier,
+                            builder: (context, value, child) {
+                              // Ensure value is valid or set to null if not in the list
+                              final validValue = companyProvider
+                                      .companySectors.keys
+                                      .contains(value)
+                                  ? value
+                                  : null;
+
+                              return DropdownButtonFormField<int>(
+                                value: validValue,
+                                decoration: InputDecoration(
+                                  labelText: 'Company Sector',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                 ),
-                              ),
-                              items: companyProvider.companySectors.keys
-                                  .map((int typeId) {
-                                return DropdownMenuItem<int>(
-                                  value: typeId,
-                                  child: Text(companyProvider
-                                      .getCompanySectorDescription(typeId)),
-                                );
-                              }).toList(),
-                              onChanged: (int? newTypeId) {
-                                if (newTypeId != null) {
-                                  _companySectorTypeNotifier.value = newTypeId;
-                                  widget.company.company.companySectorId =
-                                      newTypeId;
-                                  // Save changes to the database (implement this logic)
-                                }
-                              },
-                            );
-                          },
-                        ))
+                                items: companyProvider.companySectors.keys
+                                    .map((int typeId) {
+                                  return DropdownMenuItem<int>(
+                                    value: typeId,
+                                    child: Text(companyProvider
+                                        .getCompanySectorDescription(typeId)),
+                                  );
+                                }).toList(),
+                                onChanged: (int? newTypeId) {
+                                  if (newTypeId != null) {
+                                    _companySectorTypeNotifier.value =
+                                        newTypeId;
+                                    widget.company.companySectorId = newTypeId;
+                                    // Save changes to the database (implement this logic)
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                        )
                       : RichText(
                           text: TextSpan(
                             children: [
@@ -332,7 +350,7 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
                               TextSpan(
                                 text:
                                     companyProvider.getCompanySectorDescription(
-                                        widget.company.company.companySectorId),
+                                        widget.company.companySectorId),
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontStyle: FontStyle.italic,
@@ -351,136 +369,6 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
         ),
       );
     });
-  }
-
-  Widget _buildContactSection() {
-    return Card(
-      elevation: 4.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Extras',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8.0),
-            Row(
-              children: [
-                const Icon(Icons.badge, size: 20),
-                const SizedBox(width: 8.0),
-                isEditing
-                    ? Expanded(
-                        child: TextFormField(
-                          initialValue: widget.company.companyExtra.friends,
-                          decoration: InputDecoration(
-                            labelText: 'Friends',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          onChanged: (value) {
-                            widget.company.companyExtra.friends = value;
-                            // Save changes to the database
-                          },
-                        ),
-                      )
-                    : Text(
-                        'Friends: ${widget.company.companyExtra.friends}',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-              ],
-            ),
-            const SizedBox(height: 8.0),
-            Row(
-              children: [
-                const Icon(Icons.badge, size: 20),
-                const SizedBox(width: 8.0),
-                isEditing
-                    ? Expanded(
-                        child: TextFormField(
-                          initialValue:
-                              widget.company.companyExtra.mediaManager,
-                          decoration: InputDecoration(
-                            labelText: '',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          onChanged: (value) {
-                            widget.company.companyExtra.mediaManager = value;
-                            // Save changes to the database
-                          },
-                        ),
-                      )
-                    : Text(
-                        'Media Manager: ${widget.company.companyExtra.mediaManager}',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-              ],
-            ),
-            const SizedBox(height: 8.0),
-            Row(
-              children: [
-                const Icon(Icons.badge, size: 20),
-                const SizedBox(width: 8.0),
-                isEditing
-                    ? Expanded(
-                        child: TextFormField(
-                          initialValue:
-                              widget.company.companyExtra.corporateAffairs,
-                          decoration: InputDecoration(
-                            labelText: 'Corporate Affairs',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          onChanged: (value) {
-                            widget.company.companyExtra.corporateAffairs =
-                                value;
-                            // Save changes to the database
-                          },
-                        ),
-                      )
-                    : Text(
-                        'Corporate Affairs: ${widget.company.companyExtra.corporateAffairs}',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-              ],
-            ),
-            const SizedBox(height: 8.0),
-            Row(
-              children: [
-                const Icon(Icons.badge, size: 20),
-                const SizedBox(width: 8.0),
-                isEditing
-                    ? Expanded(
-                        child: TextFormField(
-                          initialValue: widget.company.company.address,
-                          decoration: InputDecoration(
-                            labelText: 'Address',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          onChanged: (value) {
-                            widget.company.company.address = value;
-                            // Save changes to the database
-                          },
-                        ),
-                      )
-                    : Text(
-                        'Address: ${widget.company.company.address}',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildDetailSection() {
@@ -506,13 +394,13 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
                             DateTime? selectedDate = await showDatePicker(
                               context: context,
                               initialDate:
-                                  widget.company.company.date ?? DateTime.now(),
+                                  widget.company.date ?? DateTime.now(),
                               firstDate: DateTime(1800),
                               lastDate: DateTime(2100),
                             );
                             if (selectedDate != null) {
                               setState(() {
-                                widget.company.company.date = selectedDate;
+                                widget.company.date = selectedDate;
                                 dateController.text = DateFormat('dd/MM/yyyy')
                                     .format(selectedDate);
                               });
@@ -533,7 +421,7 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
                         ),
                       )
                     : Text(
-                        'Date: ${widget.company.company.date != null ? DateFormat('dd/MM/yyyy').format(widget.company.company.date!) : 'N/A'}',
+                        'Date: ${widget.company.date != null ? DateFormat('dd/MM/yyyy').format(widget.company.date!) : 'N/A'}',
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),
@@ -550,14 +438,14 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
                           onTap: () async {
                             DateTime? selectedDate = await showDatePicker(
                               context: context,
-                              initialDate: widget.company.company.startDate ??
-                                  DateTime.now(),
+                              initialDate:
+                                  widget.company.startDate ?? DateTime.now(),
                               firstDate: DateTime(1800),
                               lastDate: DateTime(2100),
                             );
                             if (selectedDate != null) {
                               setState(() {
-                                widget.company.company.startDate = selectedDate;
+                                widget.company.startDate = selectedDate;
                                 startDateController.text =
                                     DateFormat('dd/MM/yyyy')
                                         .format(selectedDate);
@@ -579,7 +467,7 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
                         ),
                       )
                     : Text(
-                        'Start Date: ${widget.company.company.startDate != null ? DateFormat('dd/MM/yyyy').format(widget.company.company.startDate!) : 'N/A'}',
+                        'Start Date: ${widget.company.startDate != null ? DateFormat('dd/MM/yyyy').format(widget.company.startDate!) : 'N/A'}',
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),
@@ -588,7 +476,7 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
             const SizedBox(height: 8.0),
             Row(
               children: [
-                const Icon(Icons.face, size: 20),
+                const Icon(Icons.phone, size: 20),
                 const SizedBox(width: 8.0),
                 isEditing
                     ? Expanded(
@@ -605,7 +493,7 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
                         ),
                       )
                     : Text(
-                        'Phone: ${widget.company.company.phone}',
+                        'Phone: ${widget.company.phone}',
                         style: const TextStyle(fontSize: 16),
                       ),
               ],
@@ -613,7 +501,7 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
             const SizedBox(height: 8.0),
             Row(
               children: [
-                const Icon(Icons.face, size: 20),
+                const Icon(Icons.email, size: 20),
                 const SizedBox(width: 8.0),
                 isEditing
                     ? Expanded(
@@ -628,22 +516,65 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
                         ),
                       )
                     : Text(
-                        'Email: ${widget.company.company.email}',
+                        'Email: ${widget.company.email}',
                         style: const TextStyle(fontSize: 16),
                       ),
               ],
             ),
             const SizedBox(height: 8.0),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.badge, size: 20),
+                const Icon(Icons.location_on, size: 20),
                 const SizedBox(width: 8.0),
                 isEditing
                     ? Expanded(
                         child: TextFormField(
-                          initialValue:
-                              widget.company.companyExtra.managingDirector,
+                          initialValue: widget.company.address,
+                          decoration: InputDecoration(
+                            labelText: 'Address',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onChanged: (value) {
+                            widget.company.address = value;
+                            // Save changes to the database
+                          },
+                        ),
+                      )
+                    : Text(
+                        'Address: ${widget.company.address}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+              ],
+            ),
+          ])),
+    );
+  }
+
+  Widget _buildContactSection() {
+    return Card(
+      elevation: 4.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Extras',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8.0),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.business_center, size: 20),
+                const SizedBox(width: 8.0),
+                isEditing
+                    ? Expanded(
+                        child: TextFormField(
+                          initialValue: managingDirectorController.text,
                           decoration: InputDecoration(
                             labelText: 'Managing Director',
                             border: OutlineInputBorder(
@@ -651,15 +582,14 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
                             ),
                           ),
                           onChanged: (value) {
-                            widget.company.companyExtra.managingDirector =
-                                value;
+                            companyExtra?.managingDirector = value;
                             // Save changes to the database
                           },
                         ),
                       )
                     : Expanded(
                         child: Text(
-                          'Managing Director: ${widget.company.companyExtra.managingDirector}',
+                          'Managing Director: ${managingDirectorController.text}',
                           style: const TextStyle(fontSize: 16),
                         ),
                       ),
@@ -668,12 +598,93 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
             const SizedBox(height: 8.0),
             Row(
               children: [
-                const Icon(Icons.badge, size: 20),
+                const Icon(Icons.business_center, size: 20),
                 const SizedBox(width: 8.0),
                 isEditing
                     ? Expanded(
                         child: TextFormField(
-                          initialValue: widget.company.companyExtra.competitors,
+                          initialValue: corporateAffairsController.text,
+                          decoration: InputDecoration(
+                            labelText: 'Corporate Affairs',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onChanged: (value) {
+                            companyExtra?.corporateAffairs = value;
+                            // Save changes to the database
+                          },
+                        ),
+                      )
+                    : Text(
+                        'Corporate Affairs: ${corporateAffairsController.text}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+              ],
+            ),
+            const SizedBox(height: 8.0),
+            Row(
+              children: [
+                const Icon(Icons.folder, size: 20),
+                const SizedBox(width: 8.0),
+                isEditing
+                    ? Expanded(
+                        child: TextFormField(
+                          initialValue: mediaManagerController.text,
+                          decoration: InputDecoration(
+                            labelText: 'Media Manager',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onChanged: (value) {
+                            companyExtra?.mediaManager = value;
+                            // Save changes to the database
+                          },
+                        ),
+                      )
+                    : Text(
+                        'Media Manager: ${mediaManagerController.text}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+              ],
+            ),
+            const SizedBox(height: 8.0),
+            Row(
+              children: [
+                const Icon(Icons.favorite, size: 20),
+                const SizedBox(width: 8.0),
+                isEditing
+                    ? Expanded(
+                        child: TextFormField(
+                          initialValue: friendsController.text,
+                          decoration: InputDecoration(
+                            labelText: 'Friends',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onChanged: (value) {
+                            companyExtra?.friends = value;
+                            // Save changes to the database
+                          },
+                        ),
+                      )
+                    : Text(
+                        'Friends: ${friendsController.text}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+              ],
+            ),
+            const SizedBox(height: 8.0),
+            Row(
+              children: [
+                const Icon(Icons.sports_soccer, size: 20),
+                const SizedBox(width: 8.0),
+                isEditing
+                    ? Expanded(
+                        child: TextFormField(
+                          initialValue: competitorsController.text,
                           decoration: InputDecoration(
                             labelText: 'Competitors',
                             border: OutlineInputBorder(
@@ -681,18 +692,45 @@ class _CompanyDetailViewState extends State<CompanyDetailView> {
                             ),
                           ),
                           onChanged: (value) {
-                            widget.company.companyExtra.competitors = value;
+                            companyExtra?.competitors = value;
                             // Save changes to the database
                           },
                         ),
                       )
                     : Text(
-                        'Competitors: ${widget.company.companyExtra.competitors}',
+                        'Competitors: ${competitorsController.text}',
                         style: const TextStyle(fontSize: 16),
                       ),
               ],
             ),
-          ])),
+            const SizedBox(height: 8.0),
+            Row(
+              children: [
+                const Icon(Icons.meeting_room, size: 20),
+                const SizedBox(width: 8.0),
+                isEditing
+                    ? Expanded(
+                        child: TextFormField(
+                          controller: directorsController,
+                          decoration: InputDecoration(
+                            labelText: 'Directors',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      )
+                    : Text(
+                        'Directors: ${directorsController.text}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                        ),
+                      ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

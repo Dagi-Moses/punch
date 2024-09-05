@@ -259,16 +259,7 @@ class _MainViewState extends State<MainView> {
                               size: 20,
                               color: secondaryColor,
                             ),
-                            // const SizedBox(width: 4),
-                            // Text(
-                            //   newTexts.first,
-                            //   style: const TextStyle(
-                            //     fontSize: 18,
-                            //     color: Colors.black87,
-                            //     fontWeight: FontWeight.w500,
-                            //     fontFamily: 'HelveticaNeue',
-                            //   ),
-                            // )
+                           
                           ],
                         ),
                       ),
@@ -417,11 +408,11 @@ class _MainViewState extends State<MainView> {
                     ];
                   }),
             ),
-            // fixedColumnCount: 2,
+          
           
             columns: [
               if (anniversaryProvider.isRowsSelected) RowSelectorColumn(),
-              // RowSelectorColumn(),
+             
               LargeTextTableColumn(
                 title: const Text("Title"),
                 id: "Title",

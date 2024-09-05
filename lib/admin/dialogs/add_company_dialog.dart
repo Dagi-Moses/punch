@@ -73,7 +73,7 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
                     builder: (context, companyProvider, child) {
                   return Column(
                     children: [
-                      Align(
+                      const Align(
                         alignment: Alignment.bottomLeft,
                         child: Text(
                           'Company Details',
@@ -153,9 +153,9 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
                       ),
 
                       const SizedBox(height: 32),
-                      Align(
+                      const Align(
                         alignment: Alignment.bottomLeft,
-                        child: const Text(
+                        child: Text(
                           'Company Extras',
                           style: TextStyle(
                             fontSize: 24,
@@ -207,17 +207,19 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
             ? const CircularProgressIndicator(color: Colors.white)
             : const Icon(Icons.add),
         onPressed: () async {
+          print('started');
           final companyProvider =
               Provider.of<CompanyProvider>(context, listen: false);
 
           final newCompany = Company(
             name: nameController.text,
-            companySectorId: selectedType!,
+            companySectorId: selectedType,
             date: companyProvider.selectedDate,
             startDate: companyProvider.selectedStartDate,
             email: emailController.text,
             address: addressController.text,
             phone: phoneController.text,
+            
             fax: faxController.text,
           );
           final newCompanyExtra = CompanyExtra(

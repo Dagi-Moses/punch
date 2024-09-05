@@ -9,7 +9,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class ClientExtraProvider with ChangeNotifier {
   final String baseUrl = 'http://localhost:3000/clientExtras';
   final String base = "http://localhost:3000";
-  late WebSocketChannel channel;
+  //late WebSocketChannel channel;
   final String webSocketUrl = 'ws://localhost:3000?channel=clientExtra';
   late WebSocketManager _webSocketManager;
   Map<int, ClientExtra> clientsExtraMap = {};
@@ -209,9 +209,4 @@ class ClientExtraProvider with ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    channel.sink.close();
-    super.dispose();
-  }
 }
