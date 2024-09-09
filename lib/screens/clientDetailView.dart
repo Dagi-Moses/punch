@@ -7,6 +7,9 @@ import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/authProvider.dart';
 import 'package:punch/providers/clientExtraProvider.dart';
 import 'package:punch/providers/clientProvider.dart';
+import 'package:flutter_html/flutter_html.dart';
+import 'package:punch/utils/html%20handler.dart';
+import 'package:punch/widgets/text-form-fields/html_form_field_widget.dart';
 
 class ClientDetailView extends StatefulWidget {
   Client client;
@@ -37,28 +40,39 @@ class _ClientDetailViewState extends State<ClientDetailView> {
   late TextEditingController hobbiesController;
   late TextEditingController companiesController;
   late ValueNotifier<int?> _titleIdNotifier;
-   ClientExtra? clientExtra;
+  ClientExtra? clientExtra;
+
+  late HtmlTextHandler placeOfWorkHandler;
+  late HtmlTextHandler associatesHandler;
+  late HtmlTextHandler friendsHandler;
+  late HtmlTextHandler presentPositionHandler;
+  late HtmlTextHandler politicalPartyHandler;
+  late HtmlTextHandler hobbiesHandler;
+  late HtmlTextHandler companiesHandler;
   @override
   void initState() {
     super.initState();
-    // Initialize controllers with existing data
-    lastNameController =
-        TextEditingController(text: widget.client.lastName ?? "");
-    firstNameController =
-        TextEditingController(text: widget.client.firstName ?? "");
-    middleNameController =
-        TextEditingController(text: widget.client.middleName ?? "");
-    telephoneController =
-        TextEditingController(text: widget.client.telephone ?? "");
-    emailController = TextEditingController(text: widget.client.email ?? '');
-    placeOfWorkController =
-        TextEditingController(text: widget.client.placeOfWork ?? "");
-    associatesController =
-        TextEditingController(text: widget.client.associates ?? "");
-    friendsController =
-        TextEditingController(text: widget.client.friends ?? "");
+  Initialize();
+  }
 
-    // Initialize clientExtra fields as empty until fetched
+ void Initialize() async {
+    // Initialize controllers with converted text
+    lastNameController = TextEditingController(
+        text: _convertHtmlToText(widget.client.lastName ?? ""));
+    firstNameController = TextEditingController(
+        text: _convertHtmlToText(widget.client.firstName ?? ""));
+    middleNameController = TextEditingController(
+        text: _convertHtmlToText(widget.client.middleName ?? ""));
+    telephoneController = TextEditingController(
+        text: _convertHtmlToText(widget.client.telephone ?? ""));
+    emailController = TextEditingController(
+        text: _convertHtmlToText(widget.client.email ?? ''));
+    placeOfWorkController = TextEditingController(
+        text: _convertHtmlToText(widget.client.placeOfWork ?? ""));
+    associatesController = TextEditingController(
+        text: _convertHtmlToText(widget.client.associates ?? ""));
+    friendsController = TextEditingController(
+        text: _convertHtmlToText(widget.client.friends ?? ""));
     politicalPartyController = TextEditingController();
     presentPositionController = TextEditingController();
     hobbiesController = TextEditingController();
@@ -71,19 +85,100 @@ class _ClientDetailViewState extends State<ClientDetailView> {
     _titleIdNotifier = ValueNotifier(widget.client.titleId);
 
     // Fetch clientExtra and populate the fields
-    _fetchClientExtra();
+     await
+      _fetchClientExtra();
+    
+  
+
+
+    companiesHandler = HtmlTextHandler(
+      controller: companiesController,
+      onTextChanged: (text) {
+        setState(() {
+          clientExtra?.companies = text;
+        });
+      },
+      initialText: companiesController.text,
+    );
+
+    hobbiesHandler = HtmlTextHandler(
+      controller: hobbiesController,
+      onTextChanged: (text) {
+        setState(() {
+          clientExtra?.hobbies = text;
+        });
+      },
+      initialText: hobbiesController.text,
+    );
+
+    politicalPartyHandler = HtmlTextHandler(
+      controller: politicalPartyController,
+      onTextChanged: (text) {
+        setState(() {
+          clientExtra?.politicalParty = text;
+        });
+      },
+      initialText: politicalPartyController.text,
+    );
+
+    presentPositionHandler = HtmlTextHandler(
+      controller: presentPositionController,
+      onTextChanged: (text) {
+        setState(() {
+          clientExtra?.presentPosition = text;
+        });
+      },
+      initialText: presentPositionController.text,
+    );
+
+    placeOfWorkHandler = HtmlTextHandler(
+      controller: placeOfWorkController,
+      onTextChanged: (text) {
+        setState(() {
+          widget.client.placeOfWork = text;
+        });
+      },
+      initialText: placeOfWorkController.text,
+    );
+
+    associatesHandler = HtmlTextHandler(
+      controller: associatesController,
+      onTextChanged: (text) {
+        setState(() {
+          widget.client.associates = text;
+        });
+      },
+      initialText: associatesController.text,
+    );
+
+    friendsHandler = HtmlTextHandler(
+        controller: friendsController,
+        onTextChanged: (text) {
+          setState(() {
+            widget.client.friends = text;
+          });
+        },
+        initialText: friendsController.text);
   }
 
+  String _convertHtmlToText(String htmlText) {
+    return htmlText.replaceAll(RegExp(r'<br\s*/?>'), '\n');
+  }
   Future<void> _fetchClientExtra() async {
-    final clientExtraProvider = Provider.of<ClientExtraProvider>(context, listen: false);
-    clientExtra =
-        await clientExtraProvider.getClientExtraByClientNo(widget.client.clientNo!);
+    final clientExtraProvider =
+        Provider.of<ClientExtraProvider>(context, listen: false);
+    clientExtra = await clientExtraProvider
+        .getClientExtraByClientNo(widget.client.clientNo!);
     if (clientExtra != null) {
       setState(() {
-        politicalPartyController.text = clientExtra?.politicalParty ?? "";
-        presentPositionController.text = clientExtra?.presentPosition ?? "";
-        hobbiesController.text = clientExtra?.hobbies ?? "";
-        companiesController.text = clientExtra?.companies ?? "";
+      politicalPartyController.text =
+            _convertHtmlToText(clientExtra?.politicalParty ?? "");
+        presentPositionController.text =
+            _convertHtmlToText(clientExtra?.presentPosition ?? "");
+        hobbiesController.text = _convertHtmlToText(clientExtra?.hobbies ?? "");
+        companiesController.text =
+            _convertHtmlToText(clientExtra?.companies ?? "");
+
       });
     }
   }
@@ -111,7 +206,7 @@ class _ClientDetailViewState extends State<ClientDetailView> {
   @override
   Widget build(BuildContext context) {
     final clientProvider = Provider.of<ClientProvider>(context);
-         final auth = Provider.of<AuthProvider>(context);
+    final auth = Provider.of<AuthProvider>(context);
 
     final isUser = auth.user?.loginId == UserRole.user;
     return Scaffold(
@@ -121,58 +216,55 @@ class _ClientDetailViewState extends State<ClientDetailView> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
-          if(!isUser)
-          IconButton(
-            icon: Icon(isEditing ? Icons.save : Icons.edit),
-            onPressed: () async {
-              if (isEditing) {
-                print("clicked");
-                 DateTime? selectedDate;
+          if (!isUser)
+            IconButton(
+              icon: Icon(isEditing ? Icons.save : Icons.edit),
+              onPressed: () async {
+                if (isEditing) {
+                  DateTime? selectedDate;
 
-                try {
-                  selectedDate =
-                      DateFormat('dd/MM/yyyy').parse(dateOfBirthController.text);
-                } catch (e) {
-                  // Handle parsing error
-                  print("Error parsing date: $e");
-                }
-
-
-                Client client = Client(
-                  associates: associatesController.text,
-                  clientNo: widget.client.clientNo,
-                  dateOfBirth:selectedDate,
-                  email: emailController.text,
-                  firstName: firstNameController.text,
-                  friends: friendsController.text,
-                  lastName: lastNameController.text,
-                  id: widget.client.id,
-                  middleName: middleNameController.text,
-                  placeOfWork: placeOfWorkController.text,
-                  telephone: telephoneController.text,
-                  titleId: _titleIdNotifier.value,
-                );
-                ClientExtra extra = ClientExtra(
-                  clientNo: widget.client.clientNo,
-                  companies: companiesController.text,
-                  hobbies: hobbiesController.text,
-                  id: clientExtra?.id ?? widget.client.id,
-                  politicalParty: politicalPartyController.text,
-                  presentPosition: presentPositionController.text,
-                );
-                await clientProvider.updateClient(client, extra, () {
+                  try {
+                    selectedDate = DateFormat('dd/MM/yyyy')
+                        .parse(dateOfBirthController.text);
+                  } catch (e) {
+                    selectedDate = null;
+                  }
+                  Client client = Client(
+                    associates:  associatesController.text.replaceAll('\n', '<br>'),
+                    clientNo: widget.client.clientNo,
+                    dateOfBirth: selectedDate,
+                    email: emailController.text,
+                    firstName: firstNameController.text,
+                    friends:friendsController.text.replaceAll('\n', '<br>'),
+                    lastName: lastNameController.text,
+                    id: widget.client.id,
+                    middleName: middleNameController.text,
+                    placeOfWork:  placeOfWorkController.text.replaceAll('\n', '<br>'),
+                    telephone: telephoneController.text,
+                    titleId: _titleIdNotifier.value,
+                  );
+                  ClientExtra extra = ClientExtra(
+                    clientNo: widget.client.clientNo,
+                    companies: companiesController.text.replaceAll('\n', '<br>'),
+                    hobbies:   hobbiesController.text.replaceAll('\n', '<br>'),
+                    id: clientExtra?.id,
+                    politicalParty: politicalPartyController.text.replaceAll('\n', '<br>'),
+                    presentPosition:  presentPositionController.text.replaceAll('\n', '<br>'),
+                  );
+                  await clientProvider.updateClient(client, extra, () {
+                    setState(() {
+                      widget.client = client;
+                      clientExtra = extra;
+                      isEditing = false;
+                    });
+                  }, context);
+                } else {
                   setState(() {
-                    widget.client = client;
-                    isEditing = false;
+                    isEditing = true;
                   });
-                }, context);
-              } else {
-                setState(() {
-                  isEditing = true;
-                });
-              }
-            },
-          ),
+                }
+              },
+            ),
         ],
       ),
       body: Padding(
@@ -201,103 +293,46 @@ class _ClientDetailViewState extends State<ClientDetailView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.person, size: 20),
-                  const SizedBox(width: 8.0),
-                  isEditing
-                      ? Expanded(
-                          child: TextFormField(
-                            controller: firstNameController,
-                            decoration: InputDecoration(
-                              labelText: 'First Name',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'First Name: ${widget.client.firstName}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                ],
+              FormFieldWidget(
+                controller: firstNameController,
+                label: 'First Name',
+                htmlData: widget.client.firstName,
+                isEditing: isEditing,
+                icon: Icons.person,
               ),
               const SizedBox(height: 8.0),
-              Row(
-                children: [
-                  const Icon(Icons.person_pin, size: 20),
-                  const SizedBox(width: 8.0),
-                  isEditing
-                      ? Expanded(
-                          child: TextFormField(
-                            controller: middleNameController,
-                            decoration: InputDecoration(
-                              labelText: 'Middle Name',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Middle Name: ${widget.client.middleName}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                ],
+              FormFieldWidget(
+                controller: middleNameController,
+                label: 'Middle Name',
+                htmlData: widget.client.middleName,
+                isEditing: isEditing,
+                icon: Icons.person_pin,
               ),
               const SizedBox(height: 8.0),
-              Row(
-                children: [
-                  const Icon(Icons.person_outline, size: 20),
-                  const SizedBox(width: 8.0),
-                  isEditing
-                      ? Expanded(
-                          child: TextFormField(
-                            controller: lastNameController,
-                            decoration: InputDecoration(
-                              labelText: 'Last Name',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Last Name: ${widget.client.lastName}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                ],
+              FormFieldWidget(
+                controller: lastNameController,
+                label: 'Last Name',
+                htmlData: widget.client.lastName,
+                isEditing: isEditing,
+                icon: Icons.person_outline,
               ),
-              isEditing ? SizedBox() : const SizedBox(height: 8.0),
+              isEditing ? const SizedBox() : const SizedBox(height: 8.0),
               isEditing
-                  ? SizedBox()
-                  : Row(
-                      children: [
-                        const Icon(Icons.account_circle, size: 20),
-                        const SizedBox(width: 8.0),
-                        Text(
-                          'Client No: ${widget.client.clientNo}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
+                  ? const SizedBox()
+                  : TextFieldWidget(
+                      icon: Icons.account_circle,
+                      label: "Client Number",
+                      htmlData: widget.client.clientNo.toString(),
                     ),
               const SizedBox(height: 8.0),
-              Row(
-                children: [
-                  const Icon(Icons.person, size: 20),
-                  const SizedBox(width: 8.0),
-                  isEditing
-                      ? Expanded(
-                          child: ValueListenableBuilder<int?>(
+              isEditing
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.person, size: 20),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                            child: ValueListenableBuilder<int?>(
                           valueListenable: _titleIdNotifier,
                           builder: (context, value, child) {
                             return DropdownButtonFormField<int>(
@@ -324,14 +359,14 @@ class _ClientDetailViewState extends State<ClientDetailView> {
                             );
                           },
                         ))
-                      : Text(
-                          'Title: ${clientProvider.getClientTitleDescription(widget.client.titleId)}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                ],
-              ),
+                      ],
+                    )
+                  : TextFieldWidget(
+                      icon: Icons.person,
+                      label: "Title",
+                      htmlData: clientProvider
+                          .getClientTitleDescription(widget.client.titleId),
+                    ),
             ],
           ),
         ),
@@ -353,12 +388,13 @@ class _ClientDetailViewState extends State<ClientDetailView> {
               style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
             ),
             const Divider(),
-              Row(
-              children: [
-                const Icon(Icons.calendar_today, size: 20),
-                const SizedBox(width: 8.0),
-                isEditing
-                    ? Expanded(
+            isEditing
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.calendar_today, size: 20),
+                      const SizedBox(width: 8.0),
+                      Expanded(
                         child: GestureDetector(
                           onTap: () async {
                             DateTime? selectedDate = await showDatePicker(
@@ -371,8 +407,9 @@ class _ClientDetailViewState extends State<ClientDetailView> {
                             if (selectedDate != null) {
                               setState(() {
                                 widget.client.dateOfBirth = selectedDate;
-                                dateOfBirthController.text = DateFormat('dd/MM/yyyy')
-                                    .format(selectedDate);
+                                dateOfBirthController.text =
+                                    DateFormat('dd/MM/yyyy')
+                                        .format(selectedDate);
                               });
                               // Save changes to the database
                             }
@@ -380,7 +417,7 @@ class _ClientDetailViewState extends State<ClientDetailView> {
                           child: AbsorbPointer(
                             child: TextFormField(
                               decoration: InputDecoration(
-                                labelText: 'Date',
+                                labelText: 'Date Of Birth',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
@@ -390,139 +427,55 @@ class _ClientDetailViewState extends State<ClientDetailView> {
                           ),
                         ),
                       )
-                    : Text(
-                        'Date: ${widget.client.dateOfBirth != null ? DateFormat('dd/MM/yyyy').format(widget.client.dateOfBirth!) : 'N/A'}',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-              ],
+                    ],
+                  )
+                : TextFieldWidget(
+                    icon: Icons.calendar_today,
+                    label: "Date Of Birth",
+                    htmlData: widget.client.dateOfBirth != null
+                        ? DateFormat('dd/MM/yyyy')
+                            .format(widget.client.dateOfBirth!)
+                        : 'N/A',
+                  ),
+            const SizedBox(height: 8.0),
+            FormFieldWidget(
+              controller: friendsController,
+              label: 'Friends',
+              htmlData: widget.client.friends,
+              isEditing: isEditing,
+              icon: Icons.people,
             ),
             const SizedBox(height: 8.0),
-            Row(
-              children: [
-                const Icon(Icons.people, size: 20),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: isEditing
-                      ? TextFormField(
-                          controller: friendsController,
-                          decoration: InputDecoration(
-                            labelText: 'Friends',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Friends: ${widget.client.friends}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                ),
-              ],
+            FormFieldWidget(
+              controller: associatesController,
+              label: 'Associates',
+              htmlData: widget.client.associates,
+              isEditing: isEditing,
+              icon: Icons.people,
             ),
             const SizedBox(height: 8.0),
-            Row(
-              children: [
-                const Icon(Icons.people, size: 20),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: isEditing
-                      ? TextFormField(
-                          controller: associatesController,
-                          decoration: InputDecoration(
-                            labelText: 'Associates',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Associates: ${widget.client.associates}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                ),
-              ],
+            FormFieldWidget(
+              controller: telephoneController,
+              label: 'Telephone',
+              htmlData: widget.client.telephone,
+              isEditing: isEditing,
+              icon: Icons.phone,
             ),
             const SizedBox(height: 8.0),
-
-             Row(
-              children: [
-                const Icon(Icons.phone, size: 20),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: isEditing
-                      ? TextFormField(
-                          controller: telephoneController,
-                          decoration: InputDecoration(
-                            labelText: 'Telephone',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Telephone: ${widget.client.telephone}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                ),
-              ],
-            ),
-           
-            const SizedBox(height: 8.0),
-             Row(
-              children: [
-                const Icon(Icons.email, size: 20),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: isEditing
-                      ? TextFormField(
-                          controller: emailController,
-                          decoration: InputDecoration(
-                            labelText: 'Email',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Email: ${widget.client.email}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                ),
-              ],
+            FormFieldWidget(
+              controller: emailController,
+              label: 'Email',
+              htmlData: widget.client.email,
+              isEditing: isEditing,
+              icon: Icons.email,
             ),
             const SizedBox(height: 8.0),
-            Row(
-              children: [
-                const Icon(Icons.business, size: 20),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: isEditing
-                      ? TextFormField(
-                          controller: placeOfWorkController,
-                          decoration: InputDecoration(
-                            labelText: 'Place of Work',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Place of Work: ${widget.client.placeOfWork}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                ),
-              ],
+            FormFieldWidget(
+              controller: placeOfWorkController,
+              label: 'Place of Work',
+              htmlData: widget.client.placeOfWork,
+              isEditing: isEditing,
+              icon: Icons.business,
             ),
           ],
         ),
@@ -544,111 +497,38 @@ class _ClientDetailViewState extends State<ClientDetailView> {
               style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
             ),
             const Divider(),
-            Row(
-              children: [
-                const Icon(Icons.how_to_vote, size: 20),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: isEditing
-                      ? TextFormField(
-                          controller: politicalPartyController,
-                          decoration: InputDecoration(
-                            labelText: 'Political Party',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Political Party: ${politicalPartyController.text}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                ),
-              ],
+            FormFieldWidget(
+              controller: politicalPartyController,
+              label: 'Political Party',
+              htmlData: clientExtra?.politicalParty,
+              isEditing: isEditing,
+              icon: Icons.how_to_vote,
             ),
             const SizedBox(height: 8.0),
-            
-            Row(
-              children: [
-                const Icon(Icons.work, size: 20),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: isEditing
-                      ? TextFormField(
-                          controller: presentPositionController,
-                          decoration: InputDecoration(
-                            labelText: 'Present Position',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Present Position: ${presentPositionController.text}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                ),
-              ],
-            ),
-
-
-     
-           
-            const SizedBox(height: 8.0),
-             Row(
-              children: [
-                const Icon(Icons.sports_basketball, size: 20),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: isEditing
-                      ? TextFormField(
-                          controller: hobbiesController,
-                          decoration: InputDecoration(
-                            labelText: 'Hobbies',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Hobbies: ${hobbiesController.text}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                ),
-              ],
+            FormFieldWidget(
+              controller: presentPositionController,
+              label: 'Present Position',
+              htmlData: clientExtra?.presentPosition,
+              
+              isEditing: isEditing,
+              icon: Icons.work,
             ),
             const SizedBox(height: 8.0),
-            Row(
-              children: [
-                const Icon(Icons.business_center, size: 20),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: isEditing
-                      ? TextFormField(
-                          controller: companiesController,
-                          decoration: InputDecoration(
-                            labelText: 'Companies',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Companies: ${companiesController.text}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                ),
-              ],
+            FormFieldWidget(
+              controller: hobbiesController,
+              label: 'Hobbies',
+              htmlData: clientExtra?.hobbies,
+              isEditing: isEditing,
+              icon: Icons.sports_basketball,
             ),
-
+            const SizedBox(height: 8.0),
+            FormFieldWidget(
+              controller: companiesController,
+              label: 'Companies',
+              htmlData: clientExtra?.companies,
+              isEditing: isEditing,
+              icon: Icons.business_center,
+            ),
           ],
         ),
       ),

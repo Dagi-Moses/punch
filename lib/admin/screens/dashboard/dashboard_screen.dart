@@ -30,24 +30,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           children: [
             Expanded(
-              flex: 5,
-              child: SizedBox(
-                child: Consumer<DashboardPageProvider>(
-                    builder: (context, pageProvider, _) {
-                  return PageView(
-                    controller: pageProvider.pageController,
-                    onPageChanged: (index) {
-                      pageProvider.setPageIndex(index);
-                    },
-                    children: [
-                      const MainView(),
-                      const ClientScreen(),
-                      const CompanyScreen(),
-                      if (isAdmin) const UsersScreen(),
-                    ],
-                  );
-                }),
-              ),
+          
+              child: Consumer<DashboardPageProvider>(
+                  builder: (context, pageProvider, _) {
+                return PageView(
+                  controller: pageProvider.pageController,
+                  onPageChanged: (index) {
+                    pageProvider.setPageIndex(index);
+                  },
+                  children: [
+                    const MainView(),
+                    const ClientScreen(),
+                    const CompanyScreen(),
+                    if (isAdmin) const UsersScreen(),
+                  ],
+                );
+              }),
             )
           ],
         ),

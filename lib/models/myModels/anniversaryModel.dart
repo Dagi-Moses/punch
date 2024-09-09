@@ -35,8 +35,10 @@ class Anniversary {
       anniversaryNo: json['Anniversary_No'] as int?,
       name: json['Name'] as String?,
       anniversaryTypeId: json['Anniversary_Type_Id'] as int?,
-      date:
-          json['Date'] != null ? DateTime.parse(json['Date'] as String) : null,
+      date: json['Date'] != null
+          ? DateTime.parse(json['Date'] as String).toLocal()
+          : null,
+
       placedByName: json['Placed_By_Name'] as String?,
       placedByAddress: json['Placed_By_Address'] as String?,
       placedByPhone: json['Placed_By_Phone'] as String?,

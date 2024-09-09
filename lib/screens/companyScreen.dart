@@ -99,9 +99,16 @@ class _CompanyScreenState extends State<CompanyScreen> {
         child: Consumer<CompanyProvider>(
             builder: (context, companyProvider, child) {
           final companies = companyProvider.companies;
-            companies.sort((a, b) {
-            return (a.name ?? '\uFFFF').compareTo(b.name ?? '\uFFFF');
+          companies.sort((a, b) {
+            String nameA = a.name?.isNotEmpty == true
+                ? a.name!
+                : '\uFFFF'; // Assign a high value to null/empty
+            String nameB =
+                b.name?.isNotEmpty == true ? b.name! : '\uFFFF'; // Same for b
+
+            return nameA.compareTo(nameB);
           });
+
           if (companies.isEmpty) {
             return const Center(
               child: SpinKitWave(
@@ -356,7 +363,7 @@ class _CompanyScreenState extends State<CompanyScreen> {
               if (companyProvider.isRowsSelected) RowSelectorColumn(),
               // RowSelectorColumn(),
               LargeTextTableColumn(
-                title: const Text("Title"),
+                title: const Text("Name"),
                 id: "Title",
                 size: FixedColumnSize(300),
                 getter: (item, index) {
@@ -365,7 +372,7 @@ class _CompanyScreenState extends State<CompanyScreen> {
                   }
                   return item.name!;
                 },
-                fieldLabel: "Title",
+                fieldLabel: "Company Name",
                 setter: (item, newValue, index) async {
                   await Future.delayed(const Duration(seconds: 2));
                   item.name = newValue;

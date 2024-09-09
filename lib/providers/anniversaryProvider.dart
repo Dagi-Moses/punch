@@ -297,8 +297,7 @@ class AnniversaryProvider with ChangeNotifier {
           _anniversaries[index] = Anniversary.fromJson(data);
           tableController.refresh();
           tableController.replace(index, _anniversaries[index]);
-          //
-          print('socket updated anniversary');
+
           notifyListeners();
         }
         break;
@@ -406,7 +405,8 @@ class AnniversaryProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> updateAnniversary(Anniversary anniversary) async {
+  Future<void> updateAnniversary(
+      Anniversary anniversary, BuildContext context) async {
     try {
       final response = await http.patch(
         Uri.parse('$baseUrl/${anniversary.id}'),
@@ -414,16 +414,17 @@ class AnniversaryProvider with ChangeNotifier {
         body: jsonEncode(anniversary.toJson()),
       );
       if (response.statusCode == 200) {
-        print("update anniversary" + response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Anniversary updated successfully!')),
+        );
         notifyListeners();
-        return true;
       } else {
-        print('Failed to update anniversary: ${response.body}');
-        return false;
+        throw Exception('Failed to update anniversary: ${response.body}');
       }
     } catch (error) {
-      print('Error updating anniversary: $error');
-      return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
     }
   }
 

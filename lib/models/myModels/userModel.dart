@@ -37,14 +37,14 @@ class User {
     }
 
     return User(
-      id: json['_id'] as String? ?? "",
-      username: json['username'] as String? ?? "N/A",
-      password: json['password'] as String? ?? 'N/A',
-      lastName: json['last_name'] as String? ?? 'N/A',
-      firstName: json['first_name'] as String? ?? 'N/A',
+      id: json['_id'] as String? ,
+      username: json['username'] as String? ,
+      password: json['password'] as String? ,
+      lastName: json['last_name'] as String? ,
+      firstName: json['first_name'] as String? ,
       loginId: loginTypeId,
-      staffNo: json['staff_no'] as int? ?? 0,
-      token: json['token'] as String? ?? 'N/A',
+      staffNo: json['staff_no'] as int? ,
+      token: json['token'] as String? ,
     );
   }
 

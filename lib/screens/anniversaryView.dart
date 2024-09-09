@@ -6,6 +6,8 @@ import 'package:punch/models/myModels/userModel.dart';
 
 import 'package:punch/providers/anniversaryProvider.dart';
 import 'package:punch/providers/authProvider.dart';
+import 'package:punch/utils/html%20handler.dart';
+import 'package:punch/widgets/text-form-fields/html_form_field_widget.dart';
 
 class AnniversaryDetailView extends StatefulWidget {
   Anniversary anniversary;
@@ -30,28 +32,31 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
   late TextEditingController friendsController;
   late TextEditingController associatesController;
   late TextEditingController anniversaryYearController;
-
   late ValueNotifier<int?> _anniversaryTypeNotifier;
-
   late ValueNotifier<int?> _paperIdNotifier;
   late TextEditingController _dateController;
+
+  late HtmlTextHandler placedByHandler;
+  late HtmlTextHandler associatesHandler;
+  late HtmlTextHandler friendsHandler;
+
   @override
   void initState() {
     super.initState();
     // Initialize controllers with existing data
     nameController = TextEditingController(text: widget.anniversary.name ?? "");
-    placedByNameController =
-        TextEditingController(text: widget.anniversary.placedByName ?? "");
+    placedByNameController = TextEditingController(
+        text: _convertHtmlToText(widget.anniversary.placedByName ?? ""));
     placedByAddressController =
         TextEditingController(text: widget.anniversary.placedByAddress ?? "");
     placedByPhoneController =
         TextEditingController(text: widget.anniversary.placedByPhone ?? "");
-    friendsController =
-        TextEditingController(text: widget.anniversary.friends ?? '');
-    associatesController =
-        TextEditingController(text: widget.anniversary.associates ?? '');
+    friendsController = TextEditingController(
+        text: _convertHtmlToText(widget.anniversary.friends ?? ""));
+    associatesController = TextEditingController(
+        text: _convertHtmlToText(widget.anniversary.associates ?? ""));
     anniversaryYearController = TextEditingController(
-        text: widget.anniversary.anniversaryYear.toString() ?? "");
+        text: widget.anniversary.anniversaryYear.toString());
 
     _anniversaryTypeNotifier =
         ValueNotifier(widget.anniversary.anniversaryTypeId);
@@ -61,6 +66,40 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
           ? DateFormat('dd/MM/yyyy').format(widget.anniversary.date!)
           : 'N/A',
     );
+
+    associatesHandler = HtmlTextHandler(
+      controller: associatesController,
+      onTextChanged: (text) {
+        setState(() {
+          widget.anniversary.associates = text;
+        });
+      },
+      initialText: associatesController.text,
+    );
+
+    placedByHandler = HtmlTextHandler(
+      controller: placedByNameController,
+      onTextChanged: (text) {
+        setState(() {
+          widget.anniversary.placedByName = text;
+        });
+      },
+      initialText: placedByNameController.text,
+    );
+
+    friendsHandler = HtmlTextHandler(
+      controller: friendsController,
+      onTextChanged: (text) {
+        setState(() {
+          widget.anniversary.friends = text;
+        });
+      },
+      initialText: friendsController.text,
+    );
+  }
+
+  String _convertHtmlToText(String htmlText) {
+    return htmlText.replaceAll(RegExp(r'<br\s*/?>'), '\n');
   }
 
   @override
@@ -83,68 +122,59 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
   @override
   Widget build(BuildContext context) {
     final anniversaryProvider = Provider.of<AnniversaryProvider>(context);
-     final auth = Provider.of<AuthProvider>(context);
+    final auth = Provider.of<AuthProvider>(context);
 
     final isUser = auth.user?.loginId == UserRole.user;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Anniversary Details'),
-       actions: [
-        if (!isUser)   IconButton(
-            icon: Icon(isEditing ? Icons.save : Icons.edit),
-            onPressed: () async {
-              if (isEditing) {
-                DateTime? selectedDate;
+        actions: [
+          if (!isUser)
+            IconButton(
+              icon: Icon(isEditing ? Icons.save : Icons.edit),
+              onPressed: () async {
+                if (isEditing) {
+                  DateTime? selectedDate;
 
-                try {
-                  selectedDate =
-                      DateFormat('dd/MM/yyyy').parse(_dateController.text);
-                } catch (e) {
-                  // Handle parsing error
-                  print("Error parsing date: $e");
-                }
+                  try {
+                    selectedDate =
+                        DateFormat('dd/MM/yyyy').parse(_dateController.text);
+                  } catch (e) {
+                    // Handle parsing error
+                    print("Error parsing date: $e");
+                  }
 
-                Anniversary updatedAnniversary = Anniversary(
-                  id: widget.anniversary.id,
-                  anniversaryNo: widget.anniversary.anniversaryNo,
-                  name: nameController.text,
-                  placedByName: placedByNameController.text,
-                  placedByAddress: placedByAddressController.text,
-                  placedByPhone: placedByPhoneController.text,
-                  friends: friendsController.text,
-                  associates: associatesController.text,
-                  anniversaryYear: int.tryParse(anniversaryYearController.text),
-                  paperId: _paperIdNotifier.value,
-                  date: selectedDate,
-                  anniversaryTypeId: _anniversaryTypeNotifier.value,
-                );
+                  Anniversary updatedAnniversary = Anniversary(
+                    id: widget.anniversary.id,
+                    anniversaryNo: widget.anniversary.anniversaryNo,
+                    name: nameController.text,
+                    placedByName: placedByNameController.text.replaceAll('\n', '<br>'),
+                    placedByAddress: placedByAddressController.text,
+                    placedByPhone: placedByPhoneController.text,
+                    friends: friendsController.text.replaceAll('\n', '<br>'),
+                    associates: associatesController.text.replaceAll('\n', '<br>'),
+                    anniversaryYear:
+                        int.tryParse(anniversaryYearController.text),
+                    paperId: _paperIdNotifier.value,
+                    date: selectedDate,
+                    anniversaryTypeId: _anniversaryTypeNotifier.value,
+                  );
 
-                try {
-                  await anniversaryProvider
-                      .updateAnniversary(updatedAnniversary);
+                  await anniversaryProvider.updateAnniversary(
+                      updatedAnniversary, context);
                   setState(() {
                     // Replace the entire anniversary object with the updated one
                     widget.anniversary = updatedAnniversary;
                     isEditing = false;
                   });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Anniversary updated successfully!')),
-                  );
-                } catch (error) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Failed to update anniversary')),
-                  );
+                } else {
+                  setState(() {
+                    isEditing = true;
+                  });
                 }
-              } else {
-                setState(() {
-                  isEditing = true;
-                });
-              }
-            },
-          ),
+              },
+            ),
         ],
       ),
       body: Padding(
@@ -172,116 +202,77 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.person, size: 20),
-                  const SizedBox(width: 8.0),
-                  isEditing
-                      ? Expanded(
-                          child: TextFormField(
-                            controller: nameController,
-                            // decoration: const InputDecoration(labelText: 'Name'),
-                            //  initialValue:
-                            //   widget.anniversary.name,
-                            decoration: InputDecoration(
-                              labelText: 'Name',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
+              FormFieldWidget(
+                controller: nameController,
+                label: 'Name',
+                htmlData: widget.anniversary.name,
+                isEditing: isEditing,
+                icon: Icons.person,
+              ),
+              const SizedBox(height: 8.0),
+              isEditing
+                  ? Row(
+                      children: [
+                        const Icon(Icons.card_giftcard, size: 20),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                          child: ValueListenableBuilder<int?>(
+                            valueListenable: _anniversaryTypeNotifier,
+                            builder: (context, value, child) {
+                              // If the current value is null or not in the list, set it to a default or null value
+                              if (value == null ||
+                                  !anniversaryProvider.anniversaryTypes.keys
+                                      .contains(value)) {
+                                value =
+                                    null; // or set to a default value that exists in your list
+                              }
+                              return DropdownButtonFormField<int>(
+                                value: value,
+                                decoration: InputDecoration(
+                                  labelText: 'Anniversary Type',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                items: anniversaryProvider.anniversaryTypes.keys
+                                    .map((int typeId) {
+                                  return DropdownMenuItem<int>(
+                                    value: typeId,
+                                    child: Text(
+                                      anniversaryProvider
+                                          .getAnniversaryTypeDescription(
+                                              typeId),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (int? newTypeId) {
+                                  if (newTypeId != null) {
+                                    _anniversaryTypeNotifier.value = newTypeId;
+                                    widget.anniversary.anniversaryTypeId =
+                                        newTypeId;
+                                    // Save changes to the database (implement this logic)
+                                  }
+                                },
+                              );
+                            },
                           ),
                         )
-                      : Flexible(
-                        child: Text(
-                            'Name: ${widget.anniversary.name}',
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                      ),
-                ],
-              ),
-              const SizedBox(height: 8.0),
-           Row(
-  children: [
-    const Icon(Icons.card_giftcard, size: 20),
-    const SizedBox(width: 8.0),
-    isEditing
-        ? Expanded(
-            child: ValueListenableBuilder<int?>(
-              valueListenable: _anniversaryTypeNotifier,
-              builder: (context, value, child) {
-                // If the current value is null or not in the list, set it to a default or null value
-                if (value == null || 
-                    !anniversaryProvider.anniversaryTypes.keys.contains(value)) {
-                  value = null; // or set to a default value that exists in your list
-                }
-                return DropdownButtonFormField<int>(
-                  value: value,
-                  decoration: InputDecoration(
-                    labelText: 'Anniversary Type',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      ],
+                    )
+                  : TextFieldWidget(
+                      label: "Anniversary Type",
+                      htmlData:
+                          anniversaryProvider.getAnniversaryTypeDescription(
+                              widget.anniversary.anniversaryTypeId),
+                      icon: Icons.card_giftcard,
                     ),
-                  ),
-                  items: anniversaryProvider.anniversaryTypes.keys
-                      .map((int typeId) {
-                    return DropdownMenuItem<int>(
-                      value: typeId,
-                      child: Text(
-                        anniversaryProvider.getAnniversaryTypeDescription(typeId),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (int? newTypeId) {
-                    if (newTypeId != null) {
-                      _anniversaryTypeNotifier.value = newTypeId;
-                      widget.anniversary.anniversaryTypeId = newTypeId;
-                      // Save changes to the database (implement this logic)
-                    }
-                  },
-                );
-              },
-            ),
-          )
-        
-                      : Flexible(
-                        child: RichText(
-                            text: TextSpan(
-                              children: [
-                                const TextSpan(
-                                  text: 'Anniversary Type: ',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontStyle: FontStyle.italic,
-                                    color: Colors
-                                        .black, // Amber color for the 'UserRole:' text
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: anniversaryProvider
-                                      .getAnniversaryTypeDescription(
-                                          widget.anniversary.anniversaryTypeId),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    fontStyle: FontStyle.italic,
-                                    color: Colors
-                                        .amber, // Black color for the role value
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ),
-                ],
-              ),
               const SizedBox(height: 8.0),
-              Row(
-                children: [
-                  const Icon(Icons.calendar_today, size: 20),
-                  const SizedBox(width: 8.0),
-                  isEditing
-                      ? Expanded(
+              isEditing
+                  ? Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 20),
+                        const SizedBox(width: 8.0),
+                        Expanded(
                           child: GestureDetector(
                             onTap: () async {
                               DateTime? selectedDate = await showDatePicker(
@@ -314,20 +305,23 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
                             ),
                           ),
                         )
-                      : Text(
-                          'Date: ${widget.anniversary.date != null ? DateFormat('dd/MM/yyyy').format(widget.anniversary.date!) : 'N/A'}',
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                ],
-              ),
+                      ],
+                    )
+                  : TextFieldWidget(
+                      label: 'Date',
+                      htmlData: widget.anniversary.date != null
+                          ? DateFormat('dd/MM/yyyy')
+                              .format(widget.anniversary.date!)
+                          : 'N/A',
+                      icon: Icons.calendar_today,
+                    ),
               const SizedBox(height: 8.0),
-              Row(
-                children: [
-                  const Icon(Icons.timeline, size: 20),
-                  const SizedBox(width: 8.0),
-                  isEditing
-                      ? Expanded(
+              isEditing
+                  ? Row(
+                      children: [
+                        const Icon(Icons.timeline, size: 20),
+                        const SizedBox(width: 8.0),
+                        Expanded(
                           child: TextFormField(
                             initialValue:
                                 widget.anniversary.anniversaryYear?.toString(),
@@ -345,13 +339,13 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
                             },
                           ),
                         )
-                      : Text(
-                          'Anniversary Year: ${widget.anniversary.anniversaryYear}',
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                ],
-              ),
+                      ],
+                    )
+                  : TextFieldWidget(
+                      label: 'Anniversary Year',
+                      htmlData: widget.anniversary.anniversaryYear.toString(),
+                      icon: Icons.timeline,
+                    ),
             ],
           ),
         ),
@@ -375,130 +369,53 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8.0),
-              Row(
-                children: [
-                  const Icon(Icons.group, size: 20),
-                  const SizedBox(width: 8.0),
-                  isEditing
-                      ? Expanded(
-                          child: TextFormField(
-                            controller: placedByNameController,
-                            //   decoration: const InputDecoration(labelText: 'Placed By'),
-                            decoration: InputDecoration(
-                              labelText: 'Placed By',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Placed By: ${widget.anniversary.placedByName}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                ],
+              FormFieldWidget(
+                controller: placedByNameController,
+                label: 'Placed by Name',
+                htmlData: widget.anniversary.placedByName,
+                isEditing: isEditing,
+                icon: Icons.group,
               ),
               const SizedBox(height: 8.0),
-              Row(
-                children: [
-                  const Icon(Icons.location_on, size: 20),
-                  const SizedBox(width: 8.0),
-                  isEditing
-                      ? Expanded(
-                          child: TextFormField(
-                            controller: placedByAddressController,
-                            //   decoration: const InputDecoration(labelText: 'Address'),
-                            decoration: InputDecoration(
-                              labelText: 'Address',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Address: ${widget.anniversary.placedByAddress}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                ],
+              FormFieldWidget(
+                controller: placedByAddressController,
+                label: 'Placed by Address',
+                htmlData: widget.anniversary.placedByAddress,
+                isEditing: isEditing,
+                icon: Icons.location_on,
               ),
               const SizedBox(height: 8.0),
-              Row(
-                children: [
-                  const Icon(Icons.phone, size: 20),
-                  const SizedBox(width: 8.0),
-                  isEditing
-                      ? Expanded(
-                          child: TextField(
-                            controller: placedByPhoneController,
-                            decoration: InputDecoration(
-                              labelText: 'Phone',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Phone: ${widget.anniversary.placedByPhone}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                ],
+              FormFieldWidget(
+                controller: placedByPhoneController,
+                label: 'Placed by Phone',
+                htmlData: widget.anniversary.placedByPhone,
+                isEditing: isEditing,
+                icon: Icons.phone,
               ),
               const SizedBox(height: 8.0),
-              Row(
-                children: [
-                  const Icon(Icons.phone, size: 20),
-                  const SizedBox(width: 8.0),
-                  isEditing
-                      ? Expanded(
-                          child: TextField(
-                            controller: friendsController,
-                            decoration: InputDecoration(
-                              labelText: 'Friends',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Friends: ${widget.anniversary.friends}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                ],
+              FormFieldWidget(
+                controller: friendsController,
+                label: 'Friends',
+                htmlData: widget.anniversary.friends,
+                isEditing: isEditing,
+                icon: Icons.favorite,
               ),
               const SizedBox(height: 8.0),
-              Row(
-                children: [
-                  const Icon(Icons.phone, size: 20),
-                  const SizedBox(width: 8.0),
-                  isEditing
-                      ? Expanded(
-                          child: TextField(
-                            controller: associatesController,
-                            decoration: InputDecoration(
-                              labelText: 'Associates',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        )
-                      : Text(
-                          'Associates: ${widget.anniversary.associates}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                ],
+              FormFieldWidget(
+                controller: associatesController,
+                label: 'Associates',
+                htmlData: widget.anniversary.associates,
+                isEditing: isEditing,
+                icon: Icons.people,
               ),
               const SizedBox(height: 8.0),
-              Row(
-                children: [
-                  const Icon(Icons.card_giftcard, size: 20),
-                  const SizedBox(width: 8.0),
-                  isEditing
-                      ? Expanded(
-                          child: ValueListenableBuilder<int?>(
+              isEditing
+                  ? Row(
+                      children: [
+                        const Icon(Icons.card_giftcard, size: 20),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                            child: ValueListenableBuilder<int?>(
                           valueListenable: _paperIdNotifier,
                           builder: (context, value, child) {
                             return DropdownButtonFormField<int>(
@@ -527,35 +444,14 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
                             );
                           },
                         ))
-                      : RichText(
-                          text: TextSpan(
-                            children: [
-                              const TextSpan(
-                                text: 'Paper: ',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontStyle: FontStyle.italic,
-                                  color: Colors
-                                      .black, // Amber color for the 'UserRole:' text
-                                ),
-                              ),
-                              TextSpan(
-                                text:
-                                    anniversaryProvider.getPaperTypeDescription(
-                                        widget.anniversary.paperId),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  fontStyle: FontStyle.italic,
-                                  color: Colors
-                                      .amber, // Black color for the role value
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                ],
-              ),
+                      ],
+                    )
+                  : TextFieldWidget(
+                      label: 'Paper',
+                      htmlData: anniversaryProvider
+                          .getPaperTypeDescription(widget.anniversary.paperId),
+                      icon: Icons.card_giftcard,
+                    ),
             ],
           ),
         ),

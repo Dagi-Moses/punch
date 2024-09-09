@@ -97,9 +97,17 @@ class _ClientScreenState extends State<ClientScreen> {
         child:
             Consumer<ClientProvider>(builder: (context, clientProvider, child) {
           final clients = clientProvider.clients;
-          clients.sort((a, b) {
-            return (a.firstName ?? '\uFFFF').compareTo(b.firstName ?? '\uFFFF');
+       clients.sort((a, b) {
+            String nameA = a.firstName?.isNotEmpty == true
+                ? a.firstName!
+                : '\uFFFF'; // Handle null/empty firstName for a
+            String nameB = b.firstName?.isNotEmpty == true
+                ? b.firstName!
+                : '\uFFFF'; // Handle null/empty firstName for b
+
+            return nameA.compareTo(nameB);
           });
+
 
           if (clients.isEmpty) {
             return const Center(
@@ -256,9 +264,10 @@ class _ClientScreenState extends State<ClientScreen> {
                       if (clientProvider.isRowsSelected && !isUser)
                         PopupMenuItem(
                           child: const Text("Delete Selected rows"),
-                          onTap: () {
-                            clientProvider.deleteSelectedClients(
+                          onTap: () async{
+                      await      clientProvider.deleteSelectedClients(
                                 context, tableController.selectedItems);
+                                   clientProvider.setBoolValue(false);
                           },
                         ),
                       PopupMenuItem(

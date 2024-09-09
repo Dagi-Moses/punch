@@ -327,7 +327,7 @@ class ClientProvider with ChangeNotifier {
         body: jsonEncode(client.toJson()),
       );
       final responseExtra = await http.patch(
-        Uri.parse('$base/clientExtras/${clientExtra.id}'),
+        Uri.parse('$base/clientExtras/${clientExtra.clientNo}'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(clientExtra.toJson()),
       );
@@ -339,14 +339,46 @@ class ClientProvider with ChangeNotifier {
         notifyListeners();
       } else {
         throw Exception(
-            {"response": response.body + " REspondata" + responseExtra.body});
+            {"response": response.body +  "\n REspondata" + responseExtra.body});
       }
     } catch (err) {
+      print(err);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(err.toString())),
       );
     }
   }
+  // }
+
+  // // Future<void> updateClient(Client client, ClientExtra clientExtra,
+  //     Function onSuccess, BuildContext context) async {
+  //   print("starting client: ${client.toJson().toString()}");
+  //   print("client Id: ${client.id}");
+  //   try {
+  //     print("started");
+  //     final response = await http.patch(
+  //       Uri.parse('$baseUrl/${client.id}'),
+  //       headers: {'Content-Type': 'application/json'},
+  //       body: jsonEncode(client.toJson()),
+  //     );
+      
+  //     if (response.statusCode == 200 ) {
+  //       onSuccess();
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text('Client updated successfully!')),
+  //       );
+  //       notifyListeners();
+  //     } else {
+  //       throw Exception(
+  //           response.body );
+  //     }
+  //   } catch (err) {
+  //     print(err);
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text(err.toString())),
+  //     );
+  //   }
+  // }
 
   Future<void> deleteClient(BuildContext context, Client client) async {
     try {

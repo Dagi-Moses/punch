@@ -20,12 +20,12 @@ class ClientExtra {
   // Factory method to create a PoliticalClient object from a JSON map
   factory ClientExtra.fromJson(Map<String, dynamic> json) {
     return ClientExtra(
-      id: json['_id'],
-      clientNo: json['Client_No'],
-      politicalParty: json['Political_Party'],
-      presentPosition: json['Present_Position'],
-      hobbies: json['Hobbies'],
-      companies: json['Companies'],
+      id: json['_id'] as String?,
+      clientNo: json['Client_No']as int?,
+      politicalParty: json['Political_Party'] as String?,
+      presentPosition: json['Present_Position'] as String?,
+      hobbies: json['Hobbies']as String?,
+      companies: json['Companies']as String?,
     );
   }
 

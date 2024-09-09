@@ -20,9 +20,9 @@ class UserRecord {
       recordId: json['Record_Id'] as int?,
       staffNo: json['staff_no'] ,
       loginDateTime: json['login_date_time'] != null
-          ? DateTime.parse(json['login_date_time'] as String)
+          ? DateTime.parse(json['login_date_time'] as String).toLocal() 
           : null,
-      computerName: json['computer_name'] ?? "N/A",
+      computerName: json['computer_name'] as String?,
     );
   }
 

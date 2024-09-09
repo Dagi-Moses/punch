@@ -114,7 +114,8 @@ class _AddClientPageState extends State<AddClientPage> {
                           controller: dateOfBirthController),
                       const SizedBox(height: 16),
                       _buildTextField('Place Of Work',
-                          'Enter client Place Of work', placeOfWorkController),
+                          'Enter client Place Of work', placeOfWorkController,  TextInputType.multiline, null
+                      ),
                       const SizedBox(height: 16),
                       _buildTextField('Email', 'Enter client email',
                           emailController, TextInputType.emailAddress),
@@ -137,26 +138,32 @@ class _AddClientPageState extends State<AddClientPage> {
                       ),
                       const SizedBox(height: 16),
                       _buildTextField('Companies', 'Enter client\'s companies',
-                          companiesController),
+                          companiesController,  TextInputType.multiline, null
+                      ),
                       const SizedBox(height: 16),
                       _buildTextField('Hobbies', 'Enter client\'s hobbies',
-                          hobbiesController),
+                          hobbiesController,  TextInputType.multiline, null
+                      ),
                       const SizedBox(height: 16),
                       _buildTextField(
                           'Present Position',
                           'Enter client\'s Present Position',
-                          presentPositionController),
+                          presentPositionController,  TextInputType.multiline, null
+                      ),
                       const SizedBox(height: 16),
                       _buildTextField(
                           'Political Party',
                           'Enter client\'s polotical Party',
-                          politicalPartyController),
+                          politicalPartyController,  TextInputType.multiline, null
+                      ),
                       const SizedBox(height: 16),
                       _buildTextField('Friends', 'Enter client\'s friends',
-                          friendsController),
+                          friendsController,  TextInputType.multiline, null
+                      ),
                       const SizedBox(height: 16),
                       _buildTextField('Associates',
-                          'Enter client\'s associates', associatesController),
+                          'Enter client\'s associates', associatesController,    TextInputType.multiline, null
+                      ),
                       const SizedBox(height: 32),
                     ],
                   );
@@ -180,23 +187,24 @@ class _AddClientPageState extends State<AddClientPage> {
               Provider.of<ClientProvider>(context, listen: false);
 
           final client = Client(
-              associates: associatesController.text,
+              associates: associatesController.text.replaceAll('\n', '<br>'),
               dateOfBirth: Provider.of<ClientProvider>(context, listen: false)
                   .selectedDate,
               email: emailController.text,
               firstName: firstNameController.text,
-              friends: friendsController.text,
+              friends: friendsController.text.replaceAll('\n', '<br>'),
               lastName: lastNameController.text,
               middleName: middleNameController.text,
-              placeOfWork: placeOfWorkController.text,
+              placeOfWork: placeOfWorkController.text.replaceAll('\n', '<br>'),
               telephone: telephoneController.text,
               titleId: selectedType);
 
           final clientExtra = ClientExtra(
-              companies: companiesController.text,
-              hobbies: hobbiesController.text,
-              politicalParty: politicalPartyController.text,
-              presentPosition: presentPositionController.text);
+              companies: companiesController.text.replaceAll('\n', '<br>'),
+              hobbies: hobbiesController.text.replaceAll('\n', '<br>'),
+              politicalParty: politicalPartyController.text.replaceAll('\n', '<br>'),
+              presentPosition: presentPositionController.text.replaceAll('\n', '<br>'),
+          );
           if (!clientProvider.loading) {
             await clientProvider.addClient(
               client,
@@ -229,8 +237,9 @@ class _AddClientPageState extends State<AddClientPage> {
 
   Widget _buildTextField(
       String label, String hint, TextEditingController controller,
-      [TextInputType keyboardType = TextInputType.text]) {
+      [TextInputType keyboardType = TextInputType.text, int? maxLines = 1]) {
     return TextFormField(
+      maxLines: maxLines,
       controller: controller,
       keyboardType: keyboardType,
       decoration: InputDecoration(

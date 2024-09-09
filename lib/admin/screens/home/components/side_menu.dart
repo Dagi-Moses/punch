@@ -25,20 +25,13 @@ class _SideMenuState extends State<SideMenu> {
     final isAdmin = auth.user?.loginId == UserRole.admin;
 
     return sideMenu.SideMenu(
-
-      footer: const Row(
-        children: [
-          ProfileCard(),
-          Expanded(
-            child: SizedBox(),
-          ),
-        ],
-      ),
+    
+      footer: const ProfileCard(),
       controller: sidemenu,
       style: sideMenu.SideMenuStyle(
       
         decoration: const BoxDecoration(),
-
+    
         openSideMenuWidth:Responsive.isDesktop(context) ? 190: 130,
         compactSideMenuWidth: 60,
         hoverColor: Colors.red[200],
@@ -53,14 +46,14 @@ class _SideMenuState extends State<SideMenu> {
           Radius.circular(5.0),
         ),
         showTooltip: true,
-
+    
         showHamburger: Responsive.isMobile(context) ? true : false,
         itemHeight: 50.0,
         selectedHoverColor: Colors.red[400],
         itemInnerSpacing: 8.0,
         itemOuterPadding: const EdgeInsets.symmetric(horizontal: 5.0),
         toggleColor: Colors.black54,
-
+    
         // Additional properties for expandable items
         selectedTitleTextStyleExpandable:
             const TextStyle(color: Colors.white), // Adjust the style as needed
@@ -100,7 +93,7 @@ class _SideMenuState extends State<SideMenu> {
           ),
           onTap: (index, _) {
             provider.setPageIndex(index);
-
+    
             sidemenu.changePage(index);
           },
         ),
@@ -111,7 +104,7 @@ class _SideMenuState extends State<SideMenu> {
           ),
           onTap: (index, _) {
             provider.setPageIndex(index);
-
+    
             sidemenu.changePage(index);
           },
         ),

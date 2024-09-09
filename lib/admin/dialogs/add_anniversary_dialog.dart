@@ -116,10 +116,13 @@ class _AddAnniversaryPageState extends State<AddAnniversaryPage> {
                       _buildTextField(
                         controller: placedByNameController,
                         label: "Placed By Name",
+                        keyboardType: TextInputType.multiline,
+                        maxLines: null
                       ),
                       _buildTextField(
                         controller: placedByAddressController,
                         label: "Placed By Address",
+                        maxLines: null
                       ),
                       _buildTextField(
                         controller: placedByPhoneController,
@@ -128,10 +131,14 @@ class _AddAnniversaryPageState extends State<AddAnniversaryPage> {
                       _buildTextField(
                         controller: friendsController,
                         label: "Friends",
+                        keyboardType: TextInputType.multiline,
+                        maxLines: null
                       ),
                       _buildTextField(
                         controller: associatesController,
                         label: "Associates",
+                        keyboardType: TextInputType.multiline,  
+                        maxLines: null
                       ),
                       const SizedBox(height: 20),
                       Consumer<AnniversaryProvider>(
@@ -183,11 +190,11 @@ class _AddAnniversaryPageState extends State<AddAnniversaryPage> {
                   anniversaryTypeId: selectedType,
                   date: Provider.of<AnniversaryProvider>(context, listen: false)
                       .selectedDate,
-                  placedByName: placedByNameController.text,
+                  placedByName: placedByNameController.text.replaceAll('\n', '<br>'),
                   placedByAddress: placedByAddressController.text,
                   placedByPhone: placedByPhoneController.text,
-                  friends: friendsController.text,
-                  associates: associatesController.text,
+                  friends: friendsController.text.replaceAll('\n', '<br>'),
+                  associates: associatesController.text.replaceAll('\n', '<br>'),
                   paperId: selectedPaperType,
                   anniversaryYear: int.tryParse(anniversaryYearController.text),
                 );
@@ -216,13 +223,15 @@ class _AddAnniversaryPageState extends State<AddAnniversaryPage> {
 Widget _buildTextField({
   required TextEditingController controller,
   required String label,
-  TextInputType keyboardType = TextInputType.text,
   bool enabled = true,
   String? Function(String?)? validator,
+   TextInputType keyboardType = TextInputType.text,
+  int? maxLines = 1
 }) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 8.0),
     child: TextFormField(
+      maxLines: maxLines,
       controller: controller,
       decoration: InputDecoration(
         labelText: label,

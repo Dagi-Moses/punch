@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:punch/models/myModels/anniversaryModel.dart';
+
 import 'package:punch/models/myModels/companyExtraModel.dart';
 import 'package:punch/models/myModels/companyModel.dart';
 import 'package:punch/providers/companyProvider.dart';
@@ -168,26 +168,30 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
                       _buildTextField(
                           'Managing Director',
                           'Enter managing director\'s name',
-                          managingDirectorController),
+                          managingDirectorController,   TextInputType.multiline,
+                          null),
                       const SizedBox(height: 16),
                       _buildTextField(
                           'Corporate Affairs',
                           'Enter corporate affairs details',
-                          corporateAffairsController),
+                          corporateAffairsController,   TextInputType.multiline,
+                          null),
                       const SizedBox(height: 16),
                       _buildTextField(
                           'Media Manager',
                           'Enter media manager\'s name',
-                          mediaManagerController),
+                          mediaManagerController,   TextInputType.multiline,
+                          null),
                       const SizedBox(height: 16),
                       _buildTextField('Friends', 'Enter friends details',
-                          friendsController),
+                          friendsController,   TextInputType.multiline, null),
                       const SizedBox(height: 16),
                       _buildTextField('Competitors',
-                          'Enter competitors details', competitorsController),
+                          'Enter competitors details', competitorsController,   TextInputType.multiline,
+                          null),
                       const SizedBox(height: 16),
                       _buildTextField('Directors', 'Enter directors details',
-                          directorsController),
+                          directorsController,   TextInputType.multiline, null),
                       const SizedBox(height: 32),
                     ],
                   );
@@ -223,12 +227,13 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
             fax: faxController.text,
           );
           final newCompanyExtra = CompanyExtra(
-              managingDirector: managingDirectorController.text,
-              corporateAffairs: corporateAffairsController.text,
-              mediaManager: mediaManagerController.text,
-              friends: friendsController.text,
-              competitors: competitorsController.text,
-              directors: directorsController.text);
+              managingDirector: managingDirectorController.text.replaceAll('\n', '<br>'),
+              corporateAffairs: corporateAffairsController.text.replaceAll('\n', '<br>'),
+              mediaManager: mediaManagerController.text.replaceAll('\n', '<br>'),
+              friends: friendsController.text.replaceAll('\n', '<br>'),
+              competitors: competitorsController.text.replaceAll('\n', '<br>'),
+              directors: directorsController.text.replaceAll('\n', '<br>'),
+          );
           if (!companyProvider.loading) {
             await companyProvider.addCompany(
                 newCompany,
@@ -257,7 +262,7 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
 
   Widget _buildTextField(
       String label, String hint, TextEditingController controller,
-      [TextInputType keyboardType = TextInputType.text]) {
+     [TextInputType keyboardType = TextInputType.text, int? maxLines = 1]) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,

@@ -373,7 +373,7 @@ class AuthProvider with ChangeNotifier {
 
     final userRecord = UserRecord(
       staffNo: user.staffNo,
-      loginDateTime: DateTime.now(),
+      loginDateTime:  DateTime.now().toUtc(), 
       computerName: computerName,
     );
 
