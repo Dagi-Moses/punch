@@ -371,6 +371,7 @@ class _UserDetailViewState extends State<UserDetailView> {
                 final record = userRecords[index];
                 return ListTile(
                   leading: const Icon(Icons.history),
+                  
                   title: RichText(
                     text: TextSpan(
                       children: [

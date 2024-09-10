@@ -33,13 +33,13 @@ class Company {
       name: json['Name'] as String? ,
       companySectorId: json['Company_Sector_Id'] as int?,
       date:
-          json['Date'] != null ? DateTime.parse(json['Date'] as String) : null,
+          json['Date'] != null ? DateTime.parse(json['Date'] as String).toLocal() : null,
       address: json['Address'] as String? ,
       email: json['Email'] as String? ,
       phone: json['Phone'] as String? ,
       fax: json['Fax'] as String? ,
       startDate: json['Start_Date'] != null
-          ? DateTime.parse(json['Start_Date'])
+          ? DateTime.parse(json['Start_Date']).toLocal()
           : null,
     );
   }

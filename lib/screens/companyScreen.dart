@@ -299,8 +299,11 @@ class _CompanyScreenState extends State<CompanyScreen> {
                         PopupMenuItem(
                           child: const Text("Delete Selected rows"),
                           onTap: () {
-                            print("omoo");
-                            companyProvider.deleteSelectedCompanies(context, tableController.selectedItems);},
+                           
+                            companyProvider.deleteSelectedCompanies(context, tableController.selectedItems);
+                               companyProvider.setBoolValue(true);
+                            },
+                                
                         ),
                       PopupMenuItem(
                         child: const Text("Clear filters"),

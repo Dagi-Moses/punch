@@ -53,7 +53,7 @@ class User {
         (loginId != null) ? UserRole.values.indexOf(loginId!) + 1 : 0;
 
     return {
-      '_id': id,
+    //  '_id': id,
       'username': username,
       'password': password,
       'last_name': lastName,

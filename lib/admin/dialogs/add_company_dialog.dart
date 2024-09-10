@@ -265,6 +265,7 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
      [TextInputType keyboardType = TextInputType.text, int? maxLines = 1]) {
     return TextFormField(
       controller: controller,
+      maxLines: maxLines,
       keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,

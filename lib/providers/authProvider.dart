@@ -32,7 +32,9 @@ class AuthProvider with ChangeNotifier {
   bool get loading => _loading;
   late WebSocketManager _webSocketManager;
   final String webSocketUrl = 'ws://localhost:3000?channel=auth';
-
+  final String userRecordWebSocketUrl =
+      'ws://localhost:3000?channel=userRecord';
+ late WebSocketManager _userRecordManager;
   setBoolValue(bool newValue) {
     _isRowsSelected = newValue;
     notifyListeners();
@@ -92,11 +94,24 @@ class AuthProvider with ChangeNotifier {
       _reconnectWebSocket,
     );
     _webSocketManager.connect();
+
+
+    _userRecordManager = WebSocketManager(
+      userRecordWebSocketUrl,
+      _handleUserRecordWebSocketMessage,
+      _reconnectUserRecordWebSocket,
+    );
+    _userRecordManager.connect();
   }
 
   void _reconnectWebSocket() {
     print("reconnected");
   }
+  void _reconnectUserRecordWebSocket() {
+    print("reconnected user Record");
+  }
+
+  
 
   void _handleWebSocketMessage(dynamic message) async {
     final type = message['type'];
@@ -158,6 +173,47 @@ class AuthProvider with ChangeNotifier {
         break;
     }
   }
+
+
+  void   _handleUserRecordWebSocketMessage(dynamic message) async {
+    final type = message['type'];
+    final data = message['data'];
+
+    switch (type) {
+      case 'ADD':
+       final newRecord = UserRecord.fromJson(data);
+         _addUserRecord(newRecord);
+          notifyListeners();
+        break;
+
+      case 'DELETE':
+      _deleteUserRecord(int.tryParse(data)); 
+        notifyListeners();
+        break;
+    }
+  }
+void _deleteUserRecord(int? staffNo) {
+    if (userRecordsMap.containsKey(staffNo)) {
+      // Remove all records associated with the staffNo
+      userRecordsMap.remove(staffNo);
+      print('Deleted all UserRecords for staffNo $staffNo');
+    } else {
+      print('No records found for staffNo $staffNo to delete');
+    }
+    notifyListeners();
+  }
+  void _addUserRecord(UserRecord userRecord) {
+   if (userRecord.staffNo != null) {
+      if (!userRecordsMap.containsKey(userRecord.staffNo!)) {
+        userRecordsMap[userRecord.staffNo!] = [];
+      }
+      userRecordsMap[userRecord.staffNo!]!.add(userRecord);
+       print('Added new UserRecord for staffNo ${userRecord.staffNo}');
+    }
+   notifyListeners();
+  }
+
+
 
   Future<void> _initialize() async {
     _checkToken();
@@ -573,41 +629,29 @@ class AuthProvider with ChangeNotifier {
       print('Error deleting selected clients and their extras: $error');
     }
   }
-
-  Future<void> deleteUser(BuildContext context, User duser) async {
+Future<void> deleteUser(BuildContext context, User duser) async {
     try {
       // Delete the user
       final userResponse = await http.delete(Uri.parse('$userUrl/${duser.id}'));
 
       if (userResponse.statusCode == 200) {
-        // Attempt to delete associated user records
+        // Show success message for user deletion
+        Fluttertoast.showToast(
+          msg: "User deleted successfully",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+        );
+
+        // Attempt to delete associated user records (if present)
         final userRecordResponse =
-            await http.delete(Uri.parse('$userRecordUrl/${duser.staffNo}'));
-
-        if (userRecordResponse.statusCode == 200) {
-          Fluttertoast.showToast(
-            msg: "User and associated records deleted",
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-          );
-        } else {
-          Fluttertoast.showToast(
-            msg: "User deleted, but failed to delete associated records",
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.orange,
-            textColor: Colors.white,
-          );
-          print(
-              'Error deleting user records: Status ${userRecordResponse.statusCode}, Body: ${userRecordResponse.body}');
-        }
-
-        if (Navigator.canPop(context)) {
+           http.delete(Uri.parse('$userRecordUrl/${duser.staffNo}'));
+if (Navigator.canPop(context)) {
           Navigator.pop(context);
         }
-        fetchUsersRecord();
+
+      
         notifyListeners();
       } else {
         // Log the error body and response status code
@@ -616,6 +660,7 @@ class AuthProvider with ChangeNotifier {
         throw Exception('Failed to delete user: ${userResponse.body}');
       }
     } catch (error) {
+      // Show error message if any exception occurs
       Fluttertoast.showToast(
         msg: 'Error deleting user: $error',
         toastLength: Toast.LENGTH_LONG,
@@ -628,32 +673,4 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> checkUserAndDelete(BuildContext context, User user) async {
-    try {
-      print('trying to delete' + user.id!);
-      //
-      //Check if the user exists
-      final checkResponse = await http.get(Uri.parse('$userUrl/${user.id}'));
-      if (checkResponse.statusCode == 404) {
-        Fluttertoast.showToast(
-          msg: "User not found",
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-        );
-        return;
-      }
-      // If user exists, proceed to delete
-      await deleteUser(context, user);
-    } catch (error) {
-      Fluttertoast.showToast(
-        msg: 'Error checking user: $error',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
-    }
-  }
 }

@@ -79,7 +79,7 @@ initialize();
           ? DateFormat('dd/MM/yyyy').format(widget.company.startDate!)
           : 'N/A',
     );
-   await _fetchCompanyExtra();
+  
     managingDirectorController = TextEditingController();
     corporateAffairsController = TextEditingController();
     mediaManagerController = TextEditingController();
@@ -87,15 +87,15 @@ initialize();
     competitorsController = TextEditingController();
     directorsController = TextEditingController();
     _companySectorTypeNotifier = ValueNotifier(widget.company.companySectorId);
-   
-    mediaManagerHandler = HtmlTextHandler(
-        controller: mediaManagerController,
+   await  _fetchCompanyExtra();
+    managingDirectorHandler = HtmlTextHandler(
+        controller: managingDirectorController,
         onTextChanged: (text) {
           setState(() {
-            companyExtra?.mediaManager = text;
+            companyExtra?.managingDirector = text;
           });
         },
-        initialText: mediaManagerController.text);
+        initialText: managingDirectorController.text);
    
     corporateAffairsHandler = HtmlTextHandler(
         controller: corporateAffairsController,
@@ -535,7 +535,7 @@ initialize();
             const SizedBox(height: 8.0),
                 FormFieldWidget(
               isEditing: isEditing,
-              controller: managingDirectorController,
+              controller: mediaManagerController,
               label: 'Media Manager',
               htmlData: companyExtra?.mediaManager,
               icon: Icons.folder,

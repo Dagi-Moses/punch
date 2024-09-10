@@ -40,7 +40,7 @@ class Client {
       firstName: json['First_Name'] as String?,
       middleName: json['Middle_Name'] as String?,
       dateOfBirth: json['Date_Of_Birth'] != null
-          ? DateTime.parse(json['Date_Of_Birth'])
+          ? DateTime.parse(json['Date_Of_Birth']).toLocal()
           : null,
       telephone: json['Telephone'] as String?,
       email: json['Email'] as String?,

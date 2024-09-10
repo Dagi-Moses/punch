@@ -261,6 +261,7 @@ class _UsersScreenState extends State<UsersScreen> {
                           onTap: () {
                             authProvider.deleteSelectedUsers(
                                 context, tableController.selectedItems);
+                                   authProvider.setBoolValue(false);
                           },
                         ),
                       PopupMenuItem(
@@ -356,7 +357,7 @@ class _UsersScreenState extends State<UsersScreen> {
                     );
                   }));
                 }, () {
-                  authProvider.checkUserAndDelete(context, item);
+                  authProvider.deleteUser(context, item);
                 }),
               ),
             ],

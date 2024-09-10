@@ -237,49 +237,49 @@ class _MainViewState extends State<MainView> {
             }
           },
           footer: DefaultFooter<String, Anniversary>(
-            
-            child:!Responsive.isMobile(context) ?  Align(
-              alignment: Alignment.bottomLeft,
-              child: Container(
-                width:  Responsive.isTablet(context)
-                          ? MediaQuery.of(context).size.width / 12: MediaQuery.of(context).size.width / 15,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Icon(
-                            icons.first,
-                            size: 20,
-                            color: secondaryColor,
-                          ),
-                         
-                        ],
+                    
+                    child:!Responsive.isMobile(context) ?  Align(
+          alignment: Alignment.bottomLeft,
+          child: Container(
+            width:  Responsive.isTablet(context)
+                      ? MediaQuery.of(context).size.width / 12: MediaQuery.of(context).size.width / 15,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(
+                        icons.first,
+                        size: 20,
+                        color: secondaryColor,
                       ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Text(
-                          anniversaries.length.toString(),
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Raleway',
-                          ),
-                        ),
-                      ],
+                     
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text(
+                      anniversaries.length.toString(),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Raleway',
+                      ),
                     ),
                   ],
                 ),
-              )
-            ): const SizedBox(),
-          ),
+              ],
+            ),
+          )
+                    ): const SizedBox(),
+                  ),
           filters: [
             TextTableFilter(
               id: "content",
