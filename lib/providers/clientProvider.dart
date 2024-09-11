@@ -14,12 +14,12 @@ import 'package:punch/providers/clientExtraProvider.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ClientProvider with ChangeNotifier {
-  final String baseUrl = 'http://localhost:3000/clients';
-  final String base = "http://localhost:3000";
+  final String baseUrl = 'http://172.20.20.28:3000/clients';
+  final String base = "http://172.20.20.28:3000";
   late WebSocketChannel channel;
   List<Client> _clients = [];
   List<Client> get clients => _clients;
-
+  final tableController = PagedDataTableController<String, Client>();
   bool _isRowsSelected = false; // Default value
 
   bool get isRowsSelected => _isRowsSelected;
@@ -32,8 +32,8 @@ class ClientProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  final String webSocketUrl = 'ws://localhost:3000?channel=client';
-  final tableController = PagedDataTableController<String, Client>();
+  final String webSocketUrl = 'ws://172.20.20.28:3000?channel=client';
+
   late WebSocketManager _webSocketManager;
   ClientProvider() {
     fetchClients();
@@ -437,9 +437,16 @@ class ClientProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // @override
+  // void dispose() {
+  //   channel.sink.close();
+  //   super.dispose();
+  // }
   @override
-  void dispose() {
-    channel.sink.close();
-    super.dispose();
-  }
+void dispose() {
+  channel.sink.close(); // Clean up WebSocket
+  tableController.dispose(); // Clean up table controller
+  super.dispose();
+}
+
 }

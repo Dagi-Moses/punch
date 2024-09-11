@@ -7,10 +7,10 @@ import 'package:punch/models/myModels/web_socket_manager.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ClientExtraProvider with ChangeNotifier {
-  final String baseUrl = 'http://localhost:3000/clientExtras';
-  final String base = "http://localhost:3000";
+  final String baseUrl = 'http://172.20.20.28:3000/clientExtras';
+  final String base = "http://172.20.20.28:3000";
   //late WebSocketChannel channel;
-  final String webSocketUrl = 'ws://localhost:3000?channel=clientExtra';
+  final String webSocketUrl = 'ws://172.20.20.28:3000?channel=clientExtra';
   late WebSocketManager _webSocketManager;
   Map<int, ClientExtra> clientsExtraMap = {};
   ClientExtraProvider() {

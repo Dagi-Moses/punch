@@ -10,8 +10,8 @@ import 'package:punch/models/myModels/web_socket_manager.dart';
 import 'package:punch/providers/clientExtraProvider.dart';
 
 class CompanyProvider with ChangeNotifier {
-  final String baseUrl = 'http://localhost:3000/companies';
-  final String base = "http://localhost:3000";
+  final String baseUrl = 'http://172.20.20.28:3000/companies';
+  final String base = "http://172.20.20.28:3000";
   List<Company> _companies = [];
   List<Company> get companies => _companies;
   Map<int, CompanyExtra> companyExtraMap = {};
@@ -19,13 +19,13 @@ class CompanyProvider with ChangeNotifier {
   bool get isRowsSelected => _isRowsSelected;
   bool _loading = false; // Default value
   bool get loading => _loading;
-  final String webSocketUrl = 'ws://localhost:3000?channel=client';
+  final String webSocketUrl = 'ws://172.20.20.28:3000?channel=client';
   final tableController = PagedDataTableController<String, Company>();
 
   // Two WebSocket URLs
-  final String companyWebSocketUrl = 'ws://localhost:3000?channel=company';
+  final String companyWebSocketUrl = 'ws://172.20.20.28:3000?channel=company';
   final String companyExtraWebSocketUrl =
-      'ws://localhost:3000?channel=companyExtra';
+      'ws://172.20.20.28:3000?channel=companyExtra';
 
   late WebSocketManager _companyWebSocketManager;
   late WebSocketManager _companyExtraWebSocketManager;

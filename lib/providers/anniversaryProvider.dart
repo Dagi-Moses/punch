@@ -13,19 +13,19 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:paged_datatable/paged_datatable.dart';
 
 class AnniversaryProvider with ChangeNotifier {
-  final String baseUrl = 'http://localhost:3000/anniversaries';
-  final String base = "http://localhost:3000";
+  final String baseUrl = 'http://172.20.20.28:3000/anniversaries';
+  final String base = "http://172.20.20.28:3000";
   late WebSocketChannel channel;
   List<Anniversary> _anniversaries = [];
   List<Anniversary> get anniversaries => _anniversaries;
   List<AnniversarySector> _anniversarySectors = [];
   List<AnniversarySector> get anniversarySectors => _anniversarySectors;
 
-  final String webSocketUrl = 'ws://localhost:3000?channel=anniversary';
+  final String webSocketUrl = 'ws://172.20.20.28:3000?channel=anniversary';
   bool _loading = false; // Default value
 
   bool get loading => _loading;
-  //  Uri.parse('ws://localhost:3000?channel=anniversary'),
+  //  Uri.parse('ws://172.20.20.28:3000?channel=anniversary'),
 
   bool _isRowsSelected = false; // Default value
   bool get isRowsSelected => _isRowsSelected;
@@ -255,7 +255,7 @@ class AnniversaryProvider with ChangeNotifier {
 
   AnniversaryProvider() {
     channel = WebSocketChannel.connect(
-        Uri.parse('ws://localhost:3000?channel=anniversary'));
+        Uri.parse('ws://172.20.20.28:3000?channel=anniversary'));
     fetchAnniversaries();
     _initializeWebSocket();
     fetchAnniversaryTypes();

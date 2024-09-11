@@ -18,9 +18,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class AuthProvider with ChangeNotifier {
-  final String baseUrl = 'http://localhost:3000';
-  final String userUrl = 'http://localhost:3000/users';
-  final String userRecordUrl = 'http://localhost:3000/userRecords';
+  final String baseUrl = 'http://172.20.20.28:3000';
+  final String userUrl = 'http://172.20.20.28:3000/users';
+  final String userRecordUrl = 'http://172.20.20.28:3000/userRecords';
   User? _user;
   final StreamController<User?> _userController =
       StreamController<User?>.broadcast();
@@ -31,9 +31,9 @@ class AuthProvider with ChangeNotifier {
 
   bool get loading => _loading;
   late WebSocketManager _webSocketManager;
-  final String webSocketUrl = 'ws://localhost:3000?channel=auth';
+  final String webSocketUrl = 'ws://172.20.20.28:3000?channel=auth';
   final String userRecordWebSocketUrl =
-      'ws://localhost:3000?channel=userRecord';
+      'ws://172.20.20.28:3000?channel=userRecord';
  late WebSocketManager _userRecordManager;
   setBoolValue(bool newValue) {
     _isRowsSelected = newValue;
@@ -82,7 +82,7 @@ class AuthProvider with ChangeNotifier {
   AuthProvider() {
     _initialize();
     channel =
-        WebSocketChannel.connect(Uri.parse('ws://localhost:3000?channel=auth'));
+        WebSocketChannel.connect(Uri.parse('ws://172.20.20.28:3000?channel=auth'));
 
     _initializeWebSocket();
   }

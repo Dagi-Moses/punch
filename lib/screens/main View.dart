@@ -43,14 +43,17 @@ class _MainViewState extends State<MainView> {
 
   Future<void> _initializeDateFormatting() async {
     await initializeDateFormatting('en');
-    setState(() {
+    if(mounted){
+  setState(() {
       _isInitialized = true;
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AnniversaryProvider>(context, listen: false)
-          .tableController
-          .removeFilters();
-    });
+    }
+  
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   Provider.of<AnniversaryProvider>(context, listen: false)
+    //       .tableController
+    //       .removeFilters();
+    // });
   }
 
   List<int> calculatePageSizes(int totalItems) {

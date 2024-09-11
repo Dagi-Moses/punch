@@ -29,10 +29,6 @@ class ClientScreen extends StatefulWidget {
 }
 
 class _ClientScreenState extends State<ClientScreen> {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController titletypeIdController = TextEditingController();
-  final TextEditingController clientNoController = TextEditingController();
-  final TextEditingController placedByNameController = TextEditingController();
 
   bool _isInitialized = false;
 
@@ -44,14 +40,17 @@ class _ClientScreenState extends State<ClientScreen> {
 
   Future<void> _initializeDateFormatting() async {
     await initializeDateFormatting('en');
-    setState(() {
+    if(mounted){
+ setState(() {
       _isInitialized = true;
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ClientProvider>(context, listen: false)
-          .tableController
-          .removeFilters();
-    });
+    }
+   
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   Provider.of<ClientProvider>(context, listen: false)
+    //       .tableController
+    //       .removeFilters();
+    // });
   }
 
   List<int> calculatePageSizes(int totalItems) {
@@ -81,8 +80,7 @@ class _ClientScreenState extends State<ClientScreen> {
         ),
       );
     }
-    return Expanded(
-      flex: 5,
+    return SafeArea(
       child: PagedDataTableTheme(
         data: PagedDataTableThemeData(
           horizontalScrollbarVisibility: true,
@@ -104,11 +102,11 @@ class _ClientScreenState extends State<ClientScreen> {
             String nameB = b.firstName?.isNotEmpty == true
                 ? b.firstName!
                 : '\uFFFF'; // Handle null/empty firstName for b
-
+            
             return nameA.compareTo(nameB);
           });
-
-
+            
+            
           if (clients.isEmpty) {
             return const Center(
               child: SpinKitWave(
@@ -119,17 +117,10 @@ class _ClientScreenState extends State<ClientScreen> {
           }
           final pageSizes = calculatePageSizes(clients.length);
           return PagedDataTable<String, Client>(
-            fixedColumnCount: 1,
-
-            controller: tableController,
-
-            configuration: const PagedDataTableConfiguration(),
-            pageSizes: pageSizes,
-
-            fetcher: (pageSize, sortModel, filterModel, pageToken) async {
+             fetcher: (pageSize, sortModel, filterModel, pageToken) {
               try {
                 int pageIndex = int.parse(pageToken ?? "0");
-
+            
                 // Filter data based on filterModel
                 List<Client> filteredData = clients.where((client) {
                   // Text filter
@@ -139,11 +130,11 @@ class _ClientScreenState extends State<ClientScreen> {
                           .contains(filterModel['firstName'].toLowerCase())) {
                     return false;
                   }
-
+            
                   if (filterModel['clientNo'] != null) {
                     String filterInput = filterModel['clientNo'].trim();
                     int? filterStaffNo = int.tryParse(filterInput);
-
+            
                     if (filterStaffNo != null &&
                         client.clientNo == filterStaffNo) {
                       return true; // Include this user in the filtered results
@@ -151,33 +142,41 @@ class _ClientScreenState extends State<ClientScreen> {
                       return false; // Exclude users that do not match the filter
                     }
                   }
-
+            
                   if (filterModel['email'] != null &&
                       !client.email!
                           .toLowerCase()
                           .contains(filterModel['email'].toLowerCase())) {
                     return false;
                   }
-
+            
                   return true;
                 }).toList();
-
+            
                 // Paginate the filtered data
                 List<Client> data = filteredData
                     .skip(pageSize * pageIndex)
                     .take(pageSize)
                     .toList();
-
+            
                 String? nextPageToken = (data.length == pageSize)
                     ? (pageIndex + 1).toString()
                     : null;
-
+            
                 return (data, nextPageToken);
               } catch (e) {
                 return Future.error('Error fetching page: $e');
               }
             },
-
+            fixedColumnCount: 1,
+            
+            controller: tableController,
+            
+            configuration: const PagedDataTableConfiguration(),
+            pageSizes: pageSizes,
+            
+           
+            
             filters: [
               TextTableFilter(
                 id: "firstName",
@@ -204,7 +203,7 @@ class _ClientScreenState extends State<ClientScreen> {
                 enabled: true,
               ),
             ],
-
+            
             filterBarChild: IconTheme(
               data: const IconThemeData(color: Colors.black),
               child: PopupMenuButton(
@@ -280,7 +279,7 @@ class _ClientScreenState extends State<ClientScreen> {
                   }),
             ),
             // fixedColumnCount: 2,
-
+            
             footer: DefaultFooter<String, Client>(
               child: Align(
                 alignment: Alignment.bottomLeft,
@@ -326,7 +325,7 @@ class _ClientScreenState extends State<ClientScreen> {
                     : const SizedBox(),
               ),
             ),
-
+            
             columns: [
               if (clientProvider.isRowsSelected) RowSelectorColumn(),
               // RowSelectorColumn(),
@@ -358,7 +357,7 @@ class _ClientScreenState extends State<ClientScreen> {
                   return true;
                 },
               ),
-
+            
               LargeTextTableColumn(
                 title: const Text("Date of Birth "),
                 sortable: true,
@@ -405,7 +404,7 @@ class _ClientScreenState extends State<ClientScreen> {
                   return true;
                 },
               ),
-
+            
               TableColumn(
                 title: const Text("Operations"),
                 // size: const RemainingColumnSize(),

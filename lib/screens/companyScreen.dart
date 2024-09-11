@@ -45,14 +45,17 @@ class _CompanyScreenState extends State<CompanyScreen> {
 
   Future<void> _initializeDateFormatting() async {
     await initializeDateFormatting('en');
-    setState(() {
+    if(mounted){
+ setState(() {
       _isInitialized = true;
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<CompanyProvider>(context, listen: false)
-          .tableController
-          .removeFilters();
-    });
+    }
+   
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   Provider.of<CompanyProvider>(context, listen: false)
+    //       .tableController
+    //       .removeFilters();
+    // });
   }
 
   
@@ -83,9 +86,7 @@ class _CompanyScreenState extends State<CompanyScreen> {
         ),
       );
     }
-    return Expanded(
-      flex: 5,
-      child: PagedDataTableTheme(
+    return PagedDataTableTheme(
         data: PagedDataTableThemeData(
           horizontalScrollbarVisibility: true,
           borderRadius: BorderRadius.circular(10),
@@ -452,7 +453,7 @@ class _CompanyScreenState extends State<CompanyScreen> {
             ],
           );
         }),
-      ),
-    );
+      );
+    
   }
 }

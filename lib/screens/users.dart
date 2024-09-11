@@ -36,14 +36,17 @@ class _UsersScreenState extends State<UsersScreen> {
 
   Future<void> _initializeDateFormatting() async {
     await initializeDateFormatting('en');
-    setState(() {
+    if(mounted){
+  setState(() {
       _isInitialized = true;
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AuthProvider>(context, listen: false)
-          .tableController
-          .removeFilters();
-    });
+    }
+  
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   Provider.of<AuthProvider>(context, listen: false)
+    //       .tableController
+    //       .removeFilters();
+    // });
   }
 
   List<int> calculatePageSizes(int totalItems) {
@@ -70,9 +73,8 @@ class _UsersScreenState extends State<UsersScreen> {
         ),
       );
     }
-    return Expanded(
-      flex: 5,
-      child: PagedDataTableTheme(
+    return 
+       PagedDataTableTheme(
         data: PagedDataTableThemeData(
           horizontalScrollbarVisibility: true,
           borderRadius: BorderRadius.circular(10),
@@ -363,7 +365,7 @@ class _UsersScreenState extends State<UsersScreen> {
             ],
           );
         }),
-      ),
+      
     );
   }
 }
