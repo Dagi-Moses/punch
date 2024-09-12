@@ -43,7 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const ClientScreen(),
                     const CompanyScreen(),
                     if (isAdmin) const UsersScreen(),
-                    Center(child: Text('Logging Out')),
+                
                   ],
                 );
               }),
@@ -63,54 +63,3 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 }
-
-// class DashboardScreen extends StatefulWidget {
-//   @override
-//   State<DashboardScreen> createState() => _DashboardScreenState();
-// }
-
-// class _DashboardScreenState extends State<DashboardScreen> {
-//   @override
-//   Widget build(BuildContext context) {
-//     final auth = Provider.of<AuthProvider>(context);
-//     final isAdmin = auth.user?.loginId == UserRole.admin;
-
-//     return SafeArea(
-//       child: Container(
-//         padding: const EdgeInsets.all(12),
-//         child: Column(
-//           children: [
-//             Expanded(
-//               child: Consumer<DashboardPageProvider>(
-//                 builder: (context, pageProvider, _) {
-//                   return PageView(
-//                     controller: pageProvider.pageController,
-//                     onPageChanged: (index) {
-//                       pageProvider.setPageIndex(index);
-//                     },
-//                     children: [
-//                       Center(child: Text('Main View')),
-//                       Center(child: Text('Client Screen')),
-//                       Center(child: Text('Company Screen')),
-//                       if (isAdmin) Center(child: Text('Users Screen')),
-//    Center(child: Text('Logging Out')),
-//                     ],
-//                   );
-//                 },
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   @override
-//   void didUpdateWidget(covariant DashboardScreen oldWidget) {
-//     super.didUpdateWidget(oldWidget);
-//     final provider = Provider.of<DashboardPageProvider>(context, listen: false);
-//     if (provider.selectedIndex != provider.pageController.page?.toInt()) {
-//       provider.pageController.jumpToPage(provider.selectedIndex);
-//     }
-//   }
-// }

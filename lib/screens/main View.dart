@@ -48,12 +48,6 @@ class _MainViewState extends State<MainView> {
       _isInitialized = true;
     });
     }
-  
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   Provider.of<AnniversaryProvider>(context, listen: false)
-    //       .tableController
-    //       .removeFilters();
-    // });
   }
 
   List<int> calculatePageSizes(int totalItems) {
@@ -539,10 +533,8 @@ class _MainViewState extends State<MainView> {
                   );
                 }));
               }, () {
-                anniversaryProvider.deleteAnniversary(context, item.id!);
-                Future.delayed(const Duration(seconds: 1), () {
-                  setState(() {});
-                });
+                anniversaryProvider.deleteAnniversary(context, item);
+               
             
               }),
             ),

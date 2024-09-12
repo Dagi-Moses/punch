@@ -435,7 +435,7 @@ class AnniversaryProvider with ChangeNotifier {
       // Iterate over the selected clients
       for (var anniversary in selectedAnniversaries) {
         // Await the deletion of the client
-        deleteAnniversary(context, anniversary.id!);
+        deleteAnniversary(context, anniversary);
       }
 
       // Notify listeners after all deletions are completed
@@ -445,9 +445,9 @@ class AnniversaryProvider with ChangeNotifier {
     }
   }
 
-  Future<void> deleteAnniversary(BuildContext context, String id) async {
+  Future<void> deleteAnniversary(BuildContext context, Anniversary anniversary) async {
     try {
-      final response = await http.delete(Uri.parse('$baseUrl/$id'));
+      final response = await http.delete(Uri.parse('$baseUrl/${anniversary.id}'));
       if (response.statusCode == 200) {
         if (Navigator.canPop(context)) {
           Navigator.pop(context);
