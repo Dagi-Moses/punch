@@ -139,8 +139,8 @@ class _SideMenuState extends State<SideMenu> {
             ),
             onTap: (index, _) {
               logOut(context, () {
-                Navigator.of(context).pop();
-                auth.logout();
+              
+                auth.logout(context);
               });
             },
           ),

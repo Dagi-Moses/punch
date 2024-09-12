@@ -139,8 +139,7 @@ class __WebFormState extends State<_WebForm> {
           if (!_isAnimatedLogin)
             widget.privacyPolicyChild ?? const _PolicyCheckboxRow()
         ];
-      case LoginComponents.forgotPassword:
-        return <Widget>[if (_isAnimatedLogin) const _ForgotPassword()];
+     
       case LoginComponents.actionButton:
         return <Widget>[
           _ActionButton(
@@ -442,11 +441,11 @@ class _FormState extends State<_Form> {
         showPasswordVisibility: auth.showPasswordVisibility,
         textInputAction:
             auth.isSignup ? TextInputAction.next : TextInputAction.done,
-        // onFieldSubmitted: (_) {
-        //     authProvider.action(
-        //     context: context,
-        //     formKey: widget.formKey,
-        //   ) ;},
+        onFieldSubmitted: (_) {
+            authProvider.action(
+            context: context,
+            formKey: widget.formKey,
+          ) ;},
         onChanged: (value) {
           auth.setPassword(newPassword: value!);
         },
@@ -469,48 +468,3 @@ class _FormState extends State<_Form> {
   }
 }
 
-class _ForgotPassword extends StatelessWidget {
-  const _ForgotPassword({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final loginTheme = context.watch<LoginTheme>();
-    final auth = context.read<Auth>();
-    final dynamicSize = DynamicSize(context);
-    final isLandscape = loginTheme.isLandscape;
-    return Container(
-      alignment: isLandscape ? Alignment.center : Alignment.topCenter,
-      padding: loginTheme.forgotPasswordPadding ??
-          (isLandscape
-              ? dynamicSize.lowTopPadding
-              : dynamicSize.lowBottomPadding),
-      child: _textButton(context, isLandscape, loginTheme, auth),
-    );
-  }
-
-  BaseTextButton _textButton(
-    BuildContext context,
-    bool isLandscape,
-    LoginTheme loginTheme,
-    Auth auth,
-  ) {
-    return BaseTextButton(
-      text: context.read<LoginTexts>().forgotPassword,
-      style: _defaultStyle(context, isLandscape)
-          .copyWith(
-              decoration: TextDecoration.underline,
-              decorationColor: Colors.green, // Set the underline color
-              decorationThickness: 1.5,
-              color: Colors.green)
-          .merge(loginTheme.forgotPasswordStyle),
-      onPressed: () async {
-        auth.onForgotPassword(auth.emailController.text);
-      },
-    );
-  }
-
-  TextStyle _defaultStyle(BuildContext context, bool isLandscape) =>
-      TextStyles(context).subBodyStyle(
-        color: isLandscape ? Theme.of(context).primaryColor : Colors.white,
-      );
-}

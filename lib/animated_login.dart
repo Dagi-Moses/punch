@@ -499,7 +499,7 @@ class __ViewState extends State<_View> with SingleTickerProviderStateMixin {
       
       case LoginComponents.form:
       case LoginComponents.actionButton:
-      case LoginComponents.forgotPassword:
+      // case LoginComponents.forgotPassword:
       
     }
     return null;
@@ -516,10 +516,10 @@ class __ViewState extends State<_View> with SingleTickerProviderStateMixin {
               password: auth.passwordController.text,
               formKey: auth.formKey,
             ));
-      case LoginComponents.forgotPassword:
-        return context.select<Auth, bool>((Auth auth) => auth.isAnimatedLogin)
-            ? _mobileWrapper(component.animationType, const _ForgotPassword())
-            : Container();
+      // case LoginComponents.forgotPassword:
+      //   return context.select<Auth, bool>((Auth auth) => auth.isAnimatedLogin)
+      //       ? _mobileWrapper(component.animationType, const _ForgotPassword())
+      //       : Container();
       case LoginComponents.actionButton:
         return _mobileWrapper(component.animationType,  _ActionButton( 
              

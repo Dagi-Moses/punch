@@ -34,7 +34,7 @@ class AuthProvider with ChangeNotifier {
   final String webSocketUrl = 'ws://172.20.20.28:3000?channel=auth';
   final String userRecordWebSocketUrl =
       'ws://172.20.20.28:3000?channel=userRecord';
- late WebSocketManager _userRecordManager;
+  late WebSocketManager _userRecordManager;
   setBoolValue(bool newValue) {
     _isRowsSelected = newValue;
     notifyListeners();
@@ -64,7 +64,7 @@ class AuthProvider with ChangeNotifier {
 
   void setValidationStatus(
       {required bool email, required bool password, required bool loading}) {
-    _textButtonLoading = loading;
+    setTextButtonLoading(loading);
     _validateEmail = email;
     _validatePassword = password;
     notifyListeners();
@@ -81,8 +81,8 @@ class AuthProvider with ChangeNotifier {
 
   AuthProvider() {
     _initialize();
-    channel =
-        WebSocketChannel.connect(Uri.parse('ws://172.20.20.28:3000?channel=auth'));
+    channel = WebSocketChannel.connect(
+        Uri.parse('ws://172.20.20.28:3000?channel=auth'));
 
     _initializeWebSocket();
   }
@@ -95,7 +95,6 @@ class AuthProvider with ChangeNotifier {
     );
     _webSocketManager.connect();
 
-
     _userRecordManager = WebSocketManager(
       userRecordWebSocketUrl,
       _handleUserRecordWebSocketMessage,
@@ -107,11 +106,10 @@ class AuthProvider with ChangeNotifier {
   void _reconnectWebSocket() {
     print("reconnected");
   }
+
   void _reconnectUserRecordWebSocket() {
     print("reconnected user Record");
   }
-
-  
 
   void _handleWebSocketMessage(dynamic message) async {
     final type = message['type'];
@@ -174,25 +172,25 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-
-  void   _handleUserRecordWebSocketMessage(dynamic message) async {
+  void _handleUserRecordWebSocketMessage(dynamic message) async {
     final type = message['type'];
     final data = message['data'];
 
     switch (type) {
       case 'ADD':
-       final newRecord = UserRecord.fromJson(data);
-         _addUserRecord(newRecord);
-          notifyListeners();
+        final newRecord = UserRecord.fromJson(data);
+        _addUserRecord(newRecord);
+        notifyListeners();
         break;
 
       case 'DELETE':
-      _deleteUserRecord(int.tryParse(data)); 
+        _deleteUserRecord(int.tryParse(data));
         notifyListeners();
         break;
     }
   }
-void _deleteUserRecord(int? staffNo) {
+
+  void _deleteUserRecord(int? staffNo) {
     if (userRecordsMap.containsKey(staffNo)) {
       // Remove all records associated with the staffNo
       userRecordsMap.remove(staffNo);
@@ -202,18 +200,17 @@ void _deleteUserRecord(int? staffNo) {
     }
     notifyListeners();
   }
+
   void _addUserRecord(UserRecord userRecord) {
-   if (userRecord.staffNo != null) {
+    if (userRecord.staffNo != null) {
       if (!userRecordsMap.containsKey(userRecord.staffNo!)) {
         userRecordsMap[userRecord.staffNo!] = [];
       }
       userRecordsMap[userRecord.staffNo!]!.add(userRecord);
-       print('Added new UserRecord for staffNo ${userRecord.staffNo}');
+      print('Added new UserRecord for staffNo ${userRecord.staffNo}');
     }
-   notifyListeners();
+    notifyListeners();
   }
-
-
 
   Future<void> _initialize() async {
     _checkToken();
@@ -324,33 +321,11 @@ void _deleteUserRecord(int? staffNo) {
     notifyListeners();
   }
 
-  Future<void> _checkLoginStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-    String? userJson = prefs.getString('user');
-
-    if (token != null && userJson != null) {
-      try {
-        final userMap = jsonDecode(userJson);
-        _user = User.fromJson(userMap);
-        _userController.add(_user);
-      } catch (e) {
-        _user = null;
-        _userController.add(null);
-      }
-    } else {
-      _user = null;
-      _userController.add(null);
-    }
-
-    notifyListeners();
-  }
-
   Future<void> action({
     required BuildContext context,
     required GlobalKey<FormState> formKey,
   }) async {
-    _textButtonLoading = true;
+    setTextButtonLoading(true);
 
     setValidationStatus(email: true, password: true, loading: true);
     FocusManager.instance.primaryFocus?.unfocus();
@@ -359,12 +334,9 @@ void _deleteUserRecord(int? staffNo) {
         await _loginResult(context: context, formKey: formKey);
       }
     } catch (e) {
-      _textButtonLoading = false;
-      notifyListeners();
+      setTextButtonLoading(false);
     } finally {
-      _textButtonLoading = false;
-      notifyListeners();
-      setValidationStatus(email: false, password: false, loading: true);
+      setValidationStatus(email: false, password: false, loading: false);
     }
   }
 
@@ -401,19 +373,15 @@ void _deleteUserRecord(int? staffNo) {
         // Store or update the user record
         await _storeUserRecord(_user!);
 
-        _textButtonLoading = false;
         notifyListeners();
       } else {
         _handleLoginError(response);
-        print(response);
       }
     } catch (error) {
       _handleLoginException(error);
-      print(error);
     } finally {
       formKey.currentState!.reset();
-      _textButtonLoading = false;
-      notifyListeners();
+      setTextButtonLoading(false);
     }
   }
 
@@ -429,7 +397,7 @@ void _deleteUserRecord(int? staffNo) {
 
     final userRecord = UserRecord(
       staffNo: user.staffNo,
-      loginDateTime:  DateTime.now().toUtc(), 
+      loginDateTime: DateTime.now().toUtc(),
       computerName: computerName,
     );
 
@@ -485,18 +453,25 @@ void _deleteUserRecord(int? staffNo) {
     notifyListeners();
   }
 
-  Future<void> logout() async {
+  Future<void> logout(BuildContext context) async {
+    Navigator.of(context).pop();
+    if (Navigator.canPop(context)) {
+      Navigator.of(context).pop();
+    }
+    await Future.delayed(Duration(milliseconds: 100));
+    _user = null;
+    _userController.add(null);
+    notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
     await prefs.remove('user');
-    _user = null;
-    _userController.add(null);
     notifyListeners();
 
     // Clear cookies if on web
     if (kIsWeb) {
       clearCookies();
       clearLocalStorage();
+      html.window.location.reload();
     }
   }
 
@@ -629,11 +604,14 @@ void _deleteUserRecord(int? staffNo) {
       print('Error deleting selected clients and their extras: $error');
     }
   }
-Future<void> deleteUser(BuildContext context, User duser) async {
+
+  Future<void> deleteUser(BuildContext context, User duser) async {
     try {
       // Delete the user
       final userResponse = await http.delete(Uri.parse('$userUrl/${duser.id}'));
-
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
       if (userResponse.statusCode == 200) {
         // Show success message for user deletion
         Fluttertoast.showToast(
@@ -646,12 +624,8 @@ Future<void> deleteUser(BuildContext context, User duser) async {
 
         // Attempt to delete associated user records (if present)
         final userRecordResponse =
-           http.delete(Uri.parse('$userRecordUrl/${duser.staffNo}'));
-if (Navigator.canPop(context)) {
-          Navigator.pop(context);
-        }
+            http.delete(Uri.parse('$userRecordUrl/${duser.staffNo}'));
 
-      
         notifyListeners();
       } else {
         // Log the error body and response status code
@@ -672,5 +646,4 @@ if (Navigator.canPop(context)) {
       throw error;
     }
   }
-
 }

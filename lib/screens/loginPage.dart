@@ -132,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
           AnimatedComponent(component: LoginComponents.form),
 
-          AnimatedComponent(component: LoginComponents.forgotPassword),
+          // AnimatedComponent(component: LoginComponents.forgotPassword),
           AnimatedComponent(component: LoginComponents.policyCheckbox),
           // AnimatedComponent(component: LoginComponents.changeActionButton),
           AnimatedComponent(component: LoginComponents.actionButton),

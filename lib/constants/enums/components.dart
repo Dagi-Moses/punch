@@ -22,8 +22,6 @@ enum LoginComponents {
   // /// Prefixed with "Already have an account?" or "Not have an account?" texts.
   // changeActionButton,
 
-  /// Forgot password action button.
-  forgotPassword,
 
   /// Logo of the app.
   logo,

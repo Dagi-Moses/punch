@@ -58,14 +58,14 @@ class _RoundedButtonState extends State<RoundedButton> {
                     .merge(_defaultButtonStyle(context, loginTheme.isLandscape))
                 : _defaultButtonStyle(context, loginTheme.isLandscape),
             onPressed: widget.onPressed,
-            child: authProvider.textButtonLoading
-                ? SizedBox(
+            child: !authProvider.textButtonLoading
+                ? BaseText(widget.buttonText, forceDefaultStyle: true)
+                : SizedBox(
                     height: _loadingSize(context),
                     width: _loadingSize(context),
                     child: CircularProgressIndicator(
                         color: loginTheme.loadingButtonColor),
-                  )
-                : BaseText(widget.buttonText, forceDefaultStyle: true),
+                  ),
           ),
         );
       },

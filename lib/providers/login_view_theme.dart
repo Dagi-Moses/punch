@@ -99,10 +99,10 @@ class LoginViewTheme {
    
       AnimatedComponent(component: LoginComponents.form),
    
-      AnimatedComponent(
-        component: LoginComponents.forgotPassword,
-        animationType: AnimationType.left,
-      ),
+      // AnimatedComponent(
+      //   component: LoginComponents.forgotPassword,
+      //   animationType: AnimationType.left,
+      // ),
      
       AnimatedComponent(component: LoginComponents.policyCheckbox),
       AnimatedComponent(

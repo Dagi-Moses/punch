@@ -1,7 +1,9 @@
 enum UserRole { 
-  user,
   admin, 
   library,
+  user,
+ 
+ 
 }
 
 class User {
