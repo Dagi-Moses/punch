@@ -39,12 +39,8 @@ class _LoginScreenState extends State<LoginScreen> {
         return authProvider.action(context: context, formKey: formKey);
       },
       onForgotPassword: _onForgotPassword,
-      logo: kIsWeb
-          ? Image.network(
-              "assets/images/punch_logo.png",
-              scale: 5,
-            )
-          : Image.asset(
+      logo:
+          Image.asset(
               "assets/images/punch_logo.png",
               scale: 5,
             ),

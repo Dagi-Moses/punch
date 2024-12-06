@@ -458,7 +458,7 @@ class AuthProvider with ChangeNotifier {
     if (Navigator.canPop(context)) {
       Navigator.of(context).pop();
     }
-    await Future.delayed(Duration(milliseconds: 100));
+    await Future.delayed(Duration(milliseconds: 500));
     _user = null;
     _userController.add(null);
     notifyListeners();

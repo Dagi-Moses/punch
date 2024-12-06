@@ -26,14 +26,12 @@ class _SideMenuState extends State<SideMenu> {
 
     return SafeArea(
       child: sideMenu.SideMenu(
-      
         footer: const ProfileCard(),
         controller: sidemenu,
         style: sideMenu.SideMenuStyle(
-        
           decoration: const BoxDecoration(),
-      
-          openSideMenuWidth:Responsive.isDesktop(context) ? 190: 130,
+
+          openSideMenuWidth: Responsive.isDesktop(context) ? 190 : 130,
           compactSideMenuWidth: 60,
           hoverColor: Colors.red[200],
           selectedColor: punchRed,
@@ -47,20 +45,21 @@ class _SideMenuState extends State<SideMenu> {
             Radius.circular(5.0),
           ),
           showTooltip: true,
-      
+
           showHamburger: Responsive.isMobile(context) ? true : false,
           itemHeight: 50.0,
           selectedHoverColor: Colors.red[400],
           itemInnerSpacing: 8.0,
           itemOuterPadding: const EdgeInsets.symmetric(horizontal: 5.0),
           toggleColor: Colors.black54,
-      
+
           // Additional properties for expandable items
-          selectedTitleTextStyleExpandable:
-              const TextStyle(color: Colors.white), // Adjust the style as needed
+          selectedTitleTextStyleExpandable: const TextStyle(
+              color: Colors.white), // Adjust the style as needed
           unselectedTitleTextStyleExpandable: const TextStyle(
               color: Colors.black54), // Adjust the style as needed
-          selectedIconColorExpandable: Colors.white, // Adjust the color as needed
+          selectedIconColorExpandable:
+              Colors.white, // Adjust the color as needed
           unselectedIconColorExpandable:
               Colors.black54, // Adjust the color as needed
           arrowCollapse: Colors.yellow, // Adjust the color as needed
@@ -73,15 +72,10 @@ class _SideMenuState extends State<SideMenu> {
           children: [
             const SizedBox(height: defaultPadding),
             Center(
-              child: kIsWeb
-                  ? Image.network(
-                      "assets/images/punch_logo.png",
-                      scale: 5,
-                    )
-                  : Image.asset(
-                      "assets/images/punch_logo.png",
-                      scale: 5,
-                    ),
+              child: Image.asset(
+                "assets/images/punch_logo.png",
+                scale: 5,
+              ),
             ),
             const SizedBox(height: defaultPadding),
           ],
@@ -94,7 +88,7 @@ class _SideMenuState extends State<SideMenu> {
             ),
             onTap: (index, _) {
               provider.setPageIndex(0);
-      
+
               sidemenu.changePage(0);
             },
           ),
@@ -105,7 +99,7 @@ class _SideMenuState extends State<SideMenu> {
             ),
             onTap: (index, _) {
               provider.setPageIndex(1);
-      
+
               sidemenu.changePage(1);
             },
           ),
@@ -115,7 +109,7 @@ class _SideMenuState extends State<SideMenu> {
               Icons.business,
             ),
             onTap: (index, _) {
-            provider.setPageIndex(2);
+              provider.setPageIndex(2);
               sidemenu.changePage(2);
             },
           ),
@@ -139,7 +133,6 @@ class _SideMenuState extends State<SideMenu> {
             ),
             onTap: (index, _) {
               logOut(context, () {
-              
                 auth.logout(context);
               });
             },
