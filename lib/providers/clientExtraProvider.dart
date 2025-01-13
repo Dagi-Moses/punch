@@ -4,13 +4,13 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:punch/models/myModels/clientExtraModel.dart';
 import 'package:punch/models/myModels/web_socket_manager.dart';
+import 'package:punch/src/const.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ClientExtraProvider with ChangeNotifier {
-  final String baseUrl = 'http://172.20.20.28:3000/clientExtras';
-  final String base = "http://172.20.20.28:3000";
+
   //late WebSocketChannel channel;
-  final String webSocketUrl = 'ws://172.20.20.28:3000?channel=clientExtra';
+
   late WebSocketManager _webSocketManager;
   Map<int, ClientExtra> clientsExtraMap = {};
   ClientExtraProvider() {
@@ -20,7 +20,7 @@ class ClientExtraProvider with ChangeNotifier {
 
   void _initializeWebSocket() {
     _webSocketManager = WebSocketManager(
-      webSocketUrl,
+     Const.clientExtraChannel,
       _handleWebSocketMessage,
       _reconnectWebSocket,
     );
@@ -94,7 +94,7 @@ class ClientExtraProvider with ChangeNotifier {
   Future<void> fetchClientExtras() async {
     print("started fetching clientExtras");
     try {
-      final response = await http.get(Uri.parse("$base/clientExtras"));
+      final response = await http.get(Uri.parse(Const.clientExtraUrl));
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
 
@@ -126,7 +126,7 @@ class ClientExtraProvider with ChangeNotifier {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse(baseUrl),
+        Uri.parse(Const.clientExtraUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(clientExtra.toJson()),
       );
@@ -159,7 +159,7 @@ class ClientExtraProvider with ChangeNotifier {
     try {
       print("started extra");
       final response = await http.patch(
-        Uri.parse('$baseUrl/${clientExtra.id}'),
+        Uri.parse('${Const.clientExtraUrl}/${clientExtra.id}'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(clientExtra.toJson()),
       );
@@ -180,7 +180,7 @@ class ClientExtraProvider with ChangeNotifier {
 
   Future<void> deleteClientExtra(BuildContext context, String id) async {
     try {
-      final response = await http.delete(Uri.parse('$baseUrl/$id'));
+      final response = await http.delete(Uri.parse('${Const.clientExtraUrl}/$id'));
       if (response.statusCode == 200) {
         //  Navigator.pop(context);
         Fluttertoast.showToast(

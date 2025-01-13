@@ -8,10 +8,10 @@ import 'package:punch/models/myModels/companyModel.dart';
 import 'package:punch/models/myModels/companySectorModel.dart';
 import 'package:punch/models/myModels/web_socket_manager.dart';
 import 'package:punch/providers/clientExtraProvider.dart';
+import 'package:punch/src/const.dart';
 
 class CompanyProvider with ChangeNotifier {
-  final String baseUrl = 'http://172.20.20.28:3000/companies';
-  final String base = "http://172.20.20.28:3000";
+
   List<Company> _companies = [];
   List<Company> get companies => _companies;
   Map<int, CompanyExtra> companyExtraMap = {};
@@ -19,13 +19,8 @@ class CompanyProvider with ChangeNotifier {
   bool get isRowsSelected => _isRowsSelected;
   bool _loading = false; // Default value
   bool get loading => _loading;
-  final String webSocketUrl = 'ws://172.20.20.28:3000?channel=client';
-  final tableController = PagedDataTableController<String, Company>();
 
-  // Two WebSocket URLs
-  final String companyWebSocketUrl = 'ws://172.20.20.28:3000?channel=company';
-  final String companyExtraWebSocketUrl =
-      'ws://172.20.20.28:3000?channel=companyExtra';
+  final tableController = PagedDataTableController<String, Company>();
 
   late WebSocketManager _companyWebSocketManager;
   late WebSocketManager _companyExtraWebSocketManager;
@@ -41,7 +36,7 @@ class CompanyProvider with ChangeNotifier {
   void _initializeWebSockets() {
     // Initialize WebSocket for Company
     _companyWebSocketManager = WebSocketManager(
-      companyWebSocketUrl,
+      Const.companyChannel,
       _handleCompanyWebSocketMessage,
       _reconnectCompanyWebSocket,
     );
@@ -49,7 +44,7 @@ class CompanyProvider with ChangeNotifier {
 
     // Initialize WebSocket for CompanyExtra
     _companyExtraWebSocketManager = WebSocketManager(
-      companyExtraWebSocketUrl,
+        Const.companyExtraChannel,
       _handleCompanyExtraWebSocketMessage,
       _reconnectCompanyExtraWebSocket,
     );
@@ -181,7 +176,7 @@ class CompanyProvider with ChangeNotifier {
 
   Future<void> fetchCompanySectors() async {
     try {
-      final response = await http.get(Uri.parse("$base/companySectors"));
+      final response = await http.get(Uri.parse(Const.companySectorUrl));
 
       if (response.statusCode == 200) {
         List<dynamic> jsonData = jsonDecode(response.body);
@@ -214,7 +209,7 @@ class CompanyProvider with ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse("$base/companySectors"),
+        Uri.parse(Const.companySectorUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'Description': descriptionController.text}),
       );
@@ -239,7 +234,7 @@ class CompanyProvider with ChangeNotifier {
 
     try {
       final response = await http.patch(
-        Uri.parse("$base/companySectors/$id"),
+        Uri.parse("${Const.companySectorUrl}/$id"),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'Description': descriptionController.text}),
       );
@@ -262,7 +257,7 @@ class CompanyProvider with ChangeNotifier {
 
     try {
       final response = await http.delete(
-        Uri.parse('$base/companySectors/$anniversaryTypeId'),
+        Uri.parse('${Const.companySectorUrl}/$anniversaryTypeId'),
         headers: <String, String>{
           'Content-Type': 'application/json',
         },
@@ -286,7 +281,7 @@ class CompanyProvider with ChangeNotifier {
 
   Future<void> fetchCompanies() async {
     try {
-      final response = await http.get(Uri.parse(baseUrl));
+      final response = await http.get(Uri.parse(Const.companyUrl));
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
         _companies = data.map((json) => Company.fromJson(json)).toList();
@@ -303,7 +298,7 @@ class CompanyProvider with ChangeNotifier {
   Future<void> fetchCompanyExtras() async {
     print("started fetching clientExtras");
     try {
-      final response = await http.get(Uri.parse("$base/companyExtras"));
+      final response = await http.get(Uri.parse(Const.companyExtraUrl));
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
 
@@ -317,7 +312,7 @@ class CompanyProvider with ChangeNotifier {
             companyExtraMap[companyExtra.companyNo!] = companyExtra;
           }
         }
-        print("company Extras lenght " + companyExtraMap.length.toString());
+        print("company Extras lenght" + companyExtraMap.length.toString());
         // Notify listeners about the change
         notifyListeners();
       } else {
@@ -348,7 +343,7 @@ class CompanyProvider with ChangeNotifier {
 
       // Make the POST request
       final response = await http.post(
-        Uri.parse(baseUrl),
+        Uri.parse(Const.companyUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(payload),
       );
@@ -389,7 +384,7 @@ print(response.body);
 
   Future<Map<String, dynamic>?> fetchCompanyExtraById(String id) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/$id'));
+      final response = await http.get(Uri.parse('${Const.companyUrl}/$id'));
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
@@ -412,12 +407,12 @@ print(response.body);
     print('started');
     try {
       final response = await http.patch(
-        Uri.parse('$baseUrl/${company.id}'),
+        Uri.parse('${Const.companyUrl}/${company.id}'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(company.toJson()),
       );
       final responseExtra = await http.patch(
-        Uri.parse('$base/companyExtras/${companyExtra.id}'),
+        Uri.parse('${Const.companyExtraUrl}/${companyExtra.id}'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(companyExtra.toJson()),
       );
@@ -469,7 +464,7 @@ print(response.body);
     try {
 
          print("started deleting extras ${company.toJson().toString()}");
-      final response = await http.delete(Uri.parse('$baseUrl/${company.id}'));
+      final response = await http.delete(Uri.parse('${Const.companyUrl}/${company.id}'));
       if (response.statusCode == 200) {
         CompanyExtra? companyExtra = companyExtraMap[company.companyNo];
         // If a client extra exists, await its deletion
@@ -506,7 +501,7 @@ print(response.body);
   Future<void> deleteCompanyExtra(BuildContext context, String id) async {
     try {
       print("started deleting extras $id");
-      final response = await http.delete(Uri.parse('$base/companyExtras/$id'));
+      final response = await http.delete(Uri.parse('${Const.companyExtraUrl}/$id'));
       if (response.statusCode == 200) {
         print("deleted client extra");
         notifyListeners();

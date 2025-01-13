@@ -1,9 +1,12 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:paged_datatable/paged_datatable.dart';
 import 'package:provider/provider.dart';
+import 'package:punch/functions/imageFunctions.dart';
 import 'package:punch/models/myModels/clientExtraModel.dart';
 
 import 'package:punch/models/myModels/clientModel.dart';
@@ -11,28 +14,72 @@ import 'package:punch/models/myModels/clientModel.dart';
 import 'package:punch/models/myModels/titleModel.dart';
 import 'package:punch/models/myModels/web_socket_manager.dart';
 import 'package:punch/providers/clientExtraProvider.dart';
+import 'package:punch/src/const.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ClientProvider with ChangeNotifier {
-  final String baseUrl = 'http://172.20.20.28:3000/clients';
-  final String base = "http://172.20.20.28:3000";
+   final ImagePicker _picker = ImagePicker();
   late WebSocketChannel channel;
   List<Client> _clients = [];
   List<Client> get clients => _clients;
   final tableController = PagedDataTableController<String, Client>();
+
   bool _isRowsSelected = false; // Default value
-
   bool get isRowsSelected => _isRowsSelected;
-  bool _loading = false; // Default value
 
+  bool _loading = false; // Default value
   bool get loading => _loading;
+
+  bool _updateLoading = false; // Default value
+  bool get updateloading => _updateLoading;
+
+  int? _selectedType;
+  int? get selectedType => _selectedType;
+
+  int? _age;
+  int? get age => _age;
+
+  Uint8List? _compressedImage;
+  Uint8List? get compressedImage => _compressedImage;
+
+
+  set compressedImage(Uint8List? newValue) {
+    _compressedImage = newValue;
+    notifyListeners();
+  }
+  
+
+  set selectedType(int? newValue) {
+    _selectedType = newValue;
+    notifyListeners();
+  }
+
+  Future<Uint8List?> pickImage() async {
+    // Pick the image
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      // Read the image as bytes
+      final Uint8List imageBytes = await pickedFile.readAsBytes();
+
+      // Compress the image
+      final Uint8List? compressedImage =
+          await compressToTargetSize(imageBytes, 500);
+
+      if (compressedImage != null) {
+        _compressedImage = compressedImage;
+        notifyListeners();
+        return compressedImage;
+      }
+    }
+    return null;
+  }
 
   setBoolValue(bool newValue) {
     _isRowsSelected = newValue;
     notifyListeners();
   }
 
-  final String webSocketUrl = 'ws://172.20.20.28:3000?channel=client';
 
   late WebSocketManager _webSocketManager;
   ClientProvider() {
@@ -47,7 +94,7 @@ class ClientProvider with ChangeNotifier {
 
   Future<void> fetchTitles() async {
     try {
-      final response = await http.get(Uri.parse("$base/titles"));
+      final response = await http.get(Uri.parse(Const.titleUrl));
 
       if (response.statusCode == 200) {
         List<dynamic> jsonData = jsonDecode(response.body);
@@ -78,7 +125,7 @@ class ClientProvider with ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse("$base/titles"),
+        Uri.parse(Const.titleUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'Description': descriptionController.text}),
       );
@@ -103,7 +150,7 @@ class ClientProvider with ChangeNotifier {
 
     try {
       final response = await http.patch(
-        Uri.parse("$base/titles/$id"),
+        Uri.parse("${Const.titleUrl}/$id"),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'Description': descriptionController.text}),
       );
@@ -125,7 +172,7 @@ class ClientProvider with ChangeNotifier {
 
     try {
       final response = await http.delete(
-        Uri.parse('$base/titles/$titleId'),
+        Uri.parse('${Const.titleUrl}/$titleId'),
         headers: <String, String>{
           'Content-Type': 'application/json',
         },
@@ -149,7 +196,7 @@ class ClientProvider with ChangeNotifier {
 
   void _initializeWebSocket() {
     _webSocketManager = WebSocketManager(
-      webSocketUrl,
+      Const.clientChannel,
       _handleWebSocketMessage,
       _reconnectWebSocket,
     );
@@ -240,7 +287,7 @@ class ClientProvider with ChangeNotifier {
   Future<void> deleteClientExtra(BuildContext context, String id) async {
     try {
       print("started deleting extras $id");
-      final response = await http.delete(Uri.parse('$base/clientExtras/$id'));
+      final response = await http.delete(Uri.parse('${Const.clientExtraUrl}/$id'));
       if (response.statusCode == 200) {
         print("deleted client extra");
         notifyListeners();
@@ -255,7 +302,7 @@ class ClientProvider with ChangeNotifier {
 
   Future<void> fetchClients() async {
     try {
-      final response = await http.get(Uri.parse(baseUrl));
+      final response = await http.get(Uri.parse(Const.clientUrl));
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
         _clients = data.map((json) => Client.fromJson(json)).toList();
@@ -273,12 +320,12 @@ class ClientProvider with ChangeNotifier {
     Client client,
     ClientExtra clientExtra,
     List<TextEditingController> controllers,
-    void Function() clearSelectedType,
+
   ) async {
     try {
       _loading = true;
       final response = await http.post(
-        Uri.parse(baseUrl),
+        Uri.parse(Const.clientUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(
             {'client': client.toJson(), 'clientExtra': clientExtra.toJson()}),
@@ -296,7 +343,9 @@ class ClientProvider with ChangeNotifier {
         for (var controller in controllers) {
           controller.clear();
         }
-        clearSelectedType();
+              _selectedType = null;
+               _compressedImage = null;
+               _age=null;
         notifyListeners();
       } else {
         throw Exception('Failed to add client ' + response.body);
@@ -318,16 +367,17 @@ class ClientProvider with ChangeNotifier {
 
   Future<void> updateClient(Client client, ClientExtra clientExtra,
       Function onSuccess, BuildContext context) async {
-    print("starting client ");
+    _updateLoading = true;
+    notifyListeners();
     try {
       print("started");
       final response = await http.patch(
-        Uri.parse('$baseUrl/${client.id}'),
+        Uri.parse('${Const.clientUrl}/${client.id}'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(client.toJson()),
       );
       final responseExtra = await http.patch(
-        Uri.parse('$base/clientExtras/${clientExtra.clientNo}'),
+        Uri.parse('${Const.clientExtraUrl}/${clientExtra.clientNo}'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(clientExtra.toJson()),
       );
@@ -346,6 +396,9 @@ class ClientProvider with ChangeNotifier {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(err.toString())),
       );
+    }finally{
+        _updateLoading = false;
+      notifyListeners();
     }
   }
   // }
@@ -382,7 +435,7 @@ class ClientProvider with ChangeNotifier {
 
   Future<void> deleteClient(BuildContext context, Client client) async {
     try {
-      final response = await http.delete(Uri.parse('$baseUrl/${client.id}'));
+      final response = await http.delete(Uri.parse('${Const.clientUrl}/${client.id}'));
       if (response.statusCode == 200) {
          ClientExtra? clientExtra =
             Provider.of<ClientExtraProvider>(context, listen: false)
@@ -422,11 +475,23 @@ class ClientProvider with ChangeNotifier {
   DateTime? _selectedDate;
 
   DateTime? get selectedDate => _selectedDate;
-
-  void setDate(DateTime date) {
+void setDate(DateTime date) {
     _selectedDate = date;
-    notifyListeners();
+
+    // Calculate the age based on the year, month, and day
+    DateTime now = DateTime.now();
+    int age = now.year - date.year;
+
+    // Adjust the age if the birthday hasn't occurred yet this year
+    if (now.month < date.month ||
+        (now.month == date.month && now.day < date.day)) {
+      age--;
+    }
+
+    _age = age; // Set the adjusted age
+    notifyListeners(); // Notify listeners of the change
   }
+
 
   DateTime? _selectedStartDate;
 

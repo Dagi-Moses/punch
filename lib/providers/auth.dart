@@ -1,15 +1,15 @@
-import 'dart:convert';
 
-import 'package:fluttertoast/fluttertoast.dart';
+
+
 
 import 'package:punch/constants/enums/auth_mode.dart';
 import 'package:punch/constants/enums/sign_up_modes.dart';
 import 'package:punch/models/models_shelf.dart';
-import 'package:punch/models/myModels/userModel.dart';
+
 import 'package:punch/utils/validators.dart';
 import 'package:async/async.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+
 
 /// It is called on auth mode changes,
 /// triggered by [Auth.switchAuth] method.

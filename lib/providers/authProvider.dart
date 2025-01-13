@@ -13,14 +13,13 @@ import 'dart:html' as html;
 import 'package:punch/models/myModels/web_socket_manager.dart';
 import 'package:punch/providers/auth.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:punch/widgets/showToast.dart';
+import 'package:punch/src/const.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class AuthProvider with ChangeNotifier {
-  final String baseUrl = 'http://172.20.20.28:3000';
-  final String userUrl = 'http://172.20.20.28:3000/users';
-  final String userRecordUrl = 'http://172.20.20.28:3000/userRecords';
+ 
   User? _user;
   final StreamController<User?> _userController =
       StreamController<User?>.broadcast();
@@ -31,9 +30,7 @@ class AuthProvider with ChangeNotifier {
 
   bool get loading => _loading;
   late WebSocketManager _webSocketManager;
-  final String webSocketUrl = 'ws://172.20.20.28:3000?channel=auth';
-  final String userRecordWebSocketUrl =
-      'ws://172.20.20.28:3000?channel=userRecord';
+ 
   late WebSocketManager _userRecordManager;
   setBoolValue(bool newValue) {
     _isRowsSelected = newValue;
@@ -82,21 +79,21 @@ class AuthProvider with ChangeNotifier {
   AuthProvider() {
     _initialize();
     channel = WebSocketChannel.connect(
-        Uri.parse('ws://172.20.20.28:3000?channel=auth'));
+        Uri.parse(Const.authChannel));
 
     _initializeWebSocket();
   }
 
   void _initializeWebSocket() {
     _webSocketManager = WebSocketManager(
-      webSocketUrl,
+      Const.authChannel,
       _handleWebSocketMessage,
       _reconnectWebSocket,
     );
     _webSocketManager.connect();
 
     _userRecordManager = WebSocketManager(
-      userRecordWebSocketUrl,
+      Const.userRecordChannel,
       _handleUserRecordWebSocketMessage,
       _reconnectUserRecordWebSocket,
     );
@@ -220,7 +217,7 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> fetchUsers() async {
     try {
-      final response = await http.get(Uri.parse(userUrl));
+      final response = await http.get(Uri.parse(Const.userUrl));
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
         _users = data.map((json) => User.fromJson(json)).toList();
@@ -237,7 +234,7 @@ class AuthProvider with ChangeNotifier {
 // Fetch user records and store them in the map
   Future<void> fetchUsersRecord() async {
     try {
-      final response = await http.get(Uri.parse(userRecordUrl));
+      final response = await http.get(Uri.parse(Const.userRecordUrl));
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
 
@@ -295,7 +292,7 @@ class AuthProvider with ChangeNotifier {
     }
 
     final response = await http.post(
-      Uri.parse('$baseUrl/validateToken'),
+      Uri.parse(Const.validateTokenUrl),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'token': token}),
     );
@@ -346,7 +343,7 @@ class AuthProvider with ChangeNotifier {
   }) async {
     final loginFormProvider = Provider.of<Auth>(context, listen: false);
     final prefs = await SharedPreferences.getInstance();
-    final loginUrl = Uri.parse('$baseUrl/login');
+    final loginUrl = Uri.parse(Const.authUrl);
 
     try {
       final response = await http.post(
@@ -386,7 +383,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _storeUserRecord(User user) async {
-    final userRecordUrl = Uri.parse('$baseUrl/userRecords');
+    final userRecordUrl = Uri.parse(Const.userRecordUrl);
     final computerName = await getDeviceName();
 
     // Check if the recordId was correctly parsed
@@ -458,7 +455,7 @@ class AuthProvider with ChangeNotifier {
     if (Navigator.canPop(context)) {
       Navigator.of(context).pop();
     }
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 500));
     _user = null;
     _userController.add(null);
     notifyListeners();
@@ -520,7 +517,7 @@ class AuthProvider with ChangeNotifier {
     try {
       _loading = true;
       final response = await http.post(
-        Uri.parse(userUrl),
+        Uri.parse(Const.userUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(user.toJson()),
       );
@@ -560,7 +557,7 @@ class AuthProvider with ChangeNotifier {
     try {
       print("updating" + user.toJson().toString());
       final response = await http.patch(
-        Uri.parse('$userUrl/${user.id}'),
+        Uri.parse('${Const.userUrl}/${user.id}'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(user.toJson()),
       );
@@ -608,7 +605,7 @@ class AuthProvider with ChangeNotifier {
   Future<void> deleteUser(BuildContext context, User duser) async {
     try {
       // Delete the user
-      final userResponse = await http.delete(Uri.parse('$userUrl/${duser.id}'));
+      final userResponse = await http.delete(Uri.parse('${Const.userUrl}l/${duser.id}'));
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
@@ -624,7 +621,7 @@ class AuthProvider with ChangeNotifier {
 
         // Attempt to delete associated user records (if present)
         final userRecordResponse =
-            http.delete(Uri.parse('$userRecordUrl/${duser.staffNo}'));
+            http.delete(Uri.parse('${Const.userRecordUrl}/${duser.staffNo}'));
 
         notifyListeners();
       } else {

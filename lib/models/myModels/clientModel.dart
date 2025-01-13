@@ -1,4 +1,7 @@
-import 'package:intl/intl.dart';
+
+
+import 'dart:convert';
+import 'dart:typed_data';
 
 class Client {
  String? id;
@@ -13,6 +16,10 @@ class Client {
   String? placeOfWork;
   String? associates;
   String? friends;
+  String? address;
+  int? age;
+  Uint8List? image; 
+  String? description;
 
   Client({
     this.id,
@@ -27,6 +34,10 @@ class Client {
     this.placeOfWork,
     this.associates,
     this.friends,
+    this.address,
+    this.age,
+    this.image,
+    this.description
   });
 
   // Factory method to create a Client object from a JSON map
@@ -47,6 +58,14 @@ class Client {
       placeOfWork: json['Place_Of_Work']as String?,
       associates: json['Associates'] as String?,
       friends: json['Friends'] as String?,
+      address: json['Address'] as String?,
+      age: json['Age']as int?,
+       image: (json['Image'] is Map && json['Image']['data'] != null)
+          ? Uint8List.fromList(List<int>.from(json['Image']['data']))
+          : (json['Image'] is String
+              ? base64Decode(json['Image'] as String)
+              : null),
+      description: json['Description'] as String?,
     );
   }
 
@@ -65,6 +84,9 @@ class Client {
       'Place_Of_Work': placeOfWork,
       'Associates': associates,
       'Friends': friends,
+      'Address': address,
+      'Image': image != null ? base64Encode(image!) : null,
+      'Description': description,
     };
   }
  

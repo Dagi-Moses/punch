@@ -19,6 +19,7 @@ class _ManageClientTitlePageState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+         automaticallyImplyLeading: false,
         title: const Text('Manage Client Types'),
       ),
       body: Padding(

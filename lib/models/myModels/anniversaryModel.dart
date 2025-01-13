@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 class Anniversary {
   String? id;
   int? anniversaryNo;
@@ -11,6 +14,8 @@ class Anniversary {
   String? associates;
   int ? paperId;
   int? anniversaryYear;
+  Uint8List? image; // Base64 encoded image
+  String? description; // Description for the image
 
   Anniversary({
     this.id,
@@ -25,6 +30,8 @@ class Anniversary {
     this.associates,
    this.paperId,
     this.anniversaryYear,
+   this.image,
+    this.description,
   });
 
   // Deserialize JSON to Anniversary object
@@ -46,6 +53,12 @@ class Anniversary {
       associates: json['Associates'] as String?,
       paperId: json['Paper_Id'] as int?,
       anniversaryYear: json['Anniversary_Year'] as int?,
+       image: (json['Image'] is Map && json['Image']['data'] != null)
+          ? Uint8List.fromList(List<int>.from(json['Image']['data']))
+          : (json['Image'] is String
+              ? base64Decode(json['Image'] as String)
+              : null),
+      description: json['Description'] as String?,
     );
   }
 
@@ -63,7 +76,9 @@ class Anniversary {
       'Friends': friends,
       'Associates': associates,
       'Paper_Id': paperId,
-      'Anniversary_Year': anniversaryYear,
+     'Image': image != null ? base64Encode(image!) : null, 
+      'Description': description,
+     // 'Anniversary_Year': anniversaryYear,
     };
   }
 }

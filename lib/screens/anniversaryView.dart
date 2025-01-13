@@ -1,13 +1,21 @@
+
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:punch/functions/downloadImage.dart';
 import 'package:punch/models/myModels/anniversaryModel.dart';
 import 'package:punch/models/myModels/userModel.dart';
-
 import 'package:punch/providers/anniversaryProvider.dart';
 import 'package:punch/providers/authProvider.dart';
+
 import 'package:punch/utils/html%20handler.dart';
+import 'package:punch/widgets/inputs/dateFields.dart';
+import 'package:punch/widgets/inputs/editableImagePicker.dart';
 import 'package:punch/widgets/text-form-fields/html_form_field_widget.dart';
+import 'package:responsive_framework/responsive_framework.dart';
+import 'dart:html' as html;
 
 class AnniversaryDetailView extends StatefulWidget {
   Anniversary anniversary;
@@ -24,7 +32,6 @@ class AnniversaryDetailView extends StatefulWidget {
 class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
   bool isEditing = false;
 
-  // Controllers for text fields
   late TextEditingController nameController;
   late TextEditingController placedByNameController;
   late TextEditingController placedByAddressController;
@@ -35,16 +42,21 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
   late ValueNotifier<int?> _anniversaryTypeNotifier;
   late ValueNotifier<int?> _paperIdNotifier;
   late TextEditingController _dateController;
+  late TextEditingController imageDescriptionController;
 
   late HtmlTextHandler placedByHandler;
   late HtmlTextHandler associatesHandler;
   late HtmlTextHandler friendsHandler;
+  late HtmlTextHandler descriptionHandler;
 
   @override
   void initState() {
     super.initState();
+
     // Initialize controllers with existing data
     nameController = TextEditingController(text: widget.anniversary.name ?? "");
+    imageDescriptionController =
+        TextEditingController(text:  _convertHtmlToText(widget.anniversary.description ?? ""));
     placedByNameController = TextEditingController(
         text: _convertHtmlToText(widget.anniversary.placedByName ?? ""));
     placedByAddressController =
@@ -96,6 +108,16 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
       },
       initialText: friendsController.text,
     );
+
+    descriptionHandler = HtmlTextHandler(
+      controller: imageDescriptionController,
+      onTextChanged: (text) {
+        setState(() {
+          widget.anniversary.description = text;
+        });
+      },
+      initialText: imageDescriptionController.text,
+    );
   }
 
   String _convertHtmlToText(String htmlText) {
@@ -112,7 +134,7 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
     friendsController.dispose();
     associatesController.dispose();
     anniversaryYearController.dispose();
-
+    imageDescriptionController.dispose();
     _anniversaryTypeNotifier.dispose();
     _paperIdNotifier.dispose();
     _dateController.dispose();
@@ -126,336 +148,389 @@ class _AnniversaryDetailViewState extends State<AnniversaryDetailView> {
 
     final isUser = auth.user?.loginId == UserRole.user;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Anniversary Details'),
-        actions: [
-          if (!isUser)
-            IconButton(
-              icon: Icon(isEditing ? Icons.save : Icons.edit),
-              onPressed: () async {
-                if (isEditing) {
-                  DateTime? selectedDate;
+    return
+    
+     DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          title: const TabBar(
+            dividerColor: Colors.transparent,
+            labelColor: Colors.red,
+            unselectedLabelColor: Colors.black,
+            unselectedLabelStyle: TextStyle(color: Colors.black, fontWeight:FontWeight.bold),
+            labelStyle: TextStyle(fontWeight:FontWeight.bold),
+            indicatorColor: Colors.red,
+            tabs: [
+              Tab(text: "Anniversary Details"),
+              Tab(text: "Image"),
+            ],
+          ),
+        ),
+        floatingActionButton: !isUser
+            ?
+           
+            
+            anniversaryProvider.updateloading
+                ? const FloatingActionButton(
+                    onPressed:
+                        null, // Disable button interaction while loading.
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : 
+             FloatingActionButton(
+                tooltip: 'Edit Anniversary',
+                onPressed: () async {
+                  if (isEditing) {
+                    DateTime? selectedDate;
 
-                  try {
-                    selectedDate =
-                        DateFormat('dd/MM/yyyy').parse(_dateController.text);
-                  } catch (e) {
-                    // Handle parsing error
-                    print("Error parsing date: $e");
+                    try {
+                      selectedDate =
+                          DateFormat('dd/MM/yyyy').parse(_dateController.text);
+                    } catch (e) {
+                      // Handle parsing error
+                      print("Error parsing date: $e");
+                    }
+
+                    Anniversary updatedAnniversary = Anniversary(
+                        id: widget.anniversary.id,
+                        anniversaryNo: widget.anniversary.anniversaryNo,
+                        name: nameController.text,
+                        placedByName: placedByNameController.text
+                            .replaceAll('\n', '<br>'),
+                        description: imageDescriptionController.text
+                            .replaceAll('\n', '<br>'),
+                        placedByAddress: placedByAddressController.text,
+                        placedByPhone: placedByPhoneController.text,
+                        friends:
+                            friendsController.text.replaceAll('\n', '<br>'),
+                        associates:
+                            associatesController.text.replaceAll('\n', '<br>'),
+                        anniversaryYear:
+                            int.tryParse(anniversaryYearController.text),
+                        paperId: _paperIdNotifier.value,
+                        date: selectedDate,
+                        anniversaryTypeId: _anniversaryTypeNotifier.value,
+                        image: anniversaryProvider.compressedImage);
+
+                    await anniversaryProvider.updateAnniversary(
+                        updatedAnniversary, context);
+                    setState(() {
+                      // Replace the entire anniversary object with the updated one
+                      widget.anniversary = updatedAnniversary;
+                      isEditing = false;
+                    });
+                  } else {
+                    setState(() {
+                      isEditing = true;
+                    });
                   }
-
-                  Anniversary updatedAnniversary = Anniversary(
-                    id: widget.anniversary.id,
-                    anniversaryNo: widget.anniversary.anniversaryNo,
-                    name: nameController.text,
-                    placedByName: placedByNameController.text.replaceAll('\n', '<br>'),
-                    placedByAddress: placedByAddressController.text,
-                    placedByPhone: placedByPhoneController.text,
-                    friends: friendsController.text.replaceAll('\n', '<br>'),
-                    associates: associatesController.text.replaceAll('\n', '<br>'),
-                    anniversaryYear:
-                        int.tryParse(anniversaryYearController.text),
-                    paperId: _paperIdNotifier.value,
-                    date: selectedDate,
-                    anniversaryTypeId: _anniversaryTypeNotifier.value,
-                  );
-
-                  await anniversaryProvider.updateAnniversary(
-                      updatedAnniversary, context);
-                  setState(() {
-                    // Replace the entire anniversary object with the updated one
-                    widget.anniversary = updatedAnniversary;
-                    isEditing = false;
-                  });
-                } else {
-                  setState(() {
-                    isEditing = true;
-                  });
-                }
-              },
-            ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
+                },
+                child: Icon(isEditing ? Icons.save : Icons.edit),
+              )
+            : null,
+        body: TabBarView(
           children: [
-            _buildHeaderSection(),
-            const SizedBox(height: 16.0),
-            _buildDetailSection(),
-            const SizedBox(height: 16.0),
+            SingleChildScrollView(
+                child: _buildHeaderSection(anniversaryProvider)),
+            SingleChildScrollView(child:  _buildImageSection()),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeaderSection() {
-    return Consumer<AnniversaryProvider>(
-        builder: (context, anniversaryProvider, child) {
-      return Card(
-        elevation: 4.0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FormFieldWidget(
-                controller: nameController,
-                label: 'Name',
-                htmlData: widget.anniversary.name,
-                isEditing: isEditing,
-                icon: Icons.person,
-              ),
-              const SizedBox(height: 8.0),
-              isEditing
-                  ? Row(
-                      children: [
-                        const Icon(Icons.card_giftcard, size: 20),
-                        const SizedBox(width: 8.0),
-                        Expanded(
-                          child: ValueListenableBuilder<int?>(
-                            valueListenable: _anniversaryTypeNotifier,
-                            builder: (context, value, child) {
-                              // If the current value is null or not in the list, set it to a default or null value
-                              if (value == null ||
-                                  !anniversaryProvider.anniversaryTypes.keys
-                                      .contains(value)) {
-                                value =
-                                    null; // or set to a default value that exists in your list
-                              }
-                              return DropdownButtonFormField<int>(
-                                value: value,
-                                decoration: InputDecoration(
-                                  labelText: 'Anniversary Type',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                items: anniversaryProvider.anniversaryTypes.keys
-                                    .map((int typeId) {
-                                  return DropdownMenuItem<int>(
-                                    value: typeId,
-                                    child: Text(
-                                      anniversaryProvider
-                                          .getAnniversaryTypeDescription(
-                                              typeId),
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (int? newTypeId) {
-                                  if (newTypeId != null) {
-                                    _anniversaryTypeNotifier.value = newTypeId;
-                                    widget.anniversary.anniversaryTypeId =
-                                        newTypeId;
-                                    // Save changes to the database (implement this logic)
-                                  }
-                                },
-                              );
-                            },
-                          ),
-                        )
-                      ],
-                    )
-                  : TextFieldWidget(
-                      label: "Anniversary Type",
-                      htmlData:
-                          anniversaryProvider.getAnniversaryTypeDescription(
-                              widget.anniversary.anniversaryTypeId),
-                      icon: Icons.card_giftcard,
-                    ),
-              const SizedBox(height: 8.0),
-              isEditing
-                  ? Row(
-                      children: [
-                        const Icon(Icons.calendar_today, size: 20),
-                        const SizedBox(width: 8.0),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () async {
-                              DateTime? selectedDate = await showDatePicker(
-                                context: context,
-                                initialDate:
-                                    widget.anniversary.date ?? DateTime.now(),
-                                firstDate: DateTime(1900),
-                                lastDate: DateTime(2100),
-                              );
-                              if (selectedDate != null) {
-                                setState(() {
-                                  widget.anniversary.date = selectedDate;
-                                  _dateController.text =
-                                      DateFormat('dd/MM/yyyy')
-                                          .format(selectedDate);
-                                });
-                                // Save changes to the database
-                              }
-                            },
-                            child: AbsorbPointer(
-                              child: TextFormField(
-                                decoration: InputDecoration(
-                                  labelText: 'Date',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                controller: _dateController,
-                              ),
-                            ),
-                          ),
-                        )
-                      ],
-                    )
-                  : TextFieldWidget(
-                      label: 'Date',
-                      htmlData: widget.anniversary.date != null
-                          ? DateFormat('dd/MM/yyyy')
-                              .format(widget.anniversary.date!)
-                          : 'N/A',
-                      icon: Icons.calendar_today,
-                    ),
-              const SizedBox(height: 8.0),
-              isEditing
-                  ? Row(
-                      children: [
-                        const Icon(Icons.timeline, size: 20),
-                        const SizedBox(width: 8.0),
-                        Expanded(
-                          child: TextFormField(
-                            initialValue:
-                                widget.anniversary.anniversaryYear?.toString(),
-                            decoration: InputDecoration(
-                              labelText: 'Anniversary Year',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            keyboardType: TextInputType.number,
-                            onChanged: (value) {
-                              widget.anniversary.anniversaryYear =
-                                  int.tryParse(value);
-                              // Save changes to the database
-                            },
-                          ),
-                        )
-                      ],
-                    )
-                  : TextFieldWidget(
-                      label: 'Anniversary Year',
-                      htmlData: widget.anniversary.anniversaryYear.toString(),
-                      icon: Icons.timeline,
-                    ),
-            ],
-          ),
-        ),
-      );
-    });
+  Widget _buildDate(){
+    return  EditableDateField(
+          label: "Date",
+          isEditing: isEditing,
+          selectedDate: widget.anniversary.date,
+          controller: _dateController,
+          onDateChanged: (newDate) {
+            setState(() {
+              widget.anniversary.date = newDate;
+              _dateController.text = DateFormat('dd/MM/yyyy').format(newDate);
+              final aniyr = DateTime.now().year - newDate.year;
+              widget.anniversary.anniversaryYear = aniyr;
+              anniversaryYearController.text = aniyr.toString();
+            });
+          },
+        );
   }
 
-  Widget _buildDetailSection() {
-    return Consumer<AnniversaryProvider>(
-        builder: (context, anniversaryProvider, child) {
-      return Card(
-        elevation: 4.0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Details',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+
+  Widget _buildPaperType(AnniversaryProvider anniversaryProvider) {
+    return ValueListenableBuilder<int?>(
+
+      valueListenable: _paperIdNotifier,
+      builder: (context, value, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Paper",
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: Colors.black54,
               ),
-              const SizedBox(height: 8.0),
-              FormFieldWidget(
-                controller: placedByNameController,
-                label: 'Placed by Name',
-                htmlData: widget.anniversary.placedByName,
-                isEditing: isEditing,
-                icon: Icons.group,
+            ),
+            const SizedBox(height: 6),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.grey.shade300,
+                    // Change to your desired border color
+                  width: 1,
+                ),
+                borderRadius: BorderRadius.circular(10),
               ),
-              const SizedBox(height: 8.0),
-              FormFieldWidget(
-                controller: placedByAddressController,
-                label: 'Placed by Address',
-                htmlData: widget.anniversary.placedByAddress,
-                isEditing: isEditing,
-                icon: Icons.location_on,
+              child: DropdownButtonFormField<int>(
+
+                value: value,
+                decoration:const InputDecoration(
+                  
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: InputBorder.none, // Remove the inner border
+                ),
+                
+                items: anniversaryProvider.paperTypes.keys.map((int typeId) {
+                  return DropdownMenuItem<int>(
+                       enabled: isEditing,
+                    value: typeId,
+                    child: Text(
+                        anniversaryProvider.getPaperTypeDescription(typeId)),
+                  );
+                }).toList(),
+               onChanged: isEditing
+                  ? (int? newTypeId) {
+                      if (newTypeId != null) {
+                        _paperIdNotifier.value = newTypeId;
+                        widget.anniversary.paperId = newTypeId;
+                        // Save changes to the database (implement this logic)
+                      }
+                    }
+                  : null, 
               ),
-              const SizedBox(height: 8.0),
-              FormFieldWidget(
-                controller: placedByPhoneController,
-                label: 'Placed by Phone',
-                htmlData: widget.anniversary.placedByPhone,
-                isEditing: isEditing,
-                icon: Icons.phone,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildAnniversaryType(AnniversaryProvider anniversaryProvider) {
+    return ValueListenableBuilder<int?>(
+      valueListenable: _anniversaryTypeNotifier,
+      builder: (context, value, child) {
+        // If the current value is null or not in the list, set it to a default or null value
+        if (value == null ||
+            !anniversaryProvider.anniversaryTypes.keys.contains(value)) {
+          value = null; // or set to a default value that exists in your list
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Anniversary Type",
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: Colors.black54,
               ),
-              const SizedBox(height: 8.0),
-              FormFieldWidget(
-                controller: friendsController,
-                label: 'Friends',
-                htmlData: widget.anniversary.friends,
-                isEditing: isEditing,
-                icon: Icons.favorite,
+            ),
+            const SizedBox(height: 6),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                    color:
+                    Colors.grey,
+                      // Change to your desired border color
+                  width: 1,
+                ),
+                borderRadius: BorderRadius.circular(10),
               ),
-              const SizedBox(height: 8.0),
-              FormFieldWidget(
-                controller: associatesController,
-                label: 'Associates',
-                htmlData: widget.anniversary.associates,
-                isEditing: isEditing,
-                icon: Icons.people,
-              ),
-              const SizedBox(height: 8.0),
-              isEditing
-                  ? Row(
-                      children: [
-                        const Icon(Icons.card_giftcard, size: 20),
-                        const SizedBox(width: 8.0),
-                        Expanded(
-                            child: ValueListenableBuilder<int?>(
-                          valueListenable: _paperIdNotifier,
-                          builder: (context, value, child) {
-                            return DropdownButtonFormField<int>(
-                              value: value,
-                              decoration: InputDecoration(
-                                labelText: 'Paper',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              items: anniversaryProvider.paperTypes.keys
-                                  .map((int typeId) {
-                                return DropdownMenuItem<int>(
-                                  value: typeId,
-                                  child: Text(anniversaryProvider
-                                      .getPaperTypeDescription(typeId)),
-                                );
-                              }).toList(),
-                              onChanged: (int? newTypeId) {
-                                if (newTypeId != null) {
-                                  _paperIdNotifier.value = newTypeId;
-                                  widget.anniversary.paperId = newTypeId;
-                                  // Save changes to the database (implement this logic)
-                                }
-                              },
-                            );
-                          },
-                        ))
-                      ],
-                    )
-                  : TextFieldWidget(
-                      label: 'Paper',
-                      htmlData: anniversaryProvider
-                          .getPaperTypeDescription(widget.anniversary.paperId),
-                      icon: Icons.card_giftcard,
+              child: DropdownButtonFormField<int>(
+                
+                value: value,
+                decoration: const InputDecoration(
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  border: InputBorder.none, // Remove the inner border
+                ),
+                items:
+                    anniversaryProvider.anniversaryTypes.keys.map((int typeId) {
+                  return DropdownMenuItem<int>(
+                    enabled: isEditing,
+                    value: typeId,
+                    child: Text(
+                      anniversaryProvider.getAnniversaryTypeDescription(typeId),
                     ),
-            ],
+                  );
+                }).toList(),
+                onChanged: isEditing?(int? newTypeId) {
+                  if (newTypeId != null) {
+                    _anniversaryTypeNotifier.value = newTypeId;
+                    widget.anniversary.anniversaryTypeId = newTypeId;
+                    // Save changes to the database (implement this logic)
+                  }
+                }:null,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildHeaderSection(AnniversaryProvider anniversaryProvider) {
+    return Center(
+      child: ResponsiveWrapper(
+        maxWidth: 800,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Card(
+            elevation: 4.0,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  buildTextField(
+                           isEditing: isEditing,
+                    controller: nameController,
+                    label: "Name",
+                    maxLines: 1,
+                  ),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                          child: _buildAnniversaryType(anniversaryProvider)),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: buildTextField(
+                                 isEditing: isEditing,
+                          controller: placedByPhoneController,
+                          label: 'Placed by Phone',
+                          maxLines: 1,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildPaperType(anniversaryProvider)),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(child: _buildDate()),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: buildTextField(
+                                 isEditing: isEditing,
+                            controller: anniversaryYearController,
+                            label: "Anniversary Year",
+                             maxLines: 1,
+                            enabled: false),
+                      ),
+                    ],
+                  ),
+                  buildTextField(
+                           isEditing: isEditing,
+                    controller: placedByNameController,
+                    label: "Placed by Name",
+                  ),
+                  
+                  buildTextField(
+                           isEditing: isEditing,
+                    controller: placedByAddressController,
+                    label: 'Placed by Address',
+                  ),
+                
+                  buildTextField(
+                           isEditing: isEditing,
+                    controller: friendsController,
+                    label: 'Friends',
+                  ),
+             
+                  buildTextField(
+                           isEditing: isEditing,
+                    controller: associatesController,
+                    label: 'Associates',
+                  ),
+                  const SizedBox(height: 8.0),
+                ],
+              ),
+            ),
           ),
         ),
-      );
-    });
+      ),
+    );
   }
+
+  Widget _buildImageSection() {
+    return Center(
+      child: ResponsiveWrapper(
+        maxWidth: 800,
+        child: Card(
+          elevation: 4.0,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                 buildTextField(
+                  isEditing: isEditing,
+                  controller: imageDescriptionController,
+                  label: 'Image Description',
+                ),
+                 const SizedBox(height: 8.0),
+                _buildImagePicker(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+
+  
+Widget _buildImagePicker() {
+   final anniversaryProvider = Provider.of<AnniversaryProvider>(context);
+   return  EditableImagePicker(
+          label: "Image",
+          isEditing: isEditing,
+          image: widget.anniversary.image,
+          onPickImage: anniversaryProvider.pickImage,
+          onImageChanged: (newImage) {
+            setState(() {
+              widget.anniversary.image = newImage;
+            });
+          },
+          onRemoveImage: () {
+            setState(() {
+              widget.anniversary.image = null;
+              anniversaryProvider.compressedImage = null;
+            });
+          },
+          onDownloadImage: () {
+            if (widget.anniversary.image != null) {
+              downloadImage(widget.anniversary.image!, "anniversary_image.png");
+            }
+          },
+        );
+  }
+
 }

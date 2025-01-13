@@ -1,19 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 
+// ignore: must_be_immutable
+
+Widget buildTextField(
+
+ // final String? htmlData,
+
+
+  {
+     required bool isEditing,
+   required TextEditingController controller,
+ required String label,
+    bool? enabled = true,
+   TextInputType keyboardType = TextInputType.multiline,
+   int? maxLines
+  }
+   
+) {
+  return Padding(
+    padding: const EdgeInsets.only(top:8.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+             maxLines: maxLines,
+           readOnly: !(isEditing && enabled!),
+          cursorColor: Colors.red,
+          keyboardType: keyboardType,
+          controller: controller,
+       
+          decoration: InputDecoration(
+            // filled: true,
+            // fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+          ),
+        ),
+      
+      ],
+    ),
+  );
+}
+
 class FormFieldWidget extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final String? htmlData;
   final bool isEditing;
   final IconData icon;
+   bool? enabled = true;
 
-  FormFieldWidget({
+  FormFieldWidget({super.key, 
     required this.controller,
     required this.label,
     this.htmlData,
     required this.isEditing,
     required this.icon,
+    this.enabled
   });
 
   @override
@@ -26,6 +86,7 @@ class FormFieldWidget extends StatelessWidget {
         isEditing
             ? Expanded(
                 child: TextFormField(
+                  enabled: enabled,
                   controller: controller,
                   maxLines: null,
                   decoration: InputDecoration(
@@ -70,17 +131,22 @@ class FormFieldWidget extends StatelessWidget {
   }
 }
 
+
+
 class TextFieldWidget extends StatelessWidget {
   
   final String label;
   final String? htmlData;
 
+
   final IconData icon;
 
-  TextFieldWidget({
+  const TextFieldWidget({super.key, 
  
     required this.label,
     this.htmlData,
+  
+
 
     required this.icon,
   });
@@ -105,6 +171,7 @@ class TextFieldWidget extends StatelessWidget {
                                       color: Colors.grey[
                                           900]), // Custom styling for "Place of Work:"
                                 ),
+                                
                                 WidgetSpan(
                                   child: Html(
                                     data:htmlData, // Render the HTML content for the place of work
@@ -126,3 +193,77 @@ class TextFieldWidget extends StatelessWidget {
                     );
   }
 }
+
+
+
+// class FormFieldWidget extends StatelessWidget {
+//   final TextEditingController controller;
+//   final String label;
+//   final String? htmlData;
+//   final bool isEditing;
+//   final IconData icon;
+//   bool? enabled = true;
+
+//   FormFieldWidget(
+//       {super.key,
+//       required this.controller,
+//       required this.label,
+//       this.htmlData,
+//       required this.isEditing,
+//       required this.icon,
+//       this.enabled});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Row(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         Icon(icon, size: 20),
+//         const SizedBox(width: 8.0),
+//         isEditing
+//             ? Expanded(
+//                 child: TextFormField(
+//                   enabled: enabled,
+//                   controller: controller,
+//                   maxLines: null,
+//                   decoration: InputDecoration(
+//                     labelText: label,
+//                     border: OutlineInputBorder(
+//                       borderRadius: BorderRadius.circular(10),
+//                     ),
+//                   ),
+//                   keyboardType: TextInputType.multiline,
+//                 ),
+//               )
+//             : Flexible(
+//                 child: RichText(
+//                   text: TextSpan(
+//                     style: const TextStyle(fontSize: 16, color: Colors.black),
+//                     children: [
+//                       TextSpan(
+//                         text: '$label: ',
+//                         style: TextStyle(
+//                           fontWeight: FontWeight.bold,
+//                           color: Colors.grey[900],
+//                         ),
+//                       ),
+//                       if (htmlData != null)
+//                         WidgetSpan(
+//                           child: Html(
+//                             data: htmlData,
+//                             style: {
+//                               "body": Style(
+//                                 fontSize: FontSize(16),
+//                                 color: Colors.black,
+//                               ),
+//                             },
+//                           ),
+//                         ),
+//                     ],
+//                   ),
+//                 ),
+//               ),
+//       ],
+//     );
+//   }
+// }

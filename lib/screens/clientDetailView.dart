@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:punch/functions/downloadImage.dart';
 import 'package:punch/models/myModels/clientExtraModel.dart';
 import 'package:punch/models/myModels/clientModel.dart';
 import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/authProvider.dart';
 import 'package:punch/providers/clientExtraProvider.dart';
 import 'package:punch/providers/clientProvider.dart';
-import 'package:flutter_html/flutter_html.dart';
+
 import 'package:punch/utils/html%20handler.dart';
+import 'package:punch/widgets/inputs/dateFields.dart';
+import 'package:punch/widgets/inputs/editableImagePicker.dart';
 import 'package:punch/widgets/text-form-fields/html_form_field_widget.dart';
+import 'package:responsive_framework/responsive_wrapper.dart';
 
 class ClientDetailView extends StatefulWidget {
   Client client;
@@ -26,6 +30,7 @@ class ClientDetailView extends StatefulWidget {
 class _ClientDetailViewState extends State<ClientDetailView> {
   bool isEditing = false;
 
+  late TextEditingController addressController;
   late TextEditingController lastNameController;
   late TextEditingController firstNameController;
   late TextEditingController middleNameController;
@@ -40,8 +45,13 @@ class _ClientDetailViewState extends State<ClientDetailView> {
   late TextEditingController hobbiesController;
   late TextEditingController companiesController;
   late ValueNotifier<int?> _titleIdNotifier;
+  late TextEditingController imageDescriptionController;
+  late TextEditingController ageController;
+  late TextEditingController clientNoController;
+
   ClientExtra? clientExtra;
 
+  late HtmlTextHandler addressHandler;
   late HtmlTextHandler placeOfWorkHandler;
   late HtmlTextHandler associatesHandler;
   late HtmlTextHandler friendsHandler;
@@ -49,16 +59,26 @@ class _ClientDetailViewState extends State<ClientDetailView> {
   late HtmlTextHandler politicalPartyHandler;
   late HtmlTextHandler hobbiesHandler;
   late HtmlTextHandler companiesHandler;
+  late HtmlTextHandler descriptionHandler;
+
   @override
   void initState() {
     super.initState();
-  Initialize();
+    Initialize();
   }
 
- void Initialize() async {
-    // Initialize controllers with converted text
+  void Initialize() async {
+    imageDescriptionController =
+        TextEditingController(text: _convertHtmlToText(widget.client.description ?? ""));
+
+    clientNoController =
+        TextEditingController(text: widget.client.clientNo.toString()??"");
+    ageController =
+        TextEditingController(text: widget.client.age?.toString()?? "");
     lastNameController = TextEditingController(
         text: _convertHtmlToText(widget.client.lastName ?? ""));
+    addressController = TextEditingController(
+        text: _convertHtmlToText(widget.client.address ?? ""));
     firstNameController = TextEditingController(
         text: _convertHtmlToText(widget.client.firstName ?? ""));
     middleNameController = TextEditingController(
@@ -84,12 +104,7 @@ class _ClientDetailViewState extends State<ClientDetailView> {
     );
     _titleIdNotifier = ValueNotifier(widget.client.titleId);
 
-    // Fetch clientExtra and populate the fields
-     await
-      _fetchClientExtra();
-    
-  
-
+    await _fetchClientExtra();
 
     companiesHandler = HtmlTextHandler(
       controller: companiesController,
@@ -99,6 +114,16 @@ class _ClientDetailViewState extends State<ClientDetailView> {
         });
       },
       initialText: companiesController.text,
+    );
+
+    addressHandler = HtmlTextHandler(
+      controller: addressController,
+      onTextChanged: (text) {
+        setState(() {
+          widget.client.address = text;
+        });
+      },
+      initialText: addressController.text,
     );
 
     hobbiesHandler = HtmlTextHandler(
@@ -159,11 +184,22 @@ class _ClientDetailViewState extends State<ClientDetailView> {
           });
         },
         initialText: friendsController.text);
+
+    descriptionHandler = HtmlTextHandler(
+      controller: imageDescriptionController,
+      onTextChanged: (text) {
+        setState(() {
+          widget.client.description = text;
+        });
+      },
+      initialText: imageDescriptionController.text,
+    );
   }
 
   String _convertHtmlToText(String htmlText) {
     return htmlText.replaceAll(RegExp(r'<br\s*/?>'), '\n');
   }
+
   Future<void> _fetchClientExtra() async {
     final clientExtraProvider =
         Provider.of<ClientExtraProvider>(context, listen: false);
@@ -171,20 +207,22 @@ class _ClientDetailViewState extends State<ClientDetailView> {
         .getClientExtraByClientNo(widget.client.clientNo!);
     if (clientExtra != null) {
       setState(() {
-      politicalPartyController.text =
+        politicalPartyController.text =
             _convertHtmlToText(clientExtra?.politicalParty ?? "");
         presentPositionController.text =
             _convertHtmlToText(clientExtra?.presentPosition ?? "");
         hobbiesController.text = _convertHtmlToText(clientExtra?.hobbies ?? "");
         companiesController.text =
             _convertHtmlToText(clientExtra?.companies ?? "");
-
       });
     }
   }
 
   @override
   void dispose() {
+    ageController.dispose();
+    imageDescriptionController.dispose();
+    addressController.dispose();
     lastNameController.dispose();
     firstNameController.dispose();
     middleNameController.dispose();
@@ -199,6 +237,7 @@ class _ClientDetailViewState extends State<ClientDetailView> {
     hobbiesController.dispose();
     companiesController.dispose();
     _titleIdNotifier.dispose();
+    clientNoController.dispose();
 
     super.dispose();
   }
@@ -209,327 +248,380 @@ class _ClientDetailViewState extends State<ClientDetailView> {
     final auth = Provider.of<AuthProvider>(context);
 
     final isUser = auth.user?.loginId == UserRole.user;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Client Details',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          if (!isUser)
-            IconButton(
-              icon: Icon(isEditing ? Icons.save : Icons.edit),
-              onPressed: () async {
-                if (isEditing) {
-                  DateTime? selectedDate;
-
-                  try {
-                    selectedDate = DateFormat('dd/MM/yyyy')
-                        .parse(dateOfBirthController.text);
-                  } catch (e) {
-                    selectedDate = null;
-                  }
-                  Client client = Client(
-                    associates:  associatesController.text.replaceAll('\n', '<br>'),
-                    clientNo: widget.client.clientNo,
-                    dateOfBirth: selectedDate,
-                    email: emailController.text,
-                    firstName: firstNameController.text,
-                    friends:friendsController.text.replaceAll('\n', '<br>'),
-                    lastName: lastNameController.text,
-                    id: widget.client.id,
-                    middleName: middleNameController.text,
-                    placeOfWork:  placeOfWorkController.text.replaceAll('\n', '<br>'),
-                    telephone: telephoneController.text,
-                    titleId: _titleIdNotifier.value,
-                  );
-                  ClientExtra extra = ClientExtra(
-                    clientNo: widget.client.clientNo,
-                    companies: companiesController.text.replaceAll('\n', '<br>'),
-                    hobbies:   hobbiesController.text.replaceAll('\n', '<br>'),
-                    id: clientExtra?.id,
-                    politicalParty: politicalPartyController.text.replaceAll('\n', '<br>'),
-                    presentPosition:  presentPositionController.text.replaceAll('\n', '<br>'),
-                  );
-                  await clientProvider.updateClient(client, extra, () {
-                    setState(() {
-                      widget.client = client;
-                      clientExtra = extra;
-                      isEditing = false;
-                    });
-                  }, context);
-                } else {
-                  setState(() {
-                    isEditing = true;
-                  });
-                }
-              },
-            ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            _buildHeaderSection(),
-            const SizedBox(height: 16.0),
-            _buildDetailSection(),
-            const SizedBox(height: 16.0),
-            _buildContactSection(),
-            const SizedBox(height: 16.0),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeaderSection() {
-    return Consumer<ClientProvider>(builder: (context, clientProvider, child) {
-      return Card(
-        elevation: 4.0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FormFieldWidget(
-                controller: firstNameController,
-                label: 'First Name',
-                htmlData: widget.client.firstName,
-                isEditing: isEditing,
-                icon: Icons.person,
-              ),
-              const SizedBox(height: 8.0),
-              FormFieldWidget(
-                controller: middleNameController,
-                label: 'Middle Name',
-                htmlData: widget.client.middleName,
-                isEditing: isEditing,
-                icon: Icons.person_pin,
-              ),
-              const SizedBox(height: 8.0),
-              FormFieldWidget(
-                controller: lastNameController,
-                label: 'Last Name',
-                htmlData: widget.client.lastName,
-                isEditing: isEditing,
-                icon: Icons.person_outline,
-              ),
-              isEditing ? const SizedBox() : const SizedBox(height: 8.0),
-              isEditing
-                  ? const SizedBox()
-                  : TextFieldWidget(
-                      icon: Icons.account_circle,
-                      label: "Client Number",
-                      htmlData: widget.client.clientNo.toString(),
-                    ),
-              const SizedBox(height: 8.0),
-              isEditing
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.person, size: 20),
-                        const SizedBox(width: 8.0),
-                        Expanded(
-                            child: ValueListenableBuilder<int?>(
-                          valueListenable: _titleIdNotifier,
-                          builder: (context, value, child) {
-                            return DropdownButtonFormField<int>(
-                              value: value,
-                              decoration: InputDecoration(
-                                labelText: 'Title',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              items:
-                                  clientProvider.titles.keys.map((int typeId) {
-                                return DropdownMenuItem<int>(
-                                  value: typeId,
-                                  child: Text(clientProvider
-                                      .getClientTitleDescription(typeId)),
-                                );
-                              }).toList(),
-                              onChanged: (int? newTypeId) {
-                                if (newTypeId != null) {
-                                  _titleIdNotifier.value = newTypeId;
-                                }
-                              },
-                            );
-                          },
-                        ))
-                      ],
-                    )
-                  : TextFieldWidget(
-                      icon: Icons.person,
-                      label: "Title",
-                      htmlData: clientProvider
-                          .getClientTitleDescription(widget.client.titleId),
-                    ),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+              automaticallyImplyLeading: false,
+          title: const TabBar(
+            dividerColor: Colors.transparent,
+            labelColor: Colors.red,
+            unselectedLabelColor: Colors.black,
+            unselectedLabelStyle:
+                TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            labelStyle: TextStyle(fontWeight: FontWeight.bold),
+            indicatorColor: Colors.red,
+            tabs: [
+              Tab(text: "Client Details"),
+              Tab(text: "Image"),
             ],
           ),
         ),
-      );
-    });
-  }
-
-  Widget _buildDetailSection() {
-    return Card(
-      elevation: 4.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Details',
-              style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-            ),
-            const Divider(),
-            isEditing
-                ? Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.calendar_today, size: 20),
-                      const SizedBox(width: 8.0),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () async {
-                            DateTime? selectedDate = await showDatePicker(
-                              context: context,
-                              initialDate:
-                                  widget.client.dateOfBirth ?? DateTime.now(),
-                              firstDate: DateTime(1900),
-                              lastDate: DateTime(2100),
-                            );
-                            if (selectedDate != null) {
-                              setState(() {
-                                widget.client.dateOfBirth = selectedDate;
-                                dateOfBirthController.text =
-                                    DateFormat('dd/MM/yyyy')
-                                        .format(selectedDate);
-                              });
-                              // Save changes to the database
-                            }
-                          },
-                          child: AbsorbPointer(
-                            child: TextFormField(
-                              decoration: InputDecoration(
-                                labelText: 'Date Of Birth',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              controller: dateOfBirthController,
-                            ),
-                          ),
-                        ),
-                      )
-                    ],
+        floatingActionButton: !isUser
+            ?
+            
+            clientProvider.updateloading
+                ? FloatingActionButton(
+                    onPressed:
+                        null, // Disable button interaction while loading.
+                    child: const CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
                   )
-                : TextFieldWidget(
-                    icon: Icons.calendar_today,
-                    label: "Date Of Birth",
-                    htmlData: widget.client.dateOfBirth != null
-                        ? DateFormat('dd/MM/yyyy')
-                            .format(widget.client.dateOfBirth!)
-                        : 'N/A',
-                  ),
-            const SizedBox(height: 8.0),
-            FormFieldWidget(
-              controller: friendsController,
-              label: 'Friends',
-              htmlData: widget.client.friends,
-              isEditing: isEditing,
-              icon: Icons.people,
-            ),
-            const SizedBox(height: 8.0),
-            FormFieldWidget(
-              controller: associatesController,
-              label: 'Associates',
-              htmlData: widget.client.associates,
-              isEditing: isEditing,
-              icon: Icons.people,
-            ),
-            const SizedBox(height: 8.0),
-            FormFieldWidget(
-              controller: telephoneController,
-              label: 'Telephone',
-              htmlData: widget.client.telephone,
-              isEditing: isEditing,
-              icon: Icons.phone,
-            ),
-            const SizedBox(height: 8.0),
-            FormFieldWidget(
-              controller: emailController,
-              label: 'Email',
-              htmlData: widget.client.email,
-              isEditing: isEditing,
-              icon: Icons.email,
-            ),
-            const SizedBox(height: 8.0),
-            FormFieldWidget(
-              controller: placeOfWorkController,
-              label: 'Place of Work',
-              htmlData: widget.client.placeOfWork,
-              isEditing: isEditing,
-              icon: Icons.business,
-            ),
+                : 
+            
+             FloatingActionButton(
+                tooltip: 'Edit Client',
+                child: Icon(isEditing ? Icons.save : Icons.edit),
+                onPressed: () async {
+                  if (isEditing) {
+                    DateTime? selectedDate;
+
+                    try {
+                      selectedDate = DateFormat('dd/MM/yyyy')
+                          .parse(dateOfBirthController.text);
+                    } catch (e) {
+                      selectedDate = null;
+                    }
+                    Client client = Client(
+                      description: imageDescriptionController.text
+                          .replaceAll('\n', '<br>'),
+                      image: clientProvider.compressedImage,
+                      address: addressController.text.replaceAll('\n', '<br>'),
+                      associates:
+                          associatesController.text.replaceAll('\n', '<br>'),
+                      clientNo: widget.client.clientNo,
+                      dateOfBirth: selectedDate,
+                      email: emailController.text,
+                      firstName: firstNameController.text,
+                      friends: friendsController.text.replaceAll('\n', '<br>'),
+                      lastName: lastNameController.text,
+                      id: widget.client.id,
+                      middleName: middleNameController.text,
+                      placeOfWork:
+                          placeOfWorkController.text.replaceAll('\n', '<br>'),
+                      telephone: telephoneController.text,
+                      titleId: _titleIdNotifier.value,
+                    );
+                    ClientExtra extra = ClientExtra(
+                      clientNo: widget.client.clientNo,
+                      companies:
+                          companiesController.text.replaceAll('\n', '<br>'),
+                      hobbies: hobbiesController.text.replaceAll('\n', '<br>'),
+                      id: clientExtra?.id,
+                      politicalParty: politicalPartyController.text
+                          .replaceAll('\n', '<br>'),
+                      presentPosition: presentPositionController.text
+                          .replaceAll('\n', '<br>'),
+                    );
+                    await clientProvider.updateClient(client, extra, () {
+                      setState(() {
+                        widget.client = client;
+                        clientExtra = extra;
+                        isEditing = false;
+                      });
+                    }, context);
+                  } else {
+                    setState(() {
+                      isEditing = true;
+                    });
+                  }
+                },
+              )
+            : null,
+        body: TabBarView(
+          children: [
+            SingleChildScrollView(child: _buildHeaderSection(clientProvider)),
+            SingleChildScrollView(child: _buildImageSection()),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildContactSection() {
-    return Card(
-      elevation: 4.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Client Extra',
-              style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+  Widget _buildImageSection() {
+    return Center(
+      child: ResponsiveWrapper(
+        maxWidth: 800,
+        child: Card(
+          elevation: 4.0,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                buildTextField(
+                  isEditing: isEditing,
+                  controller: imageDescriptionController,
+                  label: 'Image Description',
+                ),
+                const SizedBox(height: 8.0),
+                _buildImagePicker(),
+              ],
             ),
-            const Divider(),
-            FormFieldWidget(
-              controller: politicalPartyController,
-              label: 'Political Party',
-              htmlData: clientExtra?.politicalParty,
-              isEditing: isEditing,
-              icon: Icons.how_to_vote,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePicker() {
+    final clientProvider = Provider.of<ClientProvider>(context);
+    return EditableImagePicker(
+      label: "Image",
+      isEditing: isEditing,
+      image: widget.client.image,
+      onPickImage: clientProvider.pickImage,
+      onImageChanged: (newImage) {
+        setState(() {
+          widget.client.image = newImage;
+        });
+      },
+      onRemoveImage: () {
+        setState(() {
+          widget.client.image = null;
+          clientProvider.compressedImage = null;
+        });
+      },
+      onDownloadImage: () {
+        if (widget.client.image != null) {
+          downloadImage(widget.client.image!, "client_image.png");
+        }
+      },
+    );
+  }
+
+  Widget _buildTitle(ClientProvider clientProvider) {
+    return ValueListenableBuilder<int?>(
+      valueListenable: _titleIdNotifier,
+      builder: (context, value, child) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Title",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.grey.shade300,
+                    // Change to your desired border color
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: DropdownButtonFormField<int>(
+                  value: value,
+                  decoration: const InputDecoration(
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    border: InputBorder.none, // Remove the inner border
+                  ),
+                  items: clientProvider.titles.keys.map((int typeId) {
+                    return DropdownMenuItem<int>(
+                      enabled: isEditing,
+                      value: typeId,
+                      child: Text(
+                          clientProvider.getClientTitleDescription(typeId)),
+                    );
+                  }).toList(),
+                  onChanged: isEditing
+                      ? (int? newTypeId) {
+                          if (newTypeId != null) {
+                            _titleIdNotifier.value = newTypeId;
+                            widget.client.titleId = newTypeId;
+                            // Save changes to the database (implement this logic)
+                          }
+                        }
+                      : null,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDate() {
+    return EditableDateField(
+      label: "Date of Birth",
+      isEditing: isEditing,
+      selectedDate: widget.client.dateOfBirth,
+      controller: dateOfBirthController,
+      onDateChanged: (newDate) {
+        setState(() {
+          widget.client.dateOfBirth = newDate;
+          dateOfBirthController.text = DateFormat('dd/MM/yyyy').format(newDate);
+          final aniyr = DateTime.now().year - newDate.year;
+          widget.client.age = aniyr;
+          ageController.text = aniyr.toString();
+        });
+      },
+    );
+  }
+
+  Widget _buildHeaderSection(ClientProvider clientProvider) {
+    return Center(
+      child: ResponsiveWrapper(
+        maxWidth: 800,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Card(
+            elevation: 4.0,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+
+                  Row( mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Expanded(child:  buildTextField(
+                          isEditing: isEditing,
+                          controller: firstNameController,
+                          label: 'First Name',
+                          maxLines: 1
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                    Expanded(child:   buildTextField(
+                          isEditing: isEditing,
+                          controller: middleNameController,
+                          label: 'Middle Name',
+                           maxLines: 1
+                        ),
+                      ),
+                  ],),
+                  Row( mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+
+                    Expanded(child: 
+                  buildTextField(
+                          isEditing: isEditing,
+                          controller: lastNameController,
+                          label: 'Last Name',
+                           maxLines: 1
+                        ),
+                      ),
+
+                       const SizedBox(width: 16),
+                       Expanded(child: 
+                  buildTextField(
+                    isEditing: isEditing,
+                    controller: emailController,
+                    label: 'Email',
+                     maxLines: 1
+                  ),)
+                  ],),
+                 
+                 
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: buildTextField(
+                            isEditing: isEditing,
+                            controller: clientNoController,
+                            label: "Client Number",
+                             maxLines: 1,
+                            enabled: false),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildTitle(clientProvider)),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildDate()),
+                    ],
+                  ),
+
+                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child:  buildTextField(
+                            isEditing: isEditing,
+                            controller: ageController,
+                            label: "Age",
+                             maxLines: 1,
+                            enabled: false),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(child:   buildTextField(
+                          isEditing: isEditing,
+                          controller: telephoneController,
+                          label: 'Telephone',
+                           maxLines: 1,
+                        ),
+                      ),
+                      
+                    ],
+                  ),
+                 
+                  buildTextField(
+                    isEditing: isEditing,
+                    controller: friendsController,
+                    label: 'Friends',
+                  ),
+                  buildTextField(
+                    isEditing: isEditing,
+                    controller: associatesController,
+                    label: 'Associates',
+                  ),
+                  buildTextField(
+                    isEditing: isEditing,
+                    controller: addressController,
+                    label: 'Address',
+                  ),
+                
+                  buildTextField(
+                    isEditing: isEditing,
+                    controller: placeOfWorkController,
+                    label: 'Place of Work',
+                  ),
+                  buildTextField(
+                    isEditing: isEditing,
+                    controller: politicalPartyController,
+                    label: 'Political Party',
+                  ),
+                  buildTextField(
+                    isEditing: isEditing,
+                    controller: presentPositionController,
+                    label: 'Present Position',
+                  ),
+                  buildTextField(
+                    isEditing: isEditing,
+                    controller: hobbiesController,
+                    label: 'Hobbies',
+                  ),
+                  buildTextField(
+                    isEditing: isEditing,
+                    controller: companiesController,
+                    label: 'Companies',
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8.0),
-            FormFieldWidget(
-              controller: presentPositionController,
-              label: 'Present Position',
-              htmlData: clientExtra?.presentPosition,
-              
-              isEditing: isEditing,
-              icon: Icons.work,
-            ),
-            const SizedBox(height: 8.0),
-            FormFieldWidget(
-              controller: hobbiesController,
-              label: 'Hobbies',
-              htmlData: clientExtra?.hobbies,
-              isEditing: isEditing,
-              icon: Icons.sports_basketball,
-            ),
-            const SizedBox(height: 8.0),
-            FormFieldWidget(
-              controller: companiesController,
-              label: 'Companies',
-              htmlData: clientExtra?.companies,
-              isEditing: isEditing,
-              icon: Icons.business_center,
-            ),
-          ],
+          ),
         ),
       ),
     );

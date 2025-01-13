@@ -18,6 +18,7 @@ class _ManagePapersPageState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+         automaticallyImplyLeading: false,
         title: const Text('Manage Papers'),
       ),
       body: Padding(

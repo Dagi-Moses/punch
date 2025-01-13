@@ -19,6 +19,7 @@ import 'package:punch/screens/userHome.dart';
 import 'package:paged_datatable/l10n/generated/l10n.dart';
 
 import 'package:provider/provider.dart';
+import 'package:punch/src/routes.dart';
 
 Future<void> main() async {
   await WidgetsFlutterBinding.ensureInitialized();
@@ -33,65 +34,35 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ClientProvider()),
         ChangeNotifierProvider(create: (_) => ClientExtraProvider()),
         ChangeNotifierProvider(create: (_) => Auth()),
-        // Add other providers here
       ],
       child: const MyApp(),
     ),
   );
 }
 
-
-
-UserRole mapUsertoRole(int Id) {
-  switch (Id) {
-    case 1:
-      return UserRole.admin;
-    case 2:
-      return UserRole.library;
-   
-    default:
-      return UserRole.user; // Default case for unrecognized title IDs
-  }
-}
 class MyApp extends StatelessWidget {
-  Widget _navigateBasedOnRole(UserRole role) {
-    switch (role) {
-      case UserRole.admin:
-        return AdminHome();
-      case UserRole.library:
-        return const LibraryScreen();
-      default:
-        return UserHome();
-    }
-  }
-
-  Widget _navigateToLogin() {
-    return const LoginScreen();
-  }
-
   const MyApp({
     Key? key,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final clientExtra =    Provider.of<ClientExtraProvider>(context, listen: false);
+    final clientExtra =
+        Provider.of<ClientExtraProvider>(context, listen: false);
     return ChangeNotifierProvider(
         create: (_) => AuthProvider(),
         child: MaterialApp(
           localizationsDelegates: const [
-            // Add other localizationsDelegates here
             PagedDataTableLocalization.delegate,
           ],
           supportedLocales: const [
-            Locale('en', 'NG'), // Add other supported locales here
+            Locale('en', 'NG'),
           ],
           title: 'Punch Anniversary',
           theme: ThemeData(
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             textTheme: kIsWeb ? GoogleFonts.robotoTextTheme() : null,
-           
           ),
           debugShowCheckedModeBanner: false,
           home: Consumer<AuthProvider?>(
@@ -102,8 +73,7 @@ class MyApp extends StatelessWidget {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return SplashScreen();
                   } else if (snapshot.hasData && snapshot.data != null) {
-                  //  return _navigateBasedOnRole(snapshot.data!.loginId!);
-                  return AdminHome();
+                    return AdminHome();
                   } else {
                     return const LoginScreen();
                   }
@@ -111,14 +81,8 @@ class MyApp extends StatelessWidget {
               );
             },
           ),
-          routes: {
-            '/login': (BuildContext context) => const LoginScreen(),
-            '/forgotPass': (BuildContext context) =>
-                const ForgotPasswordScreen(),
-            '/admin': (context) => AdminHome(),
-            //  '/library': (context) => LibraryScreen(),
-            '/user': (context) => UserHome(),
-          },
+       
+          onGenerateRoute: Routes.generateRoute,
         ));
   }
 }

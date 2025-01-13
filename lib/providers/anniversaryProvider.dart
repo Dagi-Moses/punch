@@ -1,45 +1,107 @@
 import 'dart:convert';
 
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'package:punch/functions/imageFunctions.dart';
 import 'package:punch/models/myModels/anniversaryModel.dart';
 import 'package:punch/models/myModels/anniversarySector.dart';
 import 'package:punch/models/myModels/anniversaryTypeModel.dart';
 import 'package:punch/models/myModels/papers.dart';
 import 'package:punch/models/myModels/web_socket_manager.dart';
+import 'package:punch/src/const.dart';
 
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:paged_datatable/paged_datatable.dart';
 
 class AnniversaryProvider with ChangeNotifier {
-  final String baseUrl = 'http://172.20.20.28:3000/anniversaries';
-  final String base = "http://172.20.20.28:3000";
   late WebSocketChannel channel;
+  final ImagePicker _picker = ImagePicker();
+
   List<Anniversary> _anniversaries = [];
   List<Anniversary> get anniversaries => _anniversaries;
+
   List<AnniversarySector> _anniversarySectors = [];
   List<AnniversarySector> get anniversarySectors => _anniversarySectors;
 
-  final String webSocketUrl = 'ws://172.20.20.28:3000?channel=anniversary';
-  bool _loading = false; // Default value
+  DateTime? _selectedDate;
+  DateTime? get selectedDate => _selectedDate;
 
+  int? _anniversaryYear;
+  int? get anniversaryYear => _anniversaryYear;
+
+  bool _isAnniversaryYearEnabled = false;
+  bool get isAnniversaryYearEnabled => _isAnniversaryYearEnabled;
+
+  bool _loading = false;
   bool get loading => _loading;
-  //  Uri.parse('ws://172.20.20.28:3000?channel=anniversary'),
 
-  bool _isRowsSelected = false; // Default value
+  bool _updateLoading = false;
+  bool get updateloading => _updateLoading;
+
+  bool _isRowsSelected = false; 
   bool get isRowsSelected => _isRowsSelected;
 
-  Map<int, String> _anniversaryTypes = {}; // Map to store type descriptions
-  Map<int, String> _paperTypes = {}; // Map to store paper descriptions
+  final Map<int, String> _anniversaryTypes = {}; // Map to store type descriptions
+  final Map<int, String> _paperTypes = {}; // Map to store paper descriptions
 
   Map<int, String> get anniversaryTypes => _anniversaryTypes;
   Map<int, String> get paperTypes => _paperTypes;
-  // Method to fetch anniversary types from the database
+
+  int? _selectedType;
+  int? get selectedType => _selectedType;
+
+  int? _selectedPaperType;
+  int? get selectedPaperType => _selectedPaperType;
+  
+  Uint8List? _compressedImage;
+  Uint8List? get compressedImage => _compressedImage;
+
+
+
+  set compressedImage(Uint8List? newValue) {
+    _compressedImage = newValue;
+    notifyListeners();
+  }
+  Future<Uint8List?> pickImage() async {
+    // Pick the image
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      // Read the image as bytes
+      final Uint8List imageBytes = await pickedFile.readAsBytes();
+
+      // Compress the image
+      final Uint8List? compressedImage = await compressToTargetSize(imageBytes, 500);
+
+      if (compressedImage != null) {
+     
+        _compressedImage = compressedImage;
+        notifyListeners();
+         return compressedImage; 
+      }
+    }
+    return null;
+  }
+
+
+  set selectedType(int? newValue) {
+    _selectedType = newValue;
+    notifyListeners(); 
+  }
+
+  set selectedPaperType(int? newValue) {
+    _selectedPaperType = newValue;
+    notifyListeners();
+  }
 
   Future<void> fetchAnniversaryTypes() async {
     try {
-      final response = await http.get(Uri.parse("$base/anniversaryTypes"));
+      final response = await http.get(Uri.parse(Const.anniversaryTypeUrl));
 
       if (response.statusCode == 200) {
         List<dynamic> jsonData = jsonDecode(response.body);
@@ -50,7 +112,6 @@ class AnniversaryProvider with ChangeNotifier {
               anniversaryType.description;
         }
 
-        // Notify listeners after updating the anniversary types
         notifyListeners();
       } else {
         throw Exception(response.body);
@@ -64,7 +125,7 @@ class AnniversaryProvider with ChangeNotifier {
   // Method to fetch paper types from the database
   Future<void> fetchPaperTypes() async {
     try {
-      final response = await http.get(Uri.parse("$base/papers"));
+      final response = await http.get(Uri.parse(Const.paperUrl));
 
       if (response.statusCode == 200) {
         List<dynamic> jsonData = jsonDecode(response.body);
@@ -101,7 +162,7 @@ class AnniversaryProvider with ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse("$base/anniversaryTypes"),
+        Uri.parse(Const.anniversaryTypeUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'Description': descriptionController.text}),
       );
@@ -122,7 +183,7 @@ class AnniversaryProvider with ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse("$base/papers"),
+        Uri.parse(Const.paperUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'Description': descriptionController.text}),
       );
@@ -147,7 +208,7 @@ class AnniversaryProvider with ChangeNotifier {
 
     try {
       final response = await http.patch(
-        Uri.parse("$base/anniversaryTypes/$id"),
+        Uri.parse("${Const.anniversaryTypeUrl}/$id"),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'Description': descriptionController.text}),
       );
@@ -173,7 +234,7 @@ class AnniversaryProvider with ChangeNotifier {
 
     try {
       final response = await http.patch(
-        Uri.parse("$base/papers/$id"),
+        Uri.parse("${Const.paperUrl}/$id"),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'Description': descriptionController.text}),
       );
@@ -196,7 +257,7 @@ class AnniversaryProvider with ChangeNotifier {
 
     try {
       final response = await http.delete(
-        Uri.parse('$base/anniversaryTypes/$anniversaryTypeId'),
+        Uri.parse('${Const.anniversaryTypeUrl}/$anniversaryTypeId'),
         headers: <String, String>{
           'Content-Type': 'application/json',
         },
@@ -223,7 +284,7 @@ class AnniversaryProvider with ChangeNotifier {
 
     try {
       final response = await http.delete(
-        Uri.parse('$base/papers/$paperTypeId'),
+        Uri.parse('${Const.paperUrl}/$paperTypeId'),
         headers: <String, String>{
           'Content-Type': 'application/json',
         },
@@ -254,8 +315,7 @@ class AnniversaryProvider with ChangeNotifier {
   final tableController = PagedDataTableController<String, Anniversary>();
 
   AnniversaryProvider() {
-    channel = WebSocketChannel.connect(
-        Uri.parse('ws://172.20.20.28:3000?channel=anniversary'));
+    channel = WebSocketChannel.connect(Uri.parse(Const.anniversaryChannel));
     fetchAnniversaries();
     _initializeWebSocket();
     fetchAnniversaryTypes();
@@ -264,7 +324,7 @@ class AnniversaryProvider with ChangeNotifier {
 
   void _initializeWebSocket() {
     _webSocketManager = WebSocketManager(
-      webSocketUrl,
+      Const.anniversaryChannel,
       _handleWebSocketMessage,
       _reconnectWebSocket,
     );
@@ -328,15 +388,16 @@ class AnniversaryProvider with ChangeNotifier {
 
   Future<void> fetchAnniversaries() async {
     try {
-      final response = await http.get(Uri.parse(baseUrl));
+      final response = await http.get(Uri.parse(Const.anniversaryUrl));
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
         _anniversaries =
             data.map((json) => Anniversary.fromJson(json)).toList();
-        print("anniversary fetched from web socket");
+
+
         notifyListeners();
       } else {
-        throw Exception('Failed to load anniversaries');
+        throw Exception(response.body);
       }
     } catch (error) {
       print('Error fetching anniversaries: $error');
@@ -346,7 +407,7 @@ class AnniversaryProvider with ChangeNotifier {
 
   Future<void> fetchAnniversarySectors() async {
     try {
-      final response = await http.get(Uri.parse("$baseUrl/anniversarySectors"));
+      final response = await http.get(Uri.parse(Const.anniversarySectorUrl));
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
         _anniversarySectors =
@@ -363,12 +424,12 @@ class AnniversaryProvider with ChangeNotifier {
   Future<void> addAnniversary(
     Anniversary anniversary,
     List<TextEditingController> controllers,
-    void Function() clearSelectedType,
+
   ) async {
     try {
       _loading = true;
       final response = await http.post(
-        Uri.parse(baseUrl),
+        Uri.parse(Const.anniversaryUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(anniversary.toJson()),
       );
@@ -385,8 +446,11 @@ class AnniversaryProvider with ChangeNotifier {
         for (var controller in controllers) {
           controller.clear();
         }
-        clearSelectedType();
+        _selectedPaperType = null;
+        _selectedType = null;
+        _compressedImage = null;
         _selectedDate = null;
+        _anniversaryYear = null;
         notifyListeners();
       } else {
         throw Exception('Failed to add anniversary' + response.body);
@@ -407,9 +471,11 @@ class AnniversaryProvider with ChangeNotifier {
 
   Future<void> updateAnniversary(
       Anniversary anniversary, BuildContext context) async {
+        _updateLoading = true;
+        notifyListeners();
     try {
       final response = await http.patch(
-        Uri.parse('$baseUrl/${anniversary.id}'),
+        Uri.parse('${Const.anniversaryUrl}/${anniversary.id}'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(anniversary.toJson()),
       );
@@ -425,6 +491,9 @@ class AnniversaryProvider with ChangeNotifier {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error.toString())),
       );
+    }finally{
+        _updateLoading = false;
+      notifyListeners();
     }
   }
 
@@ -445,9 +514,11 @@ class AnniversaryProvider with ChangeNotifier {
     }
   }
 
-  Future<void> deleteAnniversary(BuildContext context, Anniversary anniversary) async {
+  Future<void> deleteAnniversary(
+      BuildContext context, Anniversary anniversary) async {
     try {
-      final response = await http.delete(Uri.parse('$baseUrl/${anniversary.id}'));
+      final response = await http
+          .delete(Uri.parse('${Const.anniversaryUrl}/${anniversary.id}'));
       if (response.statusCode == 200) {
         if (Navigator.canPop(context)) {
           Navigator.pop(context);
@@ -462,7 +533,7 @@ class AnniversaryProvider with ChangeNotifier {
 
         notifyListeners();
       } else {
-        throw Exception('Failed to delete anniversary ' + response.body);
+        throw Exception('Failed to delete anniversary ${response.body}');
       }
     } catch (error) {
       Fluttertoast.showToast(
@@ -477,11 +548,10 @@ class AnniversaryProvider with ChangeNotifier {
     }
   }
 
-  DateTime? _selectedDate;
-  DateTime? get selectedDate => _selectedDate;
-
   void setDate(DateTime date) {
     _selectedDate = date;
+    _anniversaryYear = DateTime.now().year - date.year;
+    _isAnniversaryYearEnabled = true;
     notifyListeners();
   }
 

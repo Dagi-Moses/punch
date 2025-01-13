@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:punch/models/myModels/clientExtraModel.dart';
 import 'package:punch/models/myModels/clientModel.dart';
 import 'package:punch/providers/clientProvider.dart';
+import 'package:punch/widgets/inputs/imagePickerWidget.dart';
+import 'package:punch/widgets/text-form-fields/custom_styled_text_field.dart';
 
 class AddClientPage extends StatefulWidget {
   @override
@@ -28,13 +30,15 @@ class _AddClientPageState extends State<AddClientPage> {
   TextEditingController hobbiesController = TextEditingController();
   TextEditingController companiesController = TextEditingController();
   TextEditingController dateOfBirthController = TextEditingController();
-
-  int? selectedType;
+  TextEditingController addressController = TextEditingController();
+  TextEditingController ageController = TextEditingController();
+  TextEditingController descriptionController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+            automaticallyImplyLeading: false,
         title: const Text('Add Client'),
         backgroundColor: Colors.teal,
       ),
@@ -62,22 +66,20 @@ class _AddClientPageState extends State<AddClientPage> {
                         ),
                       ),
 
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                          'FirstName', 'Enter first name', firstNameController),
-                      const SizedBox(height: 16),
-                      _buildTextField('MiddleName', 'Enter middle name',
-                          middleNameController),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                          'LastName', 'Enter last name', lastNameController),
-                      const SizedBox(height: 16),
+                      buildTextField(
+                          label: 'FirstName', controller: firstNameController),
+
+                      buildTextField(
+                          label: 'MiddleName',
+                          controller: middleNameController),
+
+                      buildTextField(
+                          label: 'LastName', controller: lastNameController),
+
                       DropdownButtonFormField<int>(
-                        value: selectedType,
+                        value: clientProvider.selectedType,
                         onChanged: (int? newValue) {
-                          setState(() {
-                            selectedType = newValue;
-                          });
+                          clientProvider.selectedType = newValue;
                         },
                         items: clientProvider.titles.entries.map((entry) {
                           return DropdownMenuItem<int>(
@@ -96,7 +98,7 @@ class _AddClientPageState extends State<AddClientPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8),
                       //  _buildDateField(context, 'Date', DateController),
                       _buildDateField(
                           label: "Date Of Birth",
@@ -112,18 +114,35 @@ class _AddClientPageState extends State<AddClientPage> {
                             }
                           },
                           controller: dateOfBirthController),
-                      const SizedBox(height: 16),
-                      _buildTextField('Place Of Work',
-                          'Enter client Place Of work', placeOfWorkController,  TextInputType.multiline, null
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField('Email', 'Enter client email',
-                          emailController, TextInputType.emailAddress),
-                      const SizedBox(height: 16),
 
-                      _buildTextField('TelePhone', 'Enter Client Phone Number',
-                          telephoneController, TextInputType.phone),
+                      buildTextField(
+                          label: 'Age',
+                          controller: ageController
+                            ..text = clientProvider.age?.toString() ?? "",
+                          keyboardType: TextInputType.number,
+                          enabled: false),
 
+                      buildTextField(
+                          label: 'Place Of Work',
+                          controller: placeOfWorkController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
+
+                      buildTextField(
+                          label: 'Email',
+                          controller: emailController,
+                          keyboardType: TextInputType.emailAddress),
+
+                      buildTextField(
+                          label: 'TelePhone',
+                          controller: telephoneController,
+                          keyboardType: TextInputType.phone),
+
+                      buildTextField(
+                          label: 'Address',
+                          controller: addressController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
                       const SizedBox(height: 32),
                       const Align(
                         alignment: Alignment.bottomLeft,
@@ -136,35 +155,51 @@ class _AddClientPageState extends State<AddClientPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      _buildTextField('Companies', 'Enter client\'s companies',
-                          companiesController,  TextInputType.multiline, null
+
+                      buildTextField(
+                          label: 'Companies',
+                          controller: companiesController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
+
+                      buildTextField(
+                          label: 'Hobbies',
+                          controller: hobbiesController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
+
+                      buildTextField(
+                          label: 'Present Position',
+                          controller: presentPositionController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
+
+                      buildTextField(
+                          label: 'Political Party',
+                          controller: politicalPartyController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
+
+                      buildTextField(
+                          controller: friendsController,
+                          label: 'Friends',
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
+
+                      buildTextField(
+                        controller: associatesController,
+                        label: 'Associates',
+                        keyboardType: TextInputType.multiline,
+                        maxLines: null,
                       ),
-                      const SizedBox(height: 16),
-                      _buildTextField('Hobbies', 'Enter client\'s hobbies',
-                          hobbiesController,  TextInputType.multiline, null
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                          'Present Position',
-                          'Enter client\'s Present Position',
-                          presentPositionController,  TextInputType.multiline, null
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                          'Political Party',
-                          'Enter client\'s polotical Party',
-                          politicalPartyController,  TextInputType.multiline, null
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField('Friends', 'Enter client\'s friends',
-                          friendsController,  TextInputType.multiline, null
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField('Associates',
-                          'Enter client\'s associates', associatesController,    TextInputType.multiline, null
-                      ),
-                      const SizedBox(height: 32),
+
+                      buildTextField(
+                          controller: descriptionController,
+                          label: "Image Description",
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
+
+                      _buildImagePicker(clientProvider),
                     ],
                   );
                 }),
@@ -187,6 +222,7 @@ class _AddClientPageState extends State<AddClientPage> {
               Provider.of<ClientProvider>(context, listen: false);
 
           final client = Client(
+              address: addressController.text.replaceAll('\n', '<br>'),
               associates: associatesController.text.replaceAll('\n', '<br>'),
               dateOfBirth: Provider.of<ClientProvider>(context, listen: false)
                   .selectedDate,
@@ -197,19 +233,24 @@ class _AddClientPageState extends State<AddClientPage> {
               middleName: middleNameController.text,
               placeOfWork: placeOfWorkController.text.replaceAll('\n', '<br>'),
               telephone: telephoneController.text,
-              titleId: selectedType);
+              titleId: clientProvider.selectedType,
+              description: descriptionController.text.replaceAll('\n', '<br>'),
+              image: clientProvider.compressedImage);
 
           final clientExtra = ClientExtra(
-              companies: companiesController.text.replaceAll('\n', '<br>'),
-              hobbies: hobbiesController.text.replaceAll('\n', '<br>'),
-              politicalParty: politicalPartyController.text.replaceAll('\n', '<br>'),
-              presentPosition: presentPositionController.text.replaceAll('\n', '<br>'),
+            companies: companiesController.text.replaceAll('\n', '<br>'),
+            hobbies: hobbiesController.text.replaceAll('\n', '<br>'),
+            politicalParty:
+                politicalPartyController.text.replaceAll('\n', '<br>'),
+            presentPosition:
+                presentPositionController.text.replaceAll('\n', '<br>'),
           );
           if (!clientProvider.loading) {
             await clientProvider.addClient(
               client,
               clientExtra,
               [
+                addressController,
                 lastNameController,
                 firstNameController,
                 middleNameController,
@@ -223,11 +264,6 @@ class _AddClientPageState extends State<AddClientPage> {
                 hobbiesController,
                 companiesController,
               ],
-              () {
-                setState(() {
-                  selectedType = null;
-                });
-              },
             );
           }
         },
@@ -235,27 +271,11 @@ class _AddClientPageState extends State<AddClientPage> {
     );
   }
 
-  Widget _buildTextField(
-      String label, String hint, TextEditingController controller,
-      [TextInputType keyboardType = TextInputType.text, int? maxLines = 1]) {
-    return TextFormField(
-      maxLines: maxLines,
-      controller: controller,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        border: const OutlineInputBorder(),
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.teal),
-        ),
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter $label';
-        }
-        return null;
-      },
+  Widget _buildImagePicker(ClientProvider clientProvider) {
+    return ImagePickerWidget(
+      onTap: clientProvider.pickImage,
+      imageBytes: clientProvider.compressedImage,
+      placeholderText: "Select a client image",
     );
   }
 
