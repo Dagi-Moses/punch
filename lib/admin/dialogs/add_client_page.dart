@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-
+import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/models/myModels/clientExtraModel.dart';
 import 'package:punch/models/myModels/clientModel.dart';
 import 'package:punch/providers/clientProvider.dart';
+import 'package:punch/widgets/dropDowns/inputDropDown.dart';
+import 'package:punch/widgets/inputs/dateFields.dart';
 import 'package:punch/widgets/inputs/imagePickerWidget.dart';
 import 'package:punch/widgets/text-form-fields/custom_styled_text_field.dart';
+
 
 class AddClientPage extends StatefulWidget {
   @override
@@ -29,7 +30,7 @@ class _AddClientPageState extends State<AddClientPage> {
   TextEditingController presentPositionController = TextEditingController();
   TextEditingController hobbiesController = TextEditingController();
   TextEditingController companiesController = TextEditingController();
-  TextEditingController dateOfBirthController = TextEditingController();
+
   TextEditingController addressController = TextEditingController();
   TextEditingController ageController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
@@ -38,9 +39,11 @@ class _AddClientPageState extends State<AddClientPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-            automaticallyImplyLeading: false,
+        backgroundColor: punchRed, // Sets the AppBar background color
+        foregroundColor: Colors.white, // Sets the text/icon color
+        elevation: 4,
+        automaticallyImplyLeading: false,
         title: const Text('Add Client'),
-        backgroundColor: Colors.teal,
       ),
       body: SingleChildScrollView(
         child: Center(
@@ -61,89 +64,60 @@ class _AddClientPageState extends State<AddClientPage> {
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Colors.teal,
+                            color: punchRed,
                           ),
                         ),
                       ),
-
-                      buildTextField(
+                    CustomInputTextField(
                           label: 'FirstName', controller: firstNameController),
-
-                      buildTextField(
+                     CustomInputTextField(
                           label: 'MiddleName',
                           controller: middleNameController),
-
-                      buildTextField(
+                     CustomInputTextField(
                           label: 'LastName', controller: lastNameController),
-
-                      DropdownButtonFormField<int>(
+                      CustomInputDropdown<int>(
                         value: clientProvider.selectedType,
+                        label: "Title",
+                        items: clientProvider.titles,
                         onChanged: (int? newValue) {
                           clientProvider.selectedType = newValue;
                         },
-                        items: clientProvider.titles.entries.map((entry) {
-                          return DropdownMenuItem<int>(
-                            value: entry.key,
-                            child: Text(
-                              entry.value,
-                              overflow: TextOverflow.clip,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          );
-                        }).toList(),
-                        decoration: InputDecoration(
-                          labelText: "Title",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
                       ),
-                      const SizedBox(height: 8),
-                      //  _buildDateField(context, 'Date', DateController),
-                      _buildDateField(
-                          label: "Date Of Birth",
-                          selectedDate: clientProvider.selectedDate,
-                          context: context,
-                          onDateSelected: (DateTime? date) {
-                            if (date != null) {
-                              clientProvider.setDate(date);
-                              setState(() {
-                                dateOfBirthController.text =
-                                    DateFormat('dd/MM/yyyy').format(date);
-                              });
-                            }
-                          },
-                          controller: dateOfBirthController),
-
-                      buildTextField(
+                      inputDatePicker(
+                        label: "Date Of Birth",
+                        selectedDate: clientProvider.selectedDate,
+                        context: context,
+                        onDateSelected: (DateTime? date) {
+                          if (date != null) {
+                            clientProvider.setDate(date);
+                          }
+                        },
+                      ),
+                  CustomInputTextField(
                           label: 'Age',
                           controller: ageController
                             ..text = clientProvider.age?.toString() ?? "",
                           keyboardType: TextInputType.number,
                           enabled: false),
-
-                      buildTextField(
+                     CustomInputTextField(
                           label: 'Place Of Work',
                           controller: placeOfWorkController,
                           keyboardType: TextInputType.multiline,
                           maxLines: null),
-
-                      buildTextField(
+                     CustomInputTextField(
                           label: 'Email',
                           controller: emailController,
                           keyboardType: TextInputType.emailAddress),
-
-                      buildTextField(
+                    CustomInputTextField(
                           label: 'TelePhone',
                           controller: telephoneController,
                           keyboardType: TextInputType.phone),
-
-                      buildTextField(
+                    CustomInputTextField(
                           label: 'Address',
                           controller: addressController,
                           keyboardType: TextInputType.multiline,
                           maxLines: null),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
                       const Align(
                         alignment: Alignment.bottomLeft,
                         child: Text(
@@ -151,54 +125,46 @@ class _AddClientPageState extends State<AddClientPage> {
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Colors.teal,
+                            color: punchRed,
                           ),
                         ),
                       ),
-
-                      buildTextField(
+                    CustomInputTextField(
                           label: 'Companies',
                           controller: companiesController,
                           keyboardType: TextInputType.multiline,
                           maxLines: null),
-
-                      buildTextField(
+                    CustomInputTextField(
                           label: 'Hobbies',
                           controller: hobbiesController,
                           keyboardType: TextInputType.multiline,
                           maxLines: null),
-
-                      buildTextField(
+                   CustomInputTextField(
                           label: 'Present Position',
                           controller: presentPositionController,
                           keyboardType: TextInputType.multiline,
                           maxLines: null),
-
-                      buildTextField(
+                      CustomInputTextField(
                           label: 'Political Party',
                           controller: politicalPartyController,
                           keyboardType: TextInputType.multiline,
                           maxLines: null),
-
-                      buildTextField(
+                      CustomInputTextField(
                           controller: friendsController,
                           label: 'Friends',
                           keyboardType: TextInputType.multiline,
                           maxLines: null),
-
-                      buildTextField(
+                    CustomInputTextField(
                         controller: associatesController,
                         label: 'Associates',
                         keyboardType: TextInputType.multiline,
                         maxLines: null,
                       ),
-
-                      buildTextField(
+                     CustomInputTextField(
                           controller: descriptionController,
                           label: "Image Description",
                           keyboardType: TextInputType.multiline,
                           maxLines: null),
-
                       _buildImagePicker(clientProvider),
                     ],
                   );
@@ -209,8 +175,6 @@ class _AddClientPageState extends State<AddClientPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.teal,
-        hoverColor: Colors.teal[200],
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(50),
         ),
@@ -276,49 +240,6 @@ class _AddClientPageState extends State<AddClientPage> {
       onTap: clientProvider.pickImage,
       imageBytes: clientProvider.compressedImage,
       placeholderText: "Select a client image",
-    );
-  }
-
-  Widget _buildDateField(
-      {required DateTime? selectedDate,
-      required ValueChanged<DateTime?> onDateSelected,
-      required BuildContext context,
-      required String label,
-      required TextEditingController controller}) {
-    return GestureDetector(
-      onTap: () async {
-        // Show the date picker when the field is tapped
-        DateTime? pickedDate = await showDatePicker(
-          context: context,
-          initialDate: selectedDate ?? DateTime.now(),
-          firstDate: DateTime(1900),
-          lastDate: DateTime(2100),
-        );
-
-        if (pickedDate != null) {
-          onDateSelected(pickedDate); // Notify the date change
-        }
-      },
-      child: AbsorbPointer(
-        child: TextFormField(
-          readOnly: true, // Make the field read-only
-          controller: controller,
-          decoration: InputDecoration(
-            labelText: label,
-            border: const OutlineInputBorder(),
-            focusedBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.teal),
-            ),
-            suffixIcon: const Icon(Icons.calendar_today, color: Colors.teal),
-          ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please select $label';
-            }
-            return null;
-          },
-        ),
-      ),
     );
   }
 }

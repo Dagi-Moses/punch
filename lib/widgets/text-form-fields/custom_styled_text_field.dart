@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 
-Widget buildTextField(
+Widget CustomInputTextField(
     {required TextEditingController controller,
     required String label,
     bool enabled = true,

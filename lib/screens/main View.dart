@@ -19,6 +19,7 @@ import 'package:punch/screens/manageAnniversaryTypes.dart';
 import 'package:punch/screens/managepapersPage.dart';
 
 import 'package:punch/widgets/operations.dart';
+import 'package:punch/widgets/texts/richTextTableColumn.dart';
 
 class MainView extends StatefulWidget {
   const MainView({Key? key}) : super(key: key);
@@ -28,10 +29,54 @@ class MainView extends StatefulWidget {
 }
 
 class _MainViewState extends State<MainView> {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController typeIdController = TextEditingController();
-  final TextEditingController anniversaryNoController = TextEditingController();
-  final TextEditingController placedByNameController = TextEditingController();
+
+  String _getAnniversaryTypeQuery(String? query) {
+    if (query == null || query.isEmpty) {
+      return "";
+    }
+
+    // Attempt to parse query as an integer
+    int? typeId = int.tryParse(query);
+    if (typeId != null &&
+        Provider.of<AnniversaryProvider>(context, listen: false)
+            .anniversaryTypes.containsKey(typeId)) {
+      return Provider.of<AnniversaryProvider>(context, listen: false)
+          .anniversaryTypes[typeId]!.toLowerCase();
+    }
+
+    // If it's not a valid integer or doesn't match, return the query as-is
+    return query.toLowerCase();
+  }
+
+ String _getFormattedQuery(String? query) {
+  DateTime? date = query != null ? DateTime.tryParse(query) : null;
+    if (date == null) {
+      return 'N/A';
+    }
+
+    DateTime now = DateTime.now();
+    DateTime anniversaryDate = date;
+    DateTime today = DateTime(now.year, now.month, now.day);
+    DateTime nextAnniversary =
+        DateTime(today.year, anniversaryDate.month, anniversaryDate.day);
+
+    if (nextAnniversary.isBefore(today)) {
+      nextAnniversary =
+          DateTime(today.year + 1, anniversaryDate.month, anniversaryDate.day);
+    }
+
+    Duration difference = nextAnniversary.difference(today);
+
+    if (difference.inDays == 0) {
+      return "Today".toLowerCase().trim();
+    } else if (difference.inDays == 1) {
+      return "Tomorrow".toLowerCase().trim();
+    } else if (difference.inDays < 7) {
+      return DateFormat('EEEE').format(nextAnniversary).toLowerCase().trim(); // Day of the week
+    } else {
+      return DateFormat('dd/MM/yyyy').format(nextAnniversary); // Full date
+    }
+  }
 
   bool _isInitialized = false;
 
@@ -151,6 +196,10 @@ class _MainViewState extends State<MainView> {
           configuration: const PagedDataTableConfiguration(),
           pageSizes: pageSizes,
           fetcher: (pageSize, sortModel, filterModel, pageToken) async {
+          String? query = filterModel['content'] ??
+                filterModel['anniversaryType']?.toString() ??
+                filterModel['date']?.toString() ??
+                filterModel['dateRange']?.toString();
             try {
               int pageIndex = int.parse(pageToken ?? "0");
 
@@ -162,19 +211,24 @@ class _MainViewState extends State<MainView> {
                     !anniversary.name!
                         .toLowerCase()
                         .contains(filterModel['content'].toLowerCase())) {
+                 
+                
                   return false;
                 }
 
                 if (filterModel['anniversaryType'] != null &&
                     anniversary.anniversaryTypeId !=
                         filterModel['anniversaryType']) {
+               
+                
                   return false;
                 }
 
                 if (filterModel['date'] != null) {
+                
                   DateTime selectedDate = filterModel['date'];
                   DateTime now = DateTime.now();
-
+                 
                   if (anniversary.date == null ||
                       DateTime(
                             now.year,
@@ -188,10 +242,13 @@ class _MainViewState extends State<MainView> {
                           0) {
                     return false;
                   }
+                                  
+              
                 }
 
                 // Date range filter
                 if (filterModel['dateRange'] != null) {
+                
                   DateTimeRange dateRange = filterModel['dateRange'];
                   if (anniversary.date == null) {
                     return false;
@@ -214,12 +271,17 @@ class _MainViewState extends State<MainView> {
                       (anniversaryMonth > endMonth ||
                           (anniversaryMonth == endMonth &&
                               anniversaryDay > endDay))) {
+                   
+                
                     return false;
                   }
+               
                 }
 
                 return true;
               }).toList();
+
+                  anniversaryProvider.setQuery(query);
 
               // Paginate the filtered data
               List<Anniversary> data = filteredData
@@ -425,25 +487,30 @@ class _MainViewState extends State<MainView> {
           ),
           columns: [
             if (anniversaryProvider.isRowsSelected) RowSelectorColumn(),
-            LargeTextTableColumn(
-              title: const Text("Title"),
-              id: "Title",
-              size: const FixedColumnSize(320),
-              getter: (item, index) => item.name ?? "N/A",
+            HighlightQueryColumn(
               fieldLabel: "Title",
+              title: const Text("Title"),
+
+              id: "Title",
+              size: const FixedColumnSize(300),
+              query: anniversaryProvider.query?.toLowerCase() ??
+                  "", // Replace with your search query
+              getter: (item, index) => item.name ?? "N/A",
               setter: (item, newValue, index) async {
                 return false;
               },
             ),
-            TableColumn(
-              id: "upcomingDate",
+            HighlightQueryColumn(
+              fieldLabel: "Upcoming Date",
               title: const Text("Upcoming Date"),
-              // size: const MaxColumnSize(
-              //     FractionalColumnSize(.15), FixedColumnSize(100)),
+
+              id: "upcomingDate",
               size: const FixedColumnSize(150),
-              cellBuilder: (context, item, index) {
-                if (item.date == null) {
-                  return const Text('N/A');
+              query:_getFormattedQuery(anniversaryProvider.query),
+                  
+              getter: (item, index) {
+                   if (item.date == null) {
+                  return 'N/A';
                 }
 
                 DateTime now = DateTime.now();
@@ -460,57 +527,118 @@ class _MainViewState extends State<MainView> {
                 Duration difference = nextAnniversary.difference(today);
 
                 if (difference.inDays == 0) {
-                  return const Text("Today");
+                  return "Today";
                 } else if (difference.inDays == 1) {
-                  return const Text("Tomorrow");
+                  return "Tomorrow";
                 } else if (difference.inDays < 7) {
-                  return Text(DateFormat('EEEE')
-                      .format(nextAnniversary)); // Day of the week
+                  return DateFormat('EEEE')
+                      .format(nextAnniversary); // Day of the week
                 } else {
-                  return Text(DateFormat('dd/MM/yyyy')
-                      .format(nextAnniversary)); // Full date
+                  return DateFormat('dd/MM/yyyy')
+                      .format(nextAnniversary); // Full date
                 }
               },
+              setter: (item, newValue, index) async {
+                return false;
+              },
             ),
-            DropdownTableColumn(
-              sortable: true,
+            // TableColumn(
+            //   id: "upcomingDate",
+            //   title: const Text("Upcoming Date"),
+            //   size: const FixedColumnSize(150),
+            //   cellBuilder: (context, item, index) {
+            //     if (item.date == null) {
+            //       return const Text('N/A');
+            //     }
+
+            //     DateTime now = DateTime.now();
+            //     DateTime anniversaryDate = item.date!;
+            //     DateTime today = DateTime(now.year, now.month, now.day);
+            //     DateTime nextAnniversary = DateTime(
+            //         today.year, anniversaryDate.month, anniversaryDate.day);
+
+            //     if (nextAnniversary.isBefore(today)) {
+            //       nextAnniversary = DateTime(today.year + 1,
+            //           anniversaryDate.month, anniversaryDate.day);
+            //     }
+
+            //     Duration difference = nextAnniversary.difference(today);
+
+            //     if (difference.inDays == 0) {
+            //       return const Text("Today");
+            //     } else if (difference.inDays == 1) {
+            //       return const Text("Tomorrow");
+            //     } else if (difference.inDays < 7) {
+            //       return Text(DateFormat('EEEE')
+            //           .format(nextAnniversary)); // Day of the week
+            //     } else {
+            //       return Text(DateFormat('dd/MM/yyyy')
+            //           .format(nextAnniversary)); // Full date
+            //     }
+            //   },
+            // ),
+
+            HighlightQueryColumn(
               id: "type",
               title: const Text("Type"),
-              items: [
-                // Add a default or "Select Type" option if desired
-                const DropdownMenuItem<int?>(
-                  value: null,
-                  child: Text(
-                    "Select Type", // Default or fallback option
-                    overflow: TextOverflow.clip,
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
-                ...anniversaryProvider.anniversaryTypes.entries.map((entry) {
-                  return DropdownMenuItem<int?>(
-                    value:
-                        entry.key, // Use the Anniversary_Type_Id as the value
-                    child: Text(
-                      entry.value, // Use the description as the display text
-                      overflow: TextOverflow.clip,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  );
-                }).toList(),
-              ],
+              query: _getAnniversaryTypeQuery(anniversaryProvider.query), 
               size: const FixedColumnSize(210),
+              fieldLabel:
+                  "Anniversary Type", // Optional label for better accessibility
               getter: (item, index) {
                 int? typeId = item.anniversaryTypeId;
                 if (typeId == null ||
                     !anniversaryProvider.anniversaryTypes.containsKey(typeId)) {
-                  return null; // or return a default/fallback typeId if necessary
+                  return "Unknown"; // Return fallback text if typeId is null or not found
                 }
-                return typeId;
+                return anniversaryProvider
+                    .anniversaryTypes[typeId]!; // Fetch the description
               },
               setter: (item, newValue, index) async {
-                return false; // Return false if no new type was selected or if the type is the same
+                // Logic for setting new values, if applicable (optional for highlight-only use)
+                return false;
               },
             ),
+
+            // DropdownTableColumn(
+            //   sortable: true,
+            //   id: "type",
+            //   title: const Text("Type"),
+            //   items: [
+            //     // Add a default or "Select Type" option if desired
+            //     const DropdownMenuItem<int?>(
+            //       value: null,
+            //       child: Text(
+            //         "Select Type", // Default or fallback option
+            //         overflow: TextOverflow.clip,
+            //         style: TextStyle(fontSize: 14),
+            //       ),
+            //     ),
+            //     ...anniversaryProvider.anniversaryTypes.entries.map((entry) {
+            //       return DropdownMenuItem<int?>(
+            //         value:
+            //             entry.key, // Use the Anniversary_Type_Id as the value
+            //         child: Text(
+            //           entry.value, // Use the description as the display text
+            //           overflow: TextOverflow.clip,
+            //           style: const TextStyle(fontSize: 14),
+            //         ),
+            //       );
+            //     }).toList(),
+            //   ],
+            //   size: const FixedColumnSize(210),
+            //   getter: (item, index) {
+            //     int? typeId = item.anniversaryTypeId;
+            //     if (typeId == null ||
+            //         !anniversaryProvider.anniversaryTypes.containsKey(typeId)) {
+            //       return null; // or return a default/fallback typeId if necessary
+            //     }
+            //     return typeId;
+            //   },
+            //   setter: (item, newValue, index) async {
+            //     return false; // Return false if no new type was selected or if the type is the same
+            //   },
+            // ),
             LargeTextTableColumn(
               sortable: true,
               id: "placedBy",

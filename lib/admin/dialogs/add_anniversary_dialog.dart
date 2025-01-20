@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/models/myModels/anniversaryModel.dart';
 import 'package:punch/providers/anniversaryProvider.dart';
+import 'package:punch/widgets/dropDowns/inputDropDown.dart';
+import 'package:punch/widgets/inputs/dateFields.dart';
 import 'package:punch/widgets/inputs/imagePickerWidget.dart';
 import 'package:punch/widgets/text-form-fields/custom_styled_text_field.dart';
 
@@ -23,17 +26,19 @@ class _AddAnniversaryPageState extends State<AddAnniversaryPage> {
   final TextEditingController associatesController = TextEditingController();
   final TextEditingController anniversaryYearController =
       TextEditingController();
-  final TextEditingController descriptionController =
-      TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     final anniversaryProvider = Provider.of<AnniversaryProvider>(context);
     return Scaffold(
       appBar: AppBar(
-            automaticallyImplyLeading: false,
+          backgroundColor: punchRed, // Sets the AppBar background color
+        foregroundColor: Colors.white, // Sets the text/icon color
+        elevation: 4, 
+        automaticallyImplyLeading: false,
         title: const Text('Add Anniversary'),
-        backgroundColor: Colors.teal,
+      
       ),
       body: SingleChildScrollView(
         child: Center(
@@ -44,7 +49,7 @@ class _AddAnniversaryPageState extends State<AddAnniversaryPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  buildTextField(
+                  CustomInputTextField(
                     controller: nameController,
                     label: "Name",
                     validator: (value) {
@@ -54,78 +59,46 @@ class _AddAnniversaryPageState extends State<AddAnniversaryPage> {
                       return null;
                     },
                   ),
-                  DropdownButtonFormField<int>(
+                  CustomInputDropdown<int>(
                     value: anniversaryProvider.selectedType,
+                    label: "Anniversary Type",
+                    items: anniversaryProvider.anniversaryTypes,
                     onChanged: (int? newValue) {
                       anniversaryProvider.selectedType = newValue;
                     },
-                    items: anniversaryProvider.anniversaryTypes.entries
-                        .map((entry) {
-                      return DropdownMenuItem<int>(
-                        value: entry.key,
-                        child: Text(
-                          entry.value,
-                          overflow: TextOverflow.clip,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      );
-                    }).toList(),
-                    decoration: InputDecoration(
-                      labelText: "Anniversary Type",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
                   ),
-                  const SizedBox(
-                    height: 8,
-                  ),
-                  DropdownButtonFormField<int>(
+                  CustomInputDropdown<int>(
                     value: anniversaryProvider.selectedPaperType,
+                    label: "Paper",
+                    items: anniversaryProvider.paperTypes,
                     onChanged: (int? newValue) {
                       anniversaryProvider.selectedPaperType = newValue;
                     },
-                    items: anniversaryProvider.paperTypes.entries.map((entry) {
-                      return DropdownMenuItem<int>(
-                        value: entry.key,
-                        child: Text(
-                          entry.value,
-                          overflow: TextOverflow.clip,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      );
-                    }).toList(),
-                    decoration: InputDecoration(
-                      labelText: "Paper",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
                   ),
-                  buildTextField(
+                  CustomInputTextField(
                       controller: placedByNameController,
                       label: "Placed By Name",
                       keyboardType: TextInputType.multiline,
                       maxLines: null),
-                  buildTextField(
+                  CustomInputTextField(
                       controller: placedByAddressController,
                       label: "Placed By Address",
                       maxLines: null),
-                  buildTextField(
+                 CustomInputTextField(
                     controller: placedByPhoneController,
                     label: "Placed By Phone",
                   ),
-                  buildTextField(
+                  CustomInputTextField(
                       controller: friendsController,
                       label: "Friends",
                       keyboardType: TextInputType.multiline,
                       maxLines: null),
-                  buildTextField(
+                  CustomInputTextField(
                       controller: associatesController,
                       label: "Associates",
                       keyboardType: TextInputType.multiline,
                       maxLines: null),
-                  _buildDatePicker(
+                  inputDatePicker(
                     selectedDate: anniversaryProvider.selectedDate,
                     context: context,
                     onDateSelected: (DateTime? date) {
@@ -134,10 +107,7 @@ class _AddAnniversaryPageState extends State<AddAnniversaryPage> {
                       }
                     },
                   ),
-                  const SizedBox(
-                    height: 4,
-                  ),
-                  buildTextField(
+                  CustomInputTextField(
                     controller: anniversaryYearController
                       ..text =
                           anniversaryProvider.anniversaryYear?.toString() ?? "",
@@ -145,13 +115,11 @@ class _AddAnniversaryPageState extends State<AddAnniversaryPage> {
                     keyboardType: TextInputType.number,
                     enabled: false,
                   ),
-                    buildTextField(
+                   CustomInputTextField(
                       controller: descriptionController,
                       label: "Image Description",
-
                       keyboardType: TextInputType.multiline,
                       maxLines: null),
-                  
                   _buildImagePicker(anniversaryProvider),
                 ],
               ),
@@ -160,8 +128,7 @@ class _AddAnniversaryPageState extends State<AddAnniversaryPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.teal,
-        hoverColor: Colors.teal[200],
+      
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(50),
         ),
@@ -207,52 +174,12 @@ class _AddAnniversaryPageState extends State<AddAnniversaryPage> {
     );
   }
 
-Widget _buildImagePicker(AnniversaryProvider anniversaryProvider) {
+  Widget _buildImagePicker(AnniversaryProvider anniversaryProvider) {
     return ImagePickerWidget(
       onTap: anniversaryProvider.pickImage,
       imageBytes: anniversaryProvider.compressedImage,
       placeholderText: "Select an anniversary image",
+       isLoading: anniversaryProvider.imageLoading, // Pass the loading state
     );
   }
-
-
-
-Widget _buildDatePicker({
-  required DateTime? selectedDate,
-  required ValueChanged<DateTime?> onDateSelected,
-  required BuildContext context,
-}) {
-  return Container(
-    padding: const EdgeInsets.all(5.0),
-    decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey, width: 1.0),
-      borderRadius: BorderRadius.circular(8.0), // Optional: Rounded corners
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            "Date: ${selectedDate != null ? DateFormat('dd/MM/yyyy').format(selectedDate) : 'Not selected'}",
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black,
-            ),
-          ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.calendar_today, color: Colors.black),
-          onPressed: () async {
-            DateTime? pickedDate = await showDatePicker(
-              context: context,
-              initialDate: DateTime.now(),
-              firstDate: DateTime(1900),
-              lastDate: DateTime(2100),
-            );
-            onDateSelected(pickedDate);
-          },
-        ),
-      ],
-    ),
-  );
-}
 }

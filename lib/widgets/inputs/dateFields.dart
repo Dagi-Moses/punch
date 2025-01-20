@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 
 class EditableDateField extends StatelessWidget {
@@ -69,3 +70,45 @@ class EditableDateField extends StatelessWidget {
     );
   }
 }
+
+Widget inputDatePicker({
+  required DateTime? selectedDate,
+  required ValueChanged<DateTime?> onDateSelected,
+  required BuildContext context,
+  String label = "Date",
+}) {
+  TextEditingController dateController = TextEditingController(
+    text: selectedDate != null
+        ? DateFormat('dd/MM/yyyy').format(selectedDate)
+        : '',
+  );
+
+  return TextField(
+    controller: dateController,
+    readOnly: true,
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(fontSize: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      suffixIcon: IconButton(
+        icon: const Icon(Icons.calendar_today),
+        onPressed: () async {
+          DateTime? pickedDate = await showDatePicker(
+            context: context,
+            initialDate: selectedDate ?? DateTime.now(),
+            firstDate: DateTime(1900),
+            lastDate: DateTime(2100),
+          );
+
+          if (pickedDate != null) {
+            onDateSelected(pickedDate);
+            dateController.text = DateFormat('dd/MM/yyyy').format(pickedDate);
+          }
+        },
+      ),
+    ),
+  );
+}
+

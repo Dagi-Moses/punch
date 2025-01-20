@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
@@ -14,7 +13,6 @@ import 'package:punch/models/myModels/web_socket_manager.dart';
 import 'package:punch/providers/auth.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:punch/src/const.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -30,6 +28,17 @@ class AuthProvider with ChangeNotifier {
 
   bool get loading => _loading;
   late WebSocketManager _webSocketManager;
+
+  bool _isEditing = false;
+  bool get isEditing => _isEditing;
+
+  bool _updateLoading = false;
+  bool get updateloading => _updateLoading;
+
+  set isEditing(bool newValue) {
+    _isEditing = newValue;
+    notifyListeners();
+  }
  
   late WebSocketManager _userRecordManager;
   setBoolValue(bool newValue) {
@@ -75,6 +84,8 @@ class AuthProvider with ChangeNotifier {
   }
 
   final tableController = PagedDataTableController<String, User>();
+
+
 
   AuthProvider() {
     _initialize();
@@ -553,7 +564,9 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> updateUser(
-      User user, Function onSuccess, BuildContext context) async {
+      User user,  BuildContext context) async {
+        _updateLoading = true;
+         notifyListeners();
     try {
       print("updating" + user.toJson().toString());
       final response = await http.patch(
@@ -562,11 +575,11 @@ class AuthProvider with ChangeNotifier {
         body: jsonEncode(user.toJson()),
       );
       if (response.statusCode == 200) {
-        onSuccess();
+      
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('User updated successfully!')),
         );
-        notifyListeners();
+       
         return true;
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -582,6 +595,9 @@ class AuthProvider with ChangeNotifier {
       print('Error updating user: $error');
 
       return false;
+    }finally{
+       _updateLoading = false;
+       notifyListeners();
     }
   }
 

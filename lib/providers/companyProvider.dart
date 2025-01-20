@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker_web/image_picker_web.dart';
 import 'package:paged_datatable/paged_datatable.dart';
+import 'package:punch/functions/imageFunctions.dart';
 import 'package:punch/models/myModels/companyExtraModel.dart';
 import 'package:punch/models/myModels/companyModel.dart';
 import 'package:punch/models/myModels/companySectorModel.dart';
@@ -11,7 +14,6 @@ import 'package:punch/providers/clientExtraProvider.dart';
 import 'package:punch/src/const.dart';
 
 class CompanyProvider with ChangeNotifier {
-
   List<Company> _companies = [];
   List<Company> get companies => _companies;
   Map<int, CompanyExtra> companyExtraMap = {};
@@ -20,10 +22,86 @@ class CompanyProvider with ChangeNotifier {
   bool _loading = false; // Default value
   bool get loading => _loading;
 
+  bool _imageLoading = false;
+  bool get imageLoading => _imageLoading;
+
+  bool _isEditing = false;
+  bool get isEditing => _isEditing;
+
+  bool _updateLoading = false;
+  bool get updateloading => _updateLoading;
+
   final tableController = PagedDataTableController<String, Company>();
 
   late WebSocketManager _companyWebSocketManager;
   late WebSocketManager _companyExtraWebSocketManager;
+
+  String? _query;
+  String? get query => _query;
+
+  void setQuery(String? newQuery) {
+    if (_query != newQuery) {
+      _query = newQuery;
+      notifyListeners();
+    }
+  }
+
+  int? _selectedType;
+  int? get selectedType => _selectedType;
+
+  set selectedType(int? newValue) {
+    _selectedType = newValue;
+    notifyListeners();
+  }
+
+  set isEditing(bool newValue) {
+    _isEditing = newValue;
+    notifyListeners();
+  }
+
+  Uint8List? _compressedImage;
+  Uint8List? get compressedImage => _compressedImage;
+
+  set compressedImage(Uint8List? newValue) {
+    _compressedImage = newValue;
+    notifyListeners();
+  }
+
+  Future<Uint8List?> pickImage() async {
+    _imageLoading = true;
+    notifyListeners();
+    try {
+      final Uint8List? imageBytes = await ImagePickerWeb.getImageAsBytes();
+
+      if (imageBytes != null) {
+        _imageLoading = true; // Start loading
+        notifyListeners();
+        final Uint8List? compressed = await compressToTargetSize(
+          imageBytes,
+          5,
+        );
+
+        if (compressed != null) {
+          _compressedImage = compressed;
+          notifyListeners();
+          return compressed;
+        }
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: e.toString(),
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    } finally {
+      _imageLoading = false; // Stop loading
+      notifyListeners();
+    }
+
+    return null;
+  }
 
   CompanyProvider() {
     fetchCompanies();
@@ -44,7 +122,7 @@ class CompanyProvider with ChangeNotifier {
 
     // Initialize WebSocket for CompanyExtra
     _companyExtraWebSocketManager = WebSocketManager(
-        Const.companyExtraChannel,
+      Const.companyExtraChannel,
       _handleCompanyExtraWebSocketMessage,
       _reconnectCompanyExtraWebSocket,
     );
@@ -78,7 +156,7 @@ class CompanyProvider with ChangeNotifier {
           final index = _companies.indexWhere((a) => a.id == data['_id']);
           if (index != -1) {
             _companies[index] = Company.fromJson(data);
-             tableController.refresh();
+            tableController.refresh();
             tableController.replace(index, _companies[index]);
 
             print('socket updated company ');
@@ -329,13 +407,11 @@ class CompanyProvider with ChangeNotifier {
     Company company,
     CompanyExtra companyExtra,
     List<TextEditingController> controllers,
-    void Function() clearSelectedType,
   ) async {
-    
     try {
-      print('started');
-      // Create the combined payload
+   
       _loading = true;
+        notifyListeners();
       final payload = {
         'company': company.toJson(),
         'companyExtra': companyExtra.toJson(),
@@ -347,7 +423,7 @@ class CompanyProvider with ChangeNotifier {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(payload),
       );
-print(response.body);
+      print(response.body);
       if (response.statusCode == 201) {
         Fluttertoast.showToast(
           msg: "Company and Company Extra added successfully!",
@@ -361,8 +437,10 @@ print(response.body);
         for (var controller in controllers) {
           controller.clear();
         }
-        clearSelectedType();
-
+        _selectedType = null;
+        _selectedDate = null;
+        _selectedStartDate = null;
+        _compressedImage = null;
         notifyListeners();
       } else {
         throw Exception('Failed to add company ' + response.body);
@@ -401,10 +479,9 @@ print(response.body);
   Future<void> updateCompany(
     Company company,
     CompanyExtra companyExtra,
-    Function onSuccess,
     BuildContext context,
   ) async {
-    print('started');
+    _updateLoading = true;
     try {
       final response = await http.patch(
         Uri.parse('${Const.companyUrl}/${company.id}'),
@@ -416,13 +493,11 @@ print(response.body);
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(companyExtra.toJson()),
       );
-       
+
       if (response.statusCode == 200 && responseExtra.statusCode == 200) {
-        onSuccess();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Company updated successfully!')),
         );
-        notifyListeners();
       } else {
         throw Exception(
             {"response": response.body + " REspondata" + responseExtra.body});
@@ -432,12 +507,15 @@ print(response.body);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error.toString())),
       );
+    } finally {
+      _updateLoading = false;
+      notifyListeners();
     }
   }
 
   Future<void> deleteSelectedCompanies(
       BuildContext context, List<Company> selectedCompanies) async {
-        print("object");
+    print("object");
     try {
       print("selectedClients ${selectedCompanies.length.toString()}");
       // Iterate over the selected clients
@@ -460,11 +538,10 @@ print(response.body);
   }
 
   Future<void> deleteCompany(BuildContext context, Company company) async {
-    
     try {
-
-         print("started deleting extras ${company.toJson().toString()}");
-      final response = await http.delete(Uri.parse('${Const.companyUrl}/${company.id}'));
+      print("started deleting extras ${company.toJson().toString()}");
+      final response =
+          await http.delete(Uri.parse('${Const.companyUrl}/${company.id}'));
       if (response.statusCode == 200) {
         CompanyExtra? companyExtra = companyExtraMap[company.companyNo];
         // If a client extra exists, await its deletion
@@ -501,7 +578,8 @@ print(response.body);
   Future<void> deleteCompanyExtra(BuildContext context, String id) async {
     try {
       print("started deleting extras $id");
-      final response = await http.delete(Uri.parse('${Const.companyExtraUrl}/$id'));
+      final response =
+          await http.delete(Uri.parse('${Const.companyExtraUrl}/$id'));
       if (response.statusCode == 200) {
         print("deleted client extra");
         notifyListeners();

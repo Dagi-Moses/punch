@@ -4,6 +4,7 @@ class Const {
    static const String serverUrl = kReleaseMode
       ? 'http://172.20.20.28:3000' 
       : 'http://localhost:3000';
+  //  static const String serverUrl =  'http://localhost:3000';
    static const String userUrl = '$serverUrl/users';
    static const String userRecordUrl = '$serverUrl/userRecords';
    static const String validateTokenUrl = '$serverUrl/validateToken';

@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
 import 'package:provider/provider.dart';
+import 'package:punch/admin/core/constants/color_constants.dart';
 
 import 'package:punch/models/myModels/companyExtraModel.dart';
 import 'package:punch/models/myModels/companyModel.dart';
 import 'package:punch/providers/companyProvider.dart';
+import 'package:punch/widgets/dropDowns/inputDropDown.dart';
+import 'package:punch/widgets/inputs/dateFields.dart';
+import 'package:punch/widgets/inputs/imagePickerWidget.dart';
+import 'package:punch/widgets/text-form-fields/custom_styled_text_field.dart';
+import 'package:punch/widgets/texts/alignedHeaderText.dart';
 
 class AddCompanyPage extends StatefulWidget {
   @override
@@ -13,53 +19,33 @@ class AddCompanyPage extends StatefulWidget {
 
 class _AddCompanyPageState extends State<AddCompanyPage> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController companyNoController = TextEditingController();
-
   final TextEditingController nameController = TextEditingController();
-
   final TextEditingController companySectorIdController =
       TextEditingController();
-
-  final TextEditingController dateController = TextEditingController();
-
   final TextEditingController addressController = TextEditingController();
-
   final TextEditingController emailController = TextEditingController();
-
   final TextEditingController phoneController = TextEditingController();
-
   final TextEditingController faxController = TextEditingController();
-
-  final TextEditingController startDateController = TextEditingController();
-
   final TextEditingController managingDirectorController =
       TextEditingController();
-
   final TextEditingController corporateAffairsController =
       TextEditingController();
-
   final TextEditingController mediaManagerController = TextEditingController();
-
   final TextEditingController friendsController = TextEditingController();
-
   final TextEditingController competitorsController = TextEditingController();
-
   final TextEditingController directorsController = TextEditingController();
-
-  int? selectedType;
-  void clearSelectedType() {
-    setState(() {
-      selectedType = null;
-    });
-  }
+  final TextEditingController descriptionController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: punchRed,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        automaticallyImplyLeading: false,
         title: const Text('Add Company'),
-        backgroundColor: Colors.teal,
       ),
       body: SingleChildScrollView(
         child: Center(
@@ -73,52 +59,20 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
                     builder: (context, companyProvider, child) {
                   return Column(
                     children: [
-                      const Align(
-                        alignment: Alignment.bottomLeft,
-                        child: Text(
-                          'Company Details',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.teal,
-                          ),
-                        ),
+                      alignedHeaderText(
+                        title: 'Company Details',
                       ),
-
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                          'Name', 'Enter company name', nameController),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<int>(
-                        value: selectedType,
+                      CustomInputTextField(
+                          label: 'Name', controller: nameController),
+                      CustomInputDropdown<int>(
+                        value: companyProvider.selectedType,
+                        label: "Company Sector",
+                        items: companyProvider.companySectors,
                         onChanged: (int? newValue) {
-                          setState(() {
-                            selectedType = newValue!;
-                          });
+                          companyProvider.selectedType = newValue!;
                         },
-                        items:
-                            companyProvider.companySectors.entries.map((entry) {
-                          return DropdownMenuItem<int>(
-                            value: entry.key,
-                            child: Text(
-                              entry.value,
-                              overflow: TextOverflow.clip,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          );
-                        }).toList(),
-                        decoration: InputDecoration(
-                          labelText: "Company Sector",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
                       ),
-                      const SizedBox(height: 16),
-                      //  _buildDateField(context, 'Date', DateController),
-                      _buildDateField(
-                        controller: dateController,
-                        label: "Date",
+                      inputDatePicker(
                         selectedDate: companyProvider.selectedDate,
                         context: context,
                         onDateSelected: (DateTime? date) {
@@ -127,21 +81,21 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
                           }
                         },
                       ),
-                      const SizedBox(height: 16),
-                      _buildTextField('Address', 'Enter company address',
-                          addressController),
-                      const SizedBox(height: 16),
-                      _buildTextField('Email', 'Enter company email',
-                          emailController, TextInputType.emailAddress),
-                      const SizedBox(height: 16),
-                      _buildTextField('Fax', 'Enter company fax', faxController,
-                          TextInputType.phone),
-                      const SizedBox(height: 16),
-                      _buildTextField('Phone', 'Enter company Phone Number',
-                          phoneController, TextInputType.phone),
-                      const SizedBox(height: 16),
-                      _buildDateField(
-                        controller: startDateController,
+                     CustomInputTextField(
+                          label: 'Address', controller: addressController),
+                    CustomInputTextField(
+                          label: 'Email',
+                          controller: emailController,
+                          keyboardType: TextInputType.emailAddress),
+                      CustomInputTextField(
+                          label: 'Fax',
+                          controller: faxController,
+                          keyboardType: TextInputType.phone),
+                    CustomInputTextField(
+                          label: 'Phone',
+                          controller: phoneController,
+                          keyboardType: TextInputType.phone),
+                      inputDatePicker(
                         label: "Start Date",
                         selectedDate: companyProvider.selectedStartDate,
                         context: context,
@@ -151,47 +105,48 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
                           }
                         },
                       ),
-
-                      const SizedBox(height: 32),
-                      const Align(
-                        alignment: Alignment.bottomLeft,
-                        child: Text(
-                          'Company Extras',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.teal,
-                          ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 24),
+                        child: alignedHeaderText(
+                          title: 'Company Extras',
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                          'Managing Director',
-                          'Enter managing director\'s name',
-                          managingDirectorController,   TextInputType.multiline,
-                          null),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                          'Corporate Affairs',
-                          'Enter corporate affairs details',
-                          corporateAffairsController,   TextInputType.multiline,
-                          null),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                          'Media Manager',
-                          'Enter media manager\'s name',
-                          mediaManagerController,   TextInputType.multiline,
-                          null),
-                      const SizedBox(height: 16),
-                      _buildTextField('Friends', 'Enter friends details',
-                          friendsController,   TextInputType.multiline, null),
-                      const SizedBox(height: 16),
-                      _buildTextField('Competitors',
-                          'Enter competitors details', competitorsController,   TextInputType.multiline,
-                          null),
-                      const SizedBox(height: 16),
-                      _buildTextField('Directors', 'Enter directors details',
-                          directorsController,   TextInputType.multiline, null),
+                     CustomInputTextField(
+                          label: 'Managing Director',
+                          controller: managingDirectorController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
+                     CustomInputTextField(
+                          label: 'Corporate Affairs',
+                          controller: corporateAffairsController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
+                    CustomInputTextField(
+                          label: 'Media Manager',
+                          controller: mediaManagerController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
+                      CustomInputTextField(
+                          label: 'Friends',
+                          controller: friendsController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
+                     CustomInputTextField(
+                          label: 'Competitors',
+                          controller: competitorsController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
+                     CustomInputTextField(
+                          label: 'Directors',
+                          controller: directorsController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
+                     CustomInputTextField(
+                          controller: descriptionController,
+                          label: "Image Description",
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null),
+                      _buildImagePicker(companyProvider),
                       const SizedBox(height: 32),
                     ],
                   );
@@ -202,8 +157,6 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.teal,
-        hoverColor: Colors.teal[200],
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(50),
         ),
@@ -211,122 +164,60 @@ class _AddCompanyPageState extends State<AddCompanyPage> {
             ? const CircularProgressIndicator(color: Colors.white)
             : const Icon(Icons.add),
         onPressed: () async {
-          print('started');
           final companyProvider =
               Provider.of<CompanyProvider>(context, listen: false);
-
           final newCompany = Company(
             name: nameController.text,
-            companySectorId: selectedType,
+            companySectorId: companyProvider.selectedType,
             date: companyProvider.selectedDate,
             startDate: companyProvider.selectedStartDate,
             email: emailController.text,
             address: addressController.text,
             phone: phoneController.text,
-            
+            description: descriptionController.text.replaceAll('\n', '<br>'),
+            image: companyProvider.compressedImage,
             fax: faxController.text,
           );
           final newCompanyExtra = CompanyExtra(
-              managingDirector: managingDirectorController.text.replaceAll('\n', '<br>'),
-              corporateAffairs: corporateAffairsController.text.replaceAll('\n', '<br>'),
-              mediaManager: mediaManagerController.text.replaceAll('\n', '<br>'),
-              friends: friendsController.text.replaceAll('\n', '<br>'),
-              competitors: competitorsController.text.replaceAll('\n', '<br>'),
-              directors: directorsController.text.replaceAll('\n', '<br>'),
+            managingDirector:
+                managingDirectorController.text.replaceAll('\n', '<br>'),
+            corporateAffairs:
+                corporateAffairsController.text.replaceAll('\n', '<br>'),
+            mediaManager: mediaManagerController.text.replaceAll('\n', '<br>'),
+            friends: friendsController.text.replaceAll('\n', '<br>'),
+            competitors: competitorsController.text.replaceAll('\n', '<br>'),
+            directors: directorsController.text.replaceAll('\n', '<br>'),
           );
           if (!companyProvider.loading) {
             await companyProvider.addCompany(
-                newCompany,
-                newCompanyExtra,
-                [
-                  nameController,
-                  emailController,
-                  addressController,
-                  phoneController,
-                  faxController,
-                  managingDirectorController,
-                  corporateAffairsController,
-                  mediaManagerController,
-                  friendsController,
-                  competitorsController,
-                  directorsController,
-                  startDateController,
-                  dateController
-                ],
-                clearSelectedType);
+              newCompany,
+              newCompanyExtra,
+              [
+                nameController,
+                emailController,
+                addressController,
+                phoneController,
+                faxController,
+                managingDirectorController,
+                corporateAffairsController,
+                mediaManagerController,
+                friendsController,
+                competitorsController,
+                directorsController,
+                descriptionController
+              ],
+            );
           }
         },
       ),
     );
   }
 
-  Widget _buildTextField(
-      String label, String hint, TextEditingController controller,
-     [TextInputType keyboardType = TextInputType.text, int? maxLines = 1]) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        border: const OutlineInputBorder(),
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.teal),
-        ),
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter $label';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildDateField({
-    required TextEditingController controller,
-    required DateTime? selectedDate,
-    required ValueChanged<DateTime?> onDateSelected,
-    required BuildContext context,
-    required String label,
-  }) {
-    return GestureDetector(
-      onTap: () async {
-        // Show the date picker when the field is tapped
-        DateTime? pickedDate = await showDatePicker(
-          context: context,
-          initialDate: selectedDate ?? DateTime.now(),
-          firstDate: DateTime(1900),
-          lastDate: DateTime(2100),
-        );
-
-        if (pickedDate != null) {
-          onDateSelected(pickedDate); // Notify the date change
-          controller.text = DateFormat('dd/MM/yyyy')
-              .format(pickedDate); // Update the text field
-        }
-      },
-      child: AbsorbPointer(
-        child: TextFormField(
-          readOnly: true, // Make the field read-only
-          controller: controller,
-          decoration: InputDecoration(
-            labelText: label,
-            border: const OutlineInputBorder(),
-            focusedBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.teal),
-            ),
-            suffixIcon: const Icon(Icons.calendar_today, color: Colors.teal),
-          ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please select $label';
-            }
-            return null;
-          },
-        ),
-      ),
+  Widget _buildImagePicker(CompanyProvider companyProvider) {
+    return ImagePickerWidget(
+      onTap: companyProvider.pickImage,
+      imageBytes: companyProvider.compressedImage,
+      placeholderText: "Select a company image",
     );
   }
 }

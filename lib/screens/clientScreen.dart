@@ -20,6 +20,7 @@ import 'package:punch/screens/clientDetailView.dart';
 import 'package:punch/screens/manageClientTitlePage.dart';
 
 import 'package:punch/widgets/operations.dart';
+import 'package:punch/widgets/texts/richTextTableColumn.dart';
 
 class ClientScreen extends StatefulWidget {
   const ClientScreen({Key? key}) : super(key: key);
@@ -29,7 +30,6 @@ class ClientScreen extends StatefulWidget {
 }
 
 class _ClientScreenState extends State<ClientScreen> {
-
   bool _isInitialized = false;
 
   @override
@@ -40,17 +40,11 @@ class _ClientScreenState extends State<ClientScreen> {
 
   Future<void> _initializeDateFormatting() async {
     await initializeDateFormatting('en');
-    if(mounted){
- setState(() {
-      _isInitialized = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isInitialized = true;
+      });
     }
-   
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   Provider.of<ClientProvider>(context, listen: false)
-    //       .tableController
-    //       .removeFilters();
-    // });
   }
 
   List<int> calculatePageSizes(int totalItems) {
@@ -69,7 +63,7 @@ class _ClientScreenState extends State<ClientScreen> {
   Widget build(BuildContext context) {
     final tableController =
         Provider.of<ClientProvider>(context, listen: false).tableController;
-             final auth = Provider.of<AuthProvider>(context);
+    final auth = Provider.of<AuthProvider>(context);
 
     final isUser = auth.user?.loginId == UserRole.user;
     if (!_isInitialized) {
@@ -95,18 +89,17 @@ class _ClientScreenState extends State<ClientScreen> {
         child:
             Consumer<ClientProvider>(builder: (context, clientProvider, child) {
           final clients = clientProvider.clients;
-       clients.sort((a, b) {
-            String nameA = a.firstName?.isNotEmpty == true
-                ? a.firstName!
+          clients.sort((a, b) {
+            String nameA = a.lastName?.isNotEmpty == true
+                ? a.lastName!
                 : '\uFFFF'; // Handle null/empty firstName for a
-            String nameB = b.firstName?.isNotEmpty == true
-                ? b.firstName!
+            String nameB = b.lastName?.isNotEmpty == true
+                ? b.lastName!
                 : '\uFFFF'; // Handle null/empty firstName for b
-            
+
             return nameA.compareTo(nameB);
           });
-            
-            
+
           if (clients.isEmpty) {
             return const Center(
               child: SpinKitWave(
@@ -117,93 +110,63 @@ class _ClientScreenState extends State<ClientScreen> {
           }
           final pageSizes = calculatePageSizes(clients.length);
           return PagedDataTable<String, Client>(
-             fetcher: (pageSize, sortModel, filterModel, pageToken) {
+            fetcher: (pageSize, sortModel, filterModel, pageToken) {
               try {
                 int pageIndex = int.parse(pageToken ?? "0");
-            
+
+                // Filter data based on filterModel
                 // Filter data based on filterModel
                 List<Client> filteredData = clients.where((client) {
-                  // Text filter
-                  if (filterModel['firstName'] != null &&
-                      !client.firstName!
-                          .toLowerCase()
-                          .contains(filterModel['firstName'].toLowerCase())) {
-                    return false;
+                  // Get the search query
+                  String? query = filterModel['Name'];
+                  clientProvider.setQuery(query);
+                  // If there's no query, include all clients
+                  if (query == null || query.isEmpty) {
+                    return true;
                   }
-            
-                  if (filterModel['clientNo'] != null) {
-                    String filterInput = filterModel['clientNo'].trim();
-                    int? filterStaffNo = int.tryParse(filterInput);
-            
-                    if (filterStaffNo != null &&
-                        client.clientNo == filterStaffNo) {
-                      return true; // Include this user in the filtered results
-                    } else {
-                      return false; // Exclude users that do not match the filter
-                    }
-                  }
-            
-                  if (filterModel['email'] != null &&
-                      !client.email!
-                          .toLowerCase()
-                          .contains(filterModel['email'].toLowerCase())) {
-                    return false;
-                  }
-            
-                  return true;
+                  query = query.toLowerCase();
+                  bool matchesFirstName = client.firstName != null &&
+                      client.firstName!.toLowerCase().startsWith(query);
+                  bool matchesMiddleName = client.middleName != null &&
+                      client.middleName!.toLowerCase().startsWith(query);
+                  bool matchesLastName = client.lastName != null &&
+                      client.lastName!.toLowerCase().startsWith(query);
+
+                  // Return true if any of the fields match
+                  return matchesFirstName ||
+                      matchesMiddleName ||
+                      matchesLastName;
                 }).toList();
-            
+
                 // Paginate the filtered data
                 List<Client> data = filteredData
                     .skip(pageSize * pageIndex)
                     .take(pageSize)
                     .toList();
-            
+
                 String? nextPageToken = (data.length == pageSize)
                     ? (pageIndex + 1).toString()
                     : null;
-            
+
                 return (data, nextPageToken);
               } catch (e) {
                 return Future.error('Error fetching page: $e');
               }
             },
             fixedColumnCount: 1,
-            
             controller: tableController,
-            
             configuration: const PagedDataTableConfiguration(),
             pageSizes: pageSizes,
-            
-           
-            
             filters: [
               TextTableFilter(
-                id: "firstName",
+                id: "Name",
                 chipFormatter: (value) {
-                  return 'firstName has "$value"';
+                  return 'Client Name Starts With "$value"';
                 },
-                name: "First Name",
-                enabled: true,
-              ),
-              TextTableFilter(
-                id: "clientNo",
-                chipFormatter: (value) {
-                  return 'Client No has "$value"';
-                },
-                name: "Client No:",
-                enabled: true,
-              ),
-              TextTableFilter(
-                id: "email",
-                chipFormatter: (value) {
-                  return 'Email has "$value"';
-                },
-                name: "Email",
+                name: "Name",
                 enabled: true,
               ),
             ],
-            
             filterBarChild: IconTheme(
               data: const IconThemeData(color: Colors.black),
               child: PopupMenuButton(
@@ -211,26 +174,26 @@ class _ClientScreenState extends State<ClientScreen> {
                   icon: const Icon(Icons.more_vert_outlined),
                   itemBuilder: (context) {
                     return <PopupMenuEntry>[
-                      if(!isUser)
-                      PopupMenuItem(
-                        child: const Text("Add Client"),
-                        onTap: () {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (_) {
-                            return AddClientPage();
-                          }));
-                        },
-                      ),
-                        if (!isUser)
-                      PopupMenuItem(
-                        child: const Text("Edit client title"),
-                        onTap: () {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (_) {
-                            return ManageClientTitlePage();
-                          }));
-                        },
-                      ),
+                      if (!isUser)
+                        PopupMenuItem(
+                          child: const Text("Add Client"),
+                          onTap: () {
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (_) {
+                              return AddClientPage();
+                            }));
+                          },
+                        ),
+                      if (!isUser)
+                        PopupMenuItem(
+                          child: const Text("Edit client title"),
+                          onTap: () {
+                            Navigator.push(context,
+                                MaterialPageRoute(builder: (_) {
+                              return ManageClientTitlePage();
+                            }));
+                          },
+                        ),
                       PopupMenuItem(
                         child: const Text("Refresh"),
                         onTap: () {
@@ -238,35 +201,38 @@ class _ClientScreenState extends State<ClientScreen> {
                           tableController.refresh();
                         },
                       ),
-                    if (!isUser)    PopupMenuItem(
-                        child: const Text("Select Rows"),
-                        onTap: () {
-                          clientProvider.setBoolValue(true);
-                        },
-                      ),
-                      if (!isUser)  PopupMenuItem(
-                        child: const Text("Select all rows"),
-                        onTap: () {
-                          clientProvider.setBoolValue(true);
-                          Future.delayed(Duration.zero, () {
-                            tableController.selectAllRows();
-                          });
-                        },
-                      ),
-                      if (!isUser)  PopupMenuItem(
-                        child: const Text("Unselect all rows"),
-                        onTap: () {
-                          tableController.unselectAllRows();
-                          clientProvider.setBoolValue(false);
-                        },
-                      ),
+                      if (!isUser)
+                        PopupMenuItem(
+                          child: const Text("Select Rows"),
+                          onTap: () {
+                            clientProvider.setBoolValue(true);
+                          },
+                        ),
+                      if (!isUser)
+                        PopupMenuItem(
+                          child: const Text("Select all rows"),
+                          onTap: () {
+                            clientProvider.setBoolValue(true);
+                            Future.delayed(Duration.zero, () {
+                              tableController.selectAllRows();
+                            });
+                          },
+                        ),
+                      if (!isUser)
+                        PopupMenuItem(
+                          child: const Text("Unselect all rows"),
+                          onTap: () {
+                            tableController.unselectAllRows();
+                            clientProvider.setBoolValue(false);
+                          },
+                        ),
                       if (clientProvider.isRowsSelected && !isUser)
                         PopupMenuItem(
                           child: const Text("Delete Selected rows"),
-                          onTap: () async{
-                      await      clientProvider.deleteSelectedClients(
+                          onTap: () async {
+                            await clientProvider.deleteSelectedClients(
                                 context, tableController.selectedItems);
-                                   clientProvider.setBoolValue(false);
+                            clientProvider.setBoolValue(false);
                           },
                         ),
                       PopupMenuItem(
@@ -278,13 +244,11 @@ class _ClientScreenState extends State<ClientScreen> {
                     ];
                   }),
             ),
-            // fixedColumnCount: 2,
-            
             footer: DefaultFooter<String, Client>(
               child: Align(
                 alignment: Alignment.bottomLeft,
                 child: !Responsive.isMobile(context)
-                    ? Container(
+                    ? SizedBox(
                         width: Responsive.isTablet(context)
                             ? MediaQuery.of(context).size.width / 12
                             : MediaQuery.of(context).size.width / 15,
@@ -325,89 +289,108 @@ class _ClientScreenState extends State<ClientScreen> {
                     : const SizedBox(),
               ),
             ),
-            
             columns: [
               if (clientProvider.isRowsSelected) RowSelectorColumn(),
-              // RowSelectorColumn(),
-              LargeTextTableColumn(
-                title: const Text("First Name"),
-                id: "firstName",
-                // size: const MaxColumnSize(
-                //     FractionalColumnSize(.3), FixedColumnSize(300)),
-                size: const FixedColumnSize(210),
-                getter: (item, index) => item.firstName ?? "N/A",
-                fieldLabel: "firstName",
+
+              HighlightQueryColumn(
+                fieldLabel: "lastName",
+                title: const Text("Last Name"),
+
+                id: "lastName",
+                size: const FixedColumnSize(200),
+                query: clientProvider.query?.toLowerCase() ??
+                    "", // Replace with your search query
+                getter: (item, index) => item.lastName ?? "N/A",
                 setter: (item, newValue, index) async {
                   await Future.delayed(const Duration(seconds: 2));
-                  item.firstName = newValue;
+                  item.lastName = newValue;
                   return true;
                 },
               ),
-              LargeTextTableColumn(
-                title: const Text("Middle Name"),
-                id: "middleName",
-                // size: const MaxColumnSize(
-                //     FractionalColumnSize(.3), FixedColumnSize(300)),
-                size: const FixedColumnSize(200),
-                getter: (item, index) => item.middleName ?? "N/A",
+              HighlightQueryColumn(
                 fieldLabel: "middleName",
+                title: const Text("Middle Name"),
+
+                id: "middleName",
+                size: const FixedColumnSize(200),
+                query: clientProvider.query?.toLowerCase() ??
+                    "", // Replace with your search query
+                getter: (item, index) => item.middleName ?? "N/A",
                 setter: (item, newValue, index) async {
                   await Future.delayed(const Duration(seconds: 2));
                   item.middleName = newValue;
                   return true;
                 },
               ),
-            
-              LargeTextTableColumn(
-                title: const Text("Date of Birth "),
-                sortable: true,
-                id: 'date',
-                // size: const MaxColumnSize(
-                //     FractionalColumnSize(.12), FixedColumnSize(150)),
-                size: const FixedColumnSize(150),
-                getter: (item, index) => item.dateOfBirth != null
-                    ? DateFormat('dd/MM/yyyy').format(item.dateOfBirth!)
-                    : 'N/A',
+              HighlightQueryColumn(
+                fieldLabel: "firstName",
+                title: const Text("First Name"),
+                id: "firstName",
+                size: const FixedColumnSize(200),
+                query: clientProvider.query?.toLowerCase() ??
+                    "", // Replace with your search query
+                getter: (item, index) => item.firstName ?? "N/A",
                 setter: (item, newValue, index) async {
                   await Future.delayed(const Duration(seconds: 2));
-                  item.dateOfBirth = newValue as DateTime?;
+                  item.firstName = newValue;
                   return true;
                 },
-                fieldLabel: 'Date',
               ),
+
+          
+              DropdownTableColumn(
+                sortable: true,
+                id: "title",
+                title: const Text("Title"),
+                items: [
+                  const DropdownMenuItem<int?>(
+                    value: null,
+                    child: Text(
+                      "Select Title", // Default or fallback option
+                      overflow: TextOverflow.clip,
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  ...clientProvider.titles.entries.map((entry) {
+                    return DropdownMenuItem<int?>(
+                      value:
+                          entry.key, // Use the Anniversary_Type_Id as the value
+                      child: Text(
+                        entry.value, // Use the description as the display text
+                        overflow: TextOverflow.clip,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    );
+                  }),
+                ],
+                size: const FixedColumnSize(210),
+                getter: (item, index) {
+                  int? typeId = item.titleId;
+                  if (typeId == null ||
+                      !clientProvider.titles.containsKey(typeId)) {
+                    return null; // or return a default/fallback typeId if necessary
+                  }
+                  return typeId;
+                },
+                setter: (item, newValue, index) async {
+                  return false; // Return false if no new type was selected or if the type is the same
+                },
+              ),
+
               LargeTextTableColumn(
-                title: const Text("Client No:"),
-                id: "clientNo",
+                title: const Text("Age"),
+                id: "age",
                 size: const FixedColumnSize(150),
-                // size: const MaxColumnSize(
-                //     FractionalColumnSize(.15), FixedColumnSize(150)),
-                getter: (item, index) => item.clientNo.toString(),
-                fieldLabel: "Title",
+                getter: (item, index) => item.age?.toString() ?? '',
+                fieldLabel: "Age",
                 setter: (item, newValue, index) async {
                   await Future.delayed(const Duration(seconds: 2));
                   //   item.companyNo = newValue;
                   return true;
                 },
               ),
-              LargeTextTableColumn(
-                sortable: true,
-                id: "email",
-                title: const Text("Email"),
-                // size: const MaxColumnSize(
-                //     FractionalColumnSize(.25), FixedColumnSize(300)),
-                size: const FixedColumnSize(250),
-                getter: (item, index) => item.email,
-                fieldLabel: "Email",
-                setter: (item, newValue, index) async {
-                  await Future.delayed(const Duration(seconds: 2));
-                  item.email = newValue;
-                  return true;
-                },
-              ),
-            
               TableColumn(
                 title: const Text("Operations"),
-                // size: const RemainingColumnSize(),
                 size: const FixedColumnSize(160),
                 cellBuilder: (context, item, index) =>
                     operationsWidget(context, item.firstName ?? "N?A", () {

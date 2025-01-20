@@ -1,35 +1,33 @@
 import 'dart:typed_data';
+import 'package:image/image.dart' as img;
+import 'package:flutter/foundation.dart'; // For compute
 
-import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'dart:io';
-Future<Uint8List?> compressToTargetSize(
-    Uint8List imageBytes, int targetSizeKB) async {
-  int width = 1200; // Starting width
-  int height = 1200; // Starting height
-  Uint8List? compressedImage;
+Future<Uint8List?> compressToTargetSizeInBackground(
+    Map<String, dynamic> args) async {
+  final Uint8List imageBytes = args['imageBytes'];
+  final int targetSizeBytes = args['targetSizeBytes'];
 
-  while (true) {
-    compressedImage = await FlutterImageCompress.compressWithList(
-   format: CompressFormat.webp,
+  img.Image? image = img.decodeImage(imageBytes);
+  if (image == null) return null;
 
-      imageBytes,
-      minWidth: width,
-      minHeight: height,
-      quality: 100, // Maintain high quality
-    );
+  int quality = 100;
+  Uint8List compressedBytes =
+      Uint8List.fromList(img.encodeJpg(image, quality: quality));
 
-    final sizeKB = compressedImage.lengthInBytes / 1024;
-    if (sizeKB <= targetSizeKB) break;
-
-    // Reduce dimensions by 10% iteratively
-    width = (width * 0.9).round();
-    height = (height * 0.9).round();
-    print("Original Size: ${imageBytes.lengthInBytes / 1024} KB");
-    print("Compressed Size: ${compressedImage!.lengthInBytes / 1024} KB");
-
+  while (compressedBytes.length > targetSizeBytes && quality > 10) {
+    quality -= 10;
+    compressedBytes =
+        Uint8List.fromList(img.encodeJpg(image, quality: quality));
   }
 
-  return compressedImage;
+  return compressedBytes;
 }
 
-
+Future<Uint8List?> compressToTargetSize(
+    Uint8List imageBytes, int targetSizeKB) async {
+  final targetSizeBytes = targetSizeKB * 1024;
+  return await compute(
+    compressToTargetSizeInBackground,
+    {'imageBytes': imageBytes, 'targetSizeBytes': targetSizeBytes},
+  );
+}

@@ -33,7 +33,7 @@ class _SideMenuState extends State<SideMenu> {
 
           openSideMenuWidth: Responsive.isDesktop(context) ? 190 : 130,
           compactSideMenuWidth: 60,
-          hoverColor: Colors.red[200],
+          hoverColor: hoverPunchRed,
           selectedColor: punchRed,
           selectedIconColor: Colors.white,
           unselectedIconColor: Colors.white,
@@ -113,6 +113,16 @@ class _SideMenuState extends State<SideMenu> {
               sidemenu.changePage(2);
             },
           ),
+          // sideMenu.SideMenuItem(
+          //   title: "Staff",
+          //   icon: const Icon(
+          //     Icons.badge,
+          //   ),
+          //   onTap: (index, _) {
+          //     provider.setPageIndex(3);
+          //     sidemenu.changePage(3);
+          //   },
+          // ),
           if (isAdmin)
             sideMenu.SideMenuItem(
               title: "Users",

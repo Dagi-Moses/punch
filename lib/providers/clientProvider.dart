@@ -3,14 +3,13 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
+import 'package:image_picker_web/image_picker_web.dart';
+
 import 'package:paged_datatable/paged_datatable.dart';
 import 'package:provider/provider.dart';
 import 'package:punch/functions/imageFunctions.dart';
 import 'package:punch/models/myModels/clientExtraModel.dart';
-
 import 'package:punch/models/myModels/clientModel.dart';
-
 import 'package:punch/models/myModels/titleModel.dart';
 import 'package:punch/models/myModels/web_socket_manager.dart';
 import 'package:punch/providers/clientExtraProvider.dart';
@@ -18,11 +17,13 @@ import 'package:punch/src/const.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ClientProvider with ChangeNotifier {
-   final ImagePicker _picker = ImagePicker();
+  // final ImagePicker _picker = ImagePicker();
+  final tableController = PagedDataTableController<String, Client>();
+
   late WebSocketChannel channel;
+
   List<Client> _clients = [];
   List<Client> get clients => _clients;
-  final tableController = PagedDataTableController<String, Client>();
 
   bool _isRowsSelected = false; // Default value
   bool get isRowsSelected => _isRowsSelected;
@@ -33,6 +34,9 @@ class ClientProvider with ChangeNotifier {
   bool _updateLoading = false; // Default value
   bool get updateloading => _updateLoading;
 
+  bool _imageLoading = false;
+  bool get imageLoading => _imageLoading;
+
   int? _selectedType;
   int? get selectedType => _selectedType;
 
@@ -42,12 +46,26 @@ class ClientProvider with ChangeNotifier {
   Uint8List? _compressedImage;
   Uint8List? get compressedImage => _compressedImage;
 
+  String? _query;
+  String? get query => _query;
+
+  set imageLoading(bool newValue) {
+    _imageLoading  = newValue;
+    notifyListeners();
+  }
+
+
+  void setQuery(String? newQuery) {
+    if (_query != newQuery) {
+      _query = newQuery;
+      notifyListeners();
+    }
+  }
 
   set compressedImage(Uint8List? newValue) {
     _compressedImage = newValue;
     notifyListeners();
   }
-  
 
   set selectedType(int? newValue) {
     _selectedType = newValue;
@@ -55,23 +73,36 @@ class ClientProvider with ChangeNotifier {
   }
 
   Future<Uint8List?> pickImage() async {
-    // Pick the image
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    _imageLoading = true; 
+    notifyListeners();
+    try {
+      final Uint8List? imageBytes = await ImagePickerWeb.getImageAsBytes();
+      // Start loading
+      
+      if (imageBytes != null) {
+        final Uint8List? compressed =
+        
+            await compressToTargetSize(imageBytes, 5,  );
 
-    if (pickedFile != null) {
-      // Read the image as bytes
-      final Uint8List imageBytes = await pickedFile.readAsBytes();
-
-      // Compress the image
-      final Uint8List? compressedImage =
-          await compressToTargetSize(imageBytes, 500);
-
-      if (compressedImage != null) {
-        _compressedImage = compressedImage;
-        notifyListeners();
-        return compressedImage;
+        if (compressed != null) {
+          _compressedImage = compressed;
+          notifyListeners();
+          return compressed;
+        }
       }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: e.toString(),
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    } finally {
+      _imageLoading = false; // Stop loading
+      notifyListeners();
     }
+
     return null;
   }
 
@@ -79,7 +110,6 @@ class ClientProvider with ChangeNotifier {
     _isRowsSelected = newValue;
     notifyListeners();
   }
-
 
   late WebSocketManager _webSocketManager;
   ClientProvider() {
@@ -287,7 +317,8 @@ class ClientProvider with ChangeNotifier {
   Future<void> deleteClientExtra(BuildContext context, String id) async {
     try {
       print("started deleting extras $id");
-      final response = await http.delete(Uri.parse('${Const.clientExtraUrl}/$id'));
+      final response =
+          await http.delete(Uri.parse('${Const.clientExtraUrl}/$id'));
       if (response.statusCode == 200) {
         print("deleted client extra");
         notifyListeners();
@@ -320,10 +351,10 @@ class ClientProvider with ChangeNotifier {
     Client client,
     ClientExtra clientExtra,
     List<TextEditingController> controllers,
-
   ) async {
     try {
       _loading = true;
+        notifyListeners();
       final response = await http.post(
         Uri.parse(Const.clientUrl),
         headers: {'Content-Type': 'application/json'},
@@ -343,9 +374,9 @@ class ClientProvider with ChangeNotifier {
         for (var controller in controllers) {
           controller.clear();
         }
-              _selectedType = null;
-               _compressedImage = null;
-               _age=null;
+        _selectedType = null;
+        _compressedImage = null;
+        _age = null;
         notifyListeners();
       } else {
         throw Exception('Failed to add client ' + response.body);
@@ -389,15 +420,15 @@ class ClientProvider with ChangeNotifier {
         notifyListeners();
       } else {
         throw Exception(
-            {"response": response.body +  "\n REspondata" + responseExtra.body});
+            {"response": response.body + "\n REspondata" + responseExtra.body});
       }
     } catch (err) {
       print(err);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(err.toString())),
       );
-    }finally{
-        _updateLoading = false;
+    } finally {
+      _updateLoading = false;
       notifyListeners();
     }
   }
@@ -414,7 +445,7 @@ class ClientProvider with ChangeNotifier {
   //       headers: {'Content-Type': 'application/json'},
   //       body: jsonEncode(client.toJson()),
   //     );
-      
+
   //     if (response.statusCode == 200 ) {
   //       onSuccess();
   //       ScaffoldMessenger.of(context).showSnackBar(
@@ -435,16 +466,17 @@ class ClientProvider with ChangeNotifier {
 
   Future<void> deleteClient(BuildContext context, Client client) async {
     try {
-      final response = await http.delete(Uri.parse('${Const.clientUrl}/${client.id}'));
+      final response =
+          await http.delete(Uri.parse('${Const.clientUrl}/${client.id}'));
       if (response.statusCode == 200) {
-         ClientExtra? clientExtra =
+        ClientExtra? clientExtra =
             Provider.of<ClientExtraProvider>(context, listen: false)
                 .clientsExtraMap[client.clientNo];
         // If a client extra exists, await its deletion
         if (clientExtra != null) {
           deleteClientExtra(context, clientExtra.id!);
         }
-         if (Navigator.canPop(context)) {
+        if (Navigator.canPop(context)) {
           Navigator.pop(context);
         }
         Fluttertoast.showToast(
@@ -454,7 +486,6 @@ class ClientProvider with ChangeNotifier {
           backgroundColor: Colors.red,
           textColor: Colors.white,
         );
-       
 
         notifyListeners();
       } else {
@@ -475,7 +506,7 @@ class ClientProvider with ChangeNotifier {
   DateTime? _selectedDate;
 
   DateTime? get selectedDate => _selectedDate;
-void setDate(DateTime date) {
+  void setDate(DateTime date) {
     _selectedDate = date;
 
     // Calculate the age based on the year, month, and day
@@ -492,7 +523,6 @@ void setDate(DateTime date) {
     notifyListeners(); // Notify listeners of the change
   }
 
-
   DateTime? _selectedStartDate;
 
   DateTime? get selectedStartDate => _selectedStartDate;
@@ -508,10 +538,9 @@ void setDate(DateTime date) {
   //   super.dispose();
   // }
   @override
-void dispose() {
-  channel.sink.close(); // Clean up WebSocket
-  tableController.dispose(); // Clean up table controller
-  super.dispose();
-}
-
+  void dispose() {
+    channel.sink.close(); // Clean up WebSocket
+    tableController.dispose(); // Clean up table controller
+    super.dispose();
+  }
 }

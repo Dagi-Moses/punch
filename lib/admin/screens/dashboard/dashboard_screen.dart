@@ -6,6 +6,7 @@ import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/authProvider.dart';
 import 'package:punch/screens/clientScreen.dart';
 import 'package:punch/screens/main%20View.dart';
+import 'package:punch/screens/staff.dart';
 import 'package:punch/screens/users.dart';
 import 'package:punch/providers/dashboardPageProvider.dart';
 
@@ -42,6 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const MainView(),
                     const ClientScreen(),
                     const CompanyScreen(),
+                  //  const StaffView(),
                     if (isAdmin) const UsersScreen(),
                 
                   ],

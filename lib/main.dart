@@ -12,8 +12,10 @@ import 'package:punch/providers/clientExtraProvider.dart';
 import 'package:punch/providers/clientProvider.dart';
 import 'package:punch/providers/companyProvider.dart';
 import 'package:punch/providers/dashboardPageProvider.dart';
+import 'package:punch/providers/textConroller.dart';
 import 'package:punch/screens/libraryScreen.dart';
 import 'package:punch/screens/loginPage.dart';
+import 'package:punch/screens/manageAnniversaryTypes.dart';
 import 'package:punch/screens/splashScreen.dart';
 import 'package:punch/screens/userHome.dart';
 import 'package:paged_datatable/l10n/generated/l10n.dart';
@@ -34,6 +36,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ClientProvider()),
         ChangeNotifierProvider(create: (_) => ClientExtraProvider()),
         ChangeNotifierProvider(create: (_) => Auth()),
+        ChangeNotifierProvider(create: (_) => TextControllerNotifier()),
       ],
       child: const MyApp(),
     ),
@@ -63,6 +66,13 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             textTheme: kIsWeb ? GoogleFonts.robotoTextTheme() : null,
+           
+             floatingActionButtonTheme: FloatingActionButtonThemeData(
+              hoverColor: hoverPunchRed,
+              backgroundColor:  punchRed, // FAB background color
+              foregroundColor: Colors.white, // FAB icon/text color
+              elevation: 4, // Optional: Adjust the shadow
+            ),
           ),
           debugShowCheckedModeBanner: false,
           home: Consumer<AuthProvider?>(
@@ -81,7 +91,7 @@ class MyApp extends StatelessWidget {
               );
             },
           ),
-       
+     
           onGenerateRoute: Routes.generateRoute,
         ));
   }

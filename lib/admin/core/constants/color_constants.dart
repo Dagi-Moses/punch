@@ -9,14 +9,14 @@ const punchRed = Colors.redAccent;
 const bgColor =  Color(0xFFF8F8F8);
 const offWhiteColor = Color(0xFFFFF8E1); // Off-white color
 
-const darkpunchRed = Color(0xFF2c614f);
+final hoverPunchRed = Colors.red[200];
 
 
 const defaultPadding = 16.0;
 const double defaultBorderRadius = 15;
 
 class ColorConstants {
-  static Color blue = Color(0xFF0D46BB);
+  static Color blue = const Color(0xFF0D46BB);
 }
 
 class Palette {

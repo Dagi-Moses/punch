@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
+// import 'package:image_picker/image_picker.dart';
 import 'package:punch/functions/imageFunctions.dart';
 import 'package:punch/models/myModels/anniversaryModel.dart';
 import 'package:punch/models/myModels/anniversarySector.dart';
@@ -14,13 +14,13 @@ import 'package:punch/models/myModels/anniversaryTypeModel.dart';
 import 'package:punch/models/myModels/papers.dart';
 import 'package:punch/models/myModels/web_socket_manager.dart';
 import 'package:punch/src/const.dart';
-
+import 'package:image_picker_web/image_picker_web.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:paged_datatable/paged_datatable.dart';
 
 class AnniversaryProvider with ChangeNotifier {
   late WebSocketChannel channel;
-  final ImagePicker _picker = ImagePicker();
+  // final ImagePicker _picker = ImagePicker();
 
   List<Anniversary> _anniversaries = [];
   List<Anniversary> get anniversaries => _anniversaries;
@@ -40,13 +40,40 @@ class AnniversaryProvider with ChangeNotifier {
   bool _loading = false;
   bool get loading => _loading;
 
+  bool _imageLoading = false;
+  bool get imageLoading => _imageLoading;
+
+  bool _isEditing = false;
+  bool get isEditing => _isEditing;
+
   bool _updateLoading = false;
   bool get updateloading => _updateLoading;
 
-  bool _isRowsSelected = false; 
+  bool _isRowsSelected = false;
   bool get isRowsSelected => _isRowsSelected;
 
-  final Map<int, String> _anniversaryTypes = {}; // Map to store type descriptions
+  DateTime? _selectedDetailsDate;
+  DateTime? get selectedDetailsDate => _selectedDetailsDate;
+
+
+  
+  String? _query;
+  String? get query => _query;
+
+  void setQuery(String? newQuery) {
+    if (_query != newQuery) {
+      _query = newQuery;
+      notifyListeners();
+    }
+  }
+
+  set selectedDetailsDate(DateTime? date) {
+    _selectedDetailsDate = date;
+    notifyListeners(); // Notify listeners to rebuild the UI
+  }
+
+  final Map<int, String> _anniversaryTypes =
+      {}; // Map to store type descriptions
   final Map<int, String> _paperTypes = {}; // Map to store paper descriptions
 
   Map<int, String> get anniversaryTypes => _anniversaryTypes;
@@ -57,45 +84,64 @@ class AnniversaryProvider with ChangeNotifier {
 
   int? _selectedPaperType;
   int? get selectedPaperType => _selectedPaperType;
-  
+
   Uint8List? _compressedImage;
   Uint8List? get compressedImage => _compressedImage;
-
-
 
   set compressedImage(Uint8List? newValue) {
     _compressedImage = newValue;
     notifyListeners();
   }
-  Future<Uint8List?> pickImage() async {
-    // Pick the image
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+Future<Uint8List?> pickImage() async {
+    _imageLoading = true;
+    notifyListeners();
+    try {
+      final Uint8List? imageBytes = await ImagePickerWeb.getImageAsBytes();
 
-    if (pickedFile != null) {
-      // Read the image as bytes
-      final Uint8List imageBytes = await pickedFile.readAsBytes();
-
-      // Compress the image
-      final Uint8List? compressedImage = await compressToTargetSize(imageBytes, 500);
-
-      if (compressedImage != null) {
-     
-        _compressedImage = compressedImage;
-        notifyListeners();
-         return compressedImage; 
+      if (imageBytes != null) {
+        // Check if the image size is already under the target size
+        const int targetSizeKB = 5; // Adjust according to needs
+        if (imageBytes.lengthInBytes > targetSizeKB * 1024) {
+          final Uint8List? compressed =
+              await compressToTargetSize(imageBytes, targetSizeKB);
+          if (compressed != null) {
+            _compressedImage = compressed;
+            return compressed;
+          }
+        } else {
+          // If the image is already small enough, no need to compress
+          _compressedImage = imageBytes;
+          return imageBytes;
+        }
       }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: e.toString(),
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    } finally {
+      _imageLoading = false; // Stop loading
+      notifyListeners();
     }
+
     return null;
   }
 
-
   set selectedType(int? newValue) {
     _selectedType = newValue;
-    notifyListeners(); 
+    notifyListeners();
   }
 
   set selectedPaperType(int? newValue) {
     _selectedPaperType = newValue;
+    notifyListeners();
+  }
+
+  set isEditing(bool newValue) {
+    _isEditing = newValue;
     notifyListeners();
   }
 
@@ -394,7 +440,6 @@ class AnniversaryProvider with ChangeNotifier {
         _anniversaries =
             data.map((json) => Anniversary.fromJson(json)).toList();
 
-
         notifyListeners();
       } else {
         throw Exception(response.body);
@@ -424,10 +469,10 @@ class AnniversaryProvider with ChangeNotifier {
   Future<void> addAnniversary(
     Anniversary anniversary,
     List<TextEditingController> controllers,
-
   ) async {
     try {
       _loading = true;
+      notifyListeners();
       final response = await http.post(
         Uri.parse(Const.anniversaryUrl),
         headers: {'Content-Type': 'application/json'},
@@ -466,13 +511,14 @@ class AnniversaryProvider with ChangeNotifier {
       print('Error adding anniversary: $error');
     } finally {
       _loading = false;
+        notifyListeners();
     }
   }
 
   Future<void> updateAnniversary(
       Anniversary anniversary, BuildContext context) async {
-        _updateLoading = true;
-        notifyListeners();
+    _updateLoading = true;
+    notifyListeners();
     try {
       final response = await http.patch(
         Uri.parse('${Const.anniversaryUrl}/${anniversary.id}'),
@@ -491,8 +537,8 @@ class AnniversaryProvider with ChangeNotifier {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error.toString())),
       );
-    }finally{
-        _updateLoading = false;
+    } finally {
+      _updateLoading = false;
       notifyListeners();
     }
   }

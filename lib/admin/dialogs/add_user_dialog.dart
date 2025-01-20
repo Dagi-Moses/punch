@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/models/myModels/anniversaryModel.dart';
 import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/anniversaryProvider.dart';
@@ -34,8 +35,11 @@ class _AddUserPageState extends State<AddUserPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+          backgroundColor: punchRed, // Sets the AppBar background color
+        foregroundColor: Colors.white, // Sets the text/icon color
+        elevation: 4, 
         title: const Text('Add User'),
-        backgroundColor: Colors.teal,
+   
       ),
       body: SingleChildScrollView(
         child: Center(
@@ -122,8 +126,7 @@ class _AddUserPageState extends State<AddUserPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.teal,
-        hoverColor: Colors.teal[200],
+       
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(50),
         ),

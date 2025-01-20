@@ -1,10 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-
 class ImagePickerWidget extends StatelessWidget {
   final VoidCallback onTap; // Callback for the image picker action
   final Uint8List? imageBytes; // The image to display if available
+  final bool isLoading; // Loading state
   final String placeholderText; // Placeholder text for the image picker
   final double aspectRatio; // Aspect ratio of the image container
   final double borderRadius; // Border radius for the container
@@ -15,6 +15,7 @@ class ImagePickerWidget extends StatelessWidget {
     Key? key,
     required this.onTap,
     this.imageBytes,
+    this.isLoading = false,
     this.placeholderText = "Tap to upload image",
     this.aspectRatio = 3 / 2,
     this.borderRadius = 8.0,
@@ -30,12 +31,15 @@ class ImagePickerWidget extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: AspectRatio(
           aspectRatio: aspectRatio,
-          child: imageBytes != null
-              ? Image.memory(
+          child: Stack(
+            children: [
+              if (imageBytes != null)
+                Image.memory(
                   imageBytes!,
                   fit: BoxFit.contain,
                 )
-              : Container(
+              else
+                Container(
                   height: height,
                   decoration: BoxDecoration(
                     border: Border.all(color: borderColor),
@@ -48,6 +52,29 @@ class ImagePickerWidget extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (isLoading)
+                Container(
+                  height: height,
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(borderRadius),
+                  ),
+                  child: const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(color: Colors.white),
+                        SizedBox(height: 10),
+                        Text(
+                          "...",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
