@@ -1,51 +1,53 @@
-
-
 class Staff {
-  final String staffNo;
-  final String? lastName;
-  final String? firstName;
-  final String? middleName;
-  final DateTime? dateOfBirth;
-  final String? sex; // Use "M" or "F"
-  final String? religion;
-  final String? healthStatus;
-  final String? nationality;
-  final String? townOfOrigin;
-  final String? stateOfOrigin;
-  final String? localGovernmentArea;
-  final String? formerLastName;
-  final int? maritalStatus;
-  final int? numberOfChildren;
-  final int? title;
-  final int? type;
-  final int? level;
-  final double? target; // For Decimal128
+  String? id;
+  String? staffNo;
+  String? lastName;
+  String? firstName;
+  String? middleName;
+  DateTime? dateOfBirth;
+  String? sex; // Use "M" or "F"
+  String? religion;
+  String? healthStatus;
+  String? nationality;
+  String? townOfOrigin;
+  String? stateOfOrigin;
+  String? localGovernmentArea;
+  String? formerLastName;
+  int? maritalStatus;
+  int? numberOfChildren;
+  int? title;
+  int? type;
+  int? level;
+  double? target; // For Decimal128
+  int? age;
 
-  Staff({
-    required this.staffNo,
-    this.lastName,
-    this.firstName,
-    this.middleName,
-    this.dateOfBirth,
-    this.sex,
-    this.religion,
-    this.healthStatus,
-    this.nationality,
-    this.townOfOrigin,
-    this.stateOfOrigin,
-    this.localGovernmentArea,
-    this.formerLastName,
-    this.maritalStatus,
-    this.numberOfChildren,
-    this.title,
-    this.type,
-    this.level,
-    this.target,
-  });
+  Staff(
+      {this.id,
+      this.staffNo,
+      this.lastName,
+      this.firstName,
+      this.middleName,
+      this.dateOfBirth,
+      this.sex,
+      this.religion,
+      this.healthStatus,
+      this.nationality,
+      this.townOfOrigin,
+      this.stateOfOrigin,
+      this.localGovernmentArea,
+      this.formerLastName,
+      this.maritalStatus,
+      this.numberOfChildren,
+      this.title,
+      this.type,
+      this.level,
+      this.target,
+      this.age});
 
   // Factory constructor for JSON deserialization
   factory Staff.fromJson(Map<String, dynamic> json) {
     return Staff(
+      id: json['_id'] as String?,
       staffNo: json['Staff_No'] as String,
       lastName: json['Last_Name'] as String?,
       firstName: json['First_Name'] as String?,
@@ -69,6 +71,7 @@ class Staff {
       target: json['Target'] != null
           ? double.tryParse(json['Target'].toString())
           : null,
+      age: json['Age'] as int?,
     );
   }
 

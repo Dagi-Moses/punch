@@ -16,9 +16,13 @@ class Const {
    static const String clientExtraUrl = '$serverUrl/clientExtras';
    static const String clientUrl = '$serverUrl/clients';
    static const String titleUrl = '$serverUrl/titles';
+   static const String sexUrl = '$serverUrl/sexes';
+   static const String nationalityUrl = '$serverUrl/nationalities';
+   static const String healthStatusUrl = '$serverUrl/healthStatuses';
    static const String companyUrl = '$serverUrl/companies';
    static const String companyExtraUrl = '$serverUrl//companyExtras';
    static const String companySectorUrl = '$serverUrl/companySectors';
+  static const String staffUrl = '$serverUrl/staffs';
 
 
 //WEBSOCKET
@@ -32,6 +36,7 @@ class Const {
     static const String clientChannel = '${webSocketUrl}client'; 
     static const String companyChannel = '${webSocketUrl}company'; 
     static const String companyExtraChannel = '${webSocketUrl}companyExtra'; 
+    static const String staffChannel = '${webSocketUrl}staff'; 
 
 
 }

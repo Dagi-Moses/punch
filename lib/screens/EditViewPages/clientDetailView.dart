@@ -8,6 +8,7 @@ import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/authProvider.dart';
 import 'package:punch/providers/clientExtraProvider.dart';
 import 'package:punch/providers/clientProvider.dart';
+import 'package:punch/providers/titleProvider.dart';
 
 import 'package:punch/utils/html%20handler.dart';
 import 'package:punch/widgets/inputs/dateFields.dart';
@@ -246,7 +247,7 @@ class _ClientDetailViewState extends State<ClientDetailView> {
   Widget build(BuildContext context) {
     final clientProvider = Provider.of<ClientProvider>(context);
     final auth = Provider.of<AuthProvider>(context);
-
+      
     final isUser = auth.user?.loginId == UserRole.user;
     return DefaultTabController(
       length: 2,
@@ -271,10 +272,10 @@ class _ClientDetailViewState extends State<ClientDetailView> {
             ?
             
             clientProvider.updateloading
-                ? FloatingActionButton(
+                ? const FloatingActionButton(
                     onPressed:
                         null, // Disable button interaction while loading.
-                    child: const CircularProgressIndicator(
+                    child: CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
@@ -404,6 +405,7 @@ class _ClientDetailViewState extends State<ClientDetailView> {
   }
 
   Widget _buildTitle(ClientProvider clientProvider) {
+      final titles = Provider.of<TitleProvider>(context);
     return ValueListenableBuilder<int?>(
       valueListenable: _titleIdNotifier,
       builder: (context, value, child) {
@@ -437,12 +439,12 @@ class _ClientDetailViewState extends State<ClientDetailView> {
                         EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     border: InputBorder.none, // Remove the inner border
                   ),
-                  items: clientProvider.titles.keys.map((int typeId) {
+                  items: titles.titles.keys.map((int typeId) {
                     return DropdownMenuItem<int>(
                       enabled: isEditing,
                       value: typeId,
                       child: Text(
-                          clientProvider.getClientTitleDescription(typeId)),
+                          titles.getClientTitleDescription(typeId)),
                     );
                   }).toList(),
                   onChanged: isEditing

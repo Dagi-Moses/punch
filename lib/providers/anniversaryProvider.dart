@@ -1,16 +1,12 @@
 import 'dart:convert';
-
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
-// import 'package:image_picker/image_picker.dart';
 import 'package:punch/functions/imageFunctions.dart';
-import 'package:punch/models/myModels/anniversaryModel.dart';
-import 'package:punch/models/myModels/anniversarySector.dart';
-import 'package:punch/models/myModels/anniversaryTypeModel.dart';
+import 'package:punch/models/myModels/anniversary/anniversaryModel.dart';
+import 'package:punch/models/myModels/anniversary/anniversarySector.dart';
+import 'package:punch/models/myModels/anniversary/anniversaryTypeModel.dart';
 import 'package:punch/models/myModels/papers.dart';
 import 'package:punch/models/myModels/web_socket_manager.dart';
 import 'package:punch/src/const.dart';
@@ -20,8 +16,6 @@ import 'package:paged_datatable/paged_datatable.dart';
 
 class AnniversaryProvider with ChangeNotifier {
   late WebSocketChannel channel;
-  // final ImagePicker _picker = ImagePicker();
-
   List<Anniversary> _anniversaries = [];
   List<Anniversary> get anniversaries => _anniversaries;
 
@@ -54,8 +48,6 @@ class AnniversaryProvider with ChangeNotifier {
 
   DateTime? _selectedDetailsDate;
   DateTime? get selectedDetailsDate => _selectedDetailsDate;
-
-
   
   String? _query;
   String? get query => _query;
@@ -74,10 +66,12 @@ class AnniversaryProvider with ChangeNotifier {
 
   final Map<int, String> _anniversaryTypes =
       {}; // Map to store type descriptions
-  final Map<int, String> _paperTypes = {}; // Map to store paper descriptions
+  final Map<int, String> _paperTypes = {}; 
+  Map<int, String> get paperTypes => _paperTypes;
+
 
   Map<int, String> get anniversaryTypes => _anniversaryTypes;
-  Map<int, String> get paperTypes => _paperTypes;
+
 
   int? _selectedType;
   int? get selectedType => _selectedType;
@@ -92,15 +86,15 @@ class AnniversaryProvider with ChangeNotifier {
     _compressedImage = newValue;
     notifyListeners();
   }
-Future<Uint8List?> pickImage() async {
+
+ Future<Uint8List?> pickImage() async {
     _imageLoading = true;
     notifyListeners();
     try {
       final Uint8List? imageBytes = await ImagePickerWeb.getImageAsBytes();
 
       if (imageBytes != null) {
-        // Check if the image size is already under the target size
-        const int targetSizeKB = 5; // Adjust according to needs
+        const int targetSizeKB = 5; 
         if (imageBytes.lengthInBytes > targetSizeKB * 1024) {
           final Uint8List? compressed =
               await compressToTargetSize(imageBytes, targetSizeKB);
@@ -109,7 +103,6 @@ Future<Uint8List?> pickImage() async {
             return compressed;
           }
         } else {
-          // If the image is already small enough, no need to compress
           _compressedImage = imageBytes;
           return imageBytes;
         }
@@ -139,11 +132,13 @@ Future<Uint8List?> pickImage() async {
     _selectedPaperType = newValue;
     notifyListeners();
   }
-
-  set isEditing(bool newValue) {
-    _isEditing = newValue;
-    notifyListeners();
+set isEditing(bool newValue) {
+    if (_isEditing != newValue) {
+      _isEditing = newValue;
+      notifyListeners();
+    }
   }
+
 
   Future<void> fetchAnniversaryTypes() async {
     try {
@@ -516,7 +511,7 @@ Future<Uint8List?> pickImage() async {
   }
 
   Future<void> updateAnniversary(
-      Anniversary anniversary, BuildContext context) async {
+      Anniversary anniversary, BuildContext context, VoidCallback onSuccess) async {
     _updateLoading = true;
     notifyListeners();
     try {
@@ -526,6 +521,7 @@ Future<Uint8List?> pickImage() async {
         body: jsonEncode(anniversary.toJson()),
       );
       if (response.statusCode == 200) {
+        onSuccess();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Anniversary updated successfully!')),
         );
@@ -539,6 +535,7 @@ Future<Uint8List?> pickImage() async {
       );
     } finally {
       _updateLoading = false;
+      
       notifyListeners();
     }
   }

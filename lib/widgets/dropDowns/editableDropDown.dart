@@ -1,11 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 class CustomEditableDropdown<T> extends StatelessWidget {
   final String label;
   final ValueListenable<T?> valueListenable;
   final Map<T, String> items;
   final bool isEditing;
   final ValueChanged<T?> onChanged;
+
+  // Optional custom item builder
+  final DropdownMenuItem<T> Function(T key, String value)? itemBuilder;
 
   const CustomEditableDropdown({
     Key? key,
@@ -14,6 +18,7 @@ class CustomEditableDropdown<T> extends StatelessWidget {
     required this.items,
     required this.isEditing,
     required this.onChanged,
+    this.itemBuilder,
   }) : super(key: key);
 
   @override
@@ -50,14 +55,17 @@ class CustomEditableDropdown<T> extends StatelessWidget {
                   decoration: const InputDecoration(
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    border: InputBorder.none, // Remove the inner border
+                    border: InputBorder.none,
                   ),
-                  items: items.keys.map((T key) {
-                    return DropdownMenuItem<T>(
-                      value: key,
-                      enabled: isEditing,
-                      child: Text(items[key]!),
-                    );
+                  items: items.keys.map((key) {
+                    final itemValue = items[key]!;
+                    return itemBuilder != null
+                        ? itemBuilder!(key, itemValue) // Use custom itemBuilder
+                        : DropdownMenuItem<T>(
+                            value: key,
+                            enabled: isEditing,
+                            child: Text(itemValue),
+                          );
                   }).toList(),
                   onChanged: isEditing ? onChanged : null,
                 ),

@@ -50,10 +50,9 @@ class ClientProvider with ChangeNotifier {
   String? get query => _query;
 
   set imageLoading(bool newValue) {
-    _imageLoading  = newValue;
+    _imageLoading = newValue;
     notifyListeners();
   }
-
 
   void setQuery(String? newQuery) {
     if (_query != newQuery) {
@@ -73,16 +72,17 @@ class ClientProvider with ChangeNotifier {
   }
 
   Future<Uint8List?> pickImage() async {
-    _imageLoading = true; 
+    _imageLoading = true;
     notifyListeners();
     try {
       final Uint8List? imageBytes = await ImagePickerWeb.getImageAsBytes();
       // Start loading
-      
+
       if (imageBytes != null) {
-        final Uint8List? compressed =
-        
-            await compressToTargetSize(imageBytes, 5,  );
+        final Uint8List? compressed = await compressToTargetSize(
+          imageBytes,
+          5,
+        );
 
         if (compressed != null) {
           _compressedImage = compressed;
@@ -115,115 +115,9 @@ class ClientProvider with ChangeNotifier {
   ClientProvider() {
     fetchClients();
     _initializeWebSocket();
-    fetchTitles();
+ 
   }
-  Map<int, String> _titles = {}; // Map to store type descriptions
-  Map<int, String> get titles => _titles;
-
-  // Method to fetch anniversary types from the database
-
-  Future<void> fetchTitles() async {
-    try {
-      final response = await http.get(Uri.parse(Const.titleUrl));
-
-      if (response.statusCode == 200) {
-        List<dynamic> jsonData = jsonDecode(response.body);
-
-        for (var item in jsonData) {
-          var titles = ClientTitle.fromJson(item);
-          _titles[titles.titleId] = titles.description;
-        }
-
-        // Notify listeners after updating the anniversary types
-        notifyListeners();
-      } else {
-        throw Exception(response.body);
-      }
-    } catch (error) {
-      // Handle errors, e.g., log them or show a message to the user
-      print('Error fetching title: $error');
-    }
-  }
-
-  // Method to get anniversary type description by ID
-  String getClientTitleDescription(int? typeId) {
-    return _titles[typeId] ?? 'Unknown';
-  }
-
-  Future<void> addTitle(TextEditingController descriptionController) async {
-    if (descriptionController.text.isEmpty) return;
-
-    try {
-      final response = await http.post(
-        Uri.parse(Const.titleUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'Description': descriptionController.text}),
-      );
-
-      if (response.statusCode == 201) {
-        fetchTitles();
-        descriptionController.clear();
-      } else {
-        throw Exception(response.body);
-      }
-    } catch (error) {
-      print('Error adding title: $error');
-    }
-  }
-
-  Future<void> updateTitle(
-    int id,
-    TextEditingController descriptionController,
-    void Function() clearSelectedType,
-  ) async {
-    if (descriptionController.text.isEmpty) return;
-
-    try {
-      final response = await http.patch(
-        Uri.parse("${Const.titleUrl}/$id"),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'Description': descriptionController.text}),
-      );
-
-      if (response.statusCode == 200) {
-        fetchTitles();
-        descriptionController.clear();
-        clearSelectedType();
-      } else {
-        throw Exception(response.body);
-      }
-    } catch (error) {
-      print('Error updating title: $error');
-    }
-  }
-
-  Future<void> deleteTitle(BuildContext context, int titleId) async {
-    // Update with your actual base URL
-
-    try {
-      final response = await http.delete(
-        Uri.parse('${Const.titleUrl}/$titleId'),
-        headers: <String, String>{
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        await titles.remove(titleId);
-        notifyListeners();
-        Navigator.pop(context);
-
-        print('title deleted successfully');
-      } else {
-        // Handle the error response
-        throw Exception('Failed to title: ${response.body}');
-      }
-    } catch (error) {
-      print('Error deleting title: $error');
-      // Handle exceptions here
-    }
-  }
-
+ 
   void _initializeWebSocket() {
     _webSocketManager = WebSocketManager(
       Const.clientChannel,
@@ -292,22 +186,18 @@ class ClientProvider with ChangeNotifier {
   Future<void> deleteSelectedClients(
       BuildContext context, List<Client> selectedClients) async {
     try {
-      print("selectedClients ${selectedClients.length.toString()}");
-      // Iterate over the selected clients
       for (var client in selectedClients) {
-        // Await the deletion of the client
         deleteClient(context, client);
-        // Fetch the associated client extra
+
         ClientExtra? clientExtra =
             Provider.of<ClientExtraProvider>(context, listen: false)
                 .clientsExtraMap[client.clientNo];
-        // If a client extra exists, await its deletion
+
         if (clientExtra != null) {
           deleteClientExtra(context, clientExtra.id!);
         }
       }
 
-      // Notify listeners after all deletions are completed
       notifyListeners();
     } catch (error) {
       print('Error deleting selected clients and their extras: $error');
@@ -354,7 +244,7 @@ class ClientProvider with ChangeNotifier {
   ) async {
     try {
       _loading = true;
-        notifyListeners();
+      notifyListeners();
       final response = await http.post(
         Uri.parse(Const.clientUrl),
         headers: {'Content-Type': 'application/json'},

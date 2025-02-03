@@ -4,6 +4,7 @@ import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:punch/models/myModels/clientExtraModel.dart';
 import 'package:punch/models/myModels/clientModel.dart';
 import 'package:punch/providers/clientProvider.dart';
+import 'package:punch/providers/titleProvider.dart';
 import 'package:punch/widgets/dropDowns/inputDropDown.dart';
 import 'package:punch/widgets/inputs/dateFields.dart';
 import 'package:punch/widgets/inputs/imagePickerWidget.dart';
@@ -37,6 +38,7 @@ class _AddClientPageState extends State<AddClientPage> {
 
   @override
   Widget build(BuildContext context) {
+        final titles = Provider.of<TitleProvider>(context);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: punchRed, // Sets the AppBar background color
@@ -78,7 +80,7 @@ class _AddClientPageState extends State<AddClientPage> {
                       CustomInputDropdown<int>(
                         value: clientProvider.selectedType,
                         label: "Title",
-                        items: clientProvider.titles,
+                        items: titles.titles,
                         onChanged: (int? newValue) {
                           clientProvider.selectedType = newValue;
                         },

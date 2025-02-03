@@ -113,16 +113,16 @@ class _SideMenuState extends State<SideMenu> {
               sidemenu.changePage(2);
             },
           ),
-          // sideMenu.SideMenuItem(
-          //   title: "Staff",
-          //   icon: const Icon(
-          //     Icons.badge,
-          //   ),
-          //   onTap: (index, _) {
-          //     provider.setPageIndex(3);
-          //     sidemenu.changePage(3);
-          //   },
-          // ),
+          sideMenu.SideMenuItem(
+            title: "Staff",
+            icon: const Icon(
+              Icons.badge,
+            ),
+            onTap: (index, _) {
+              provider.setPageIndex(3);
+              sidemenu.changePage(3);
+            },
+          ),
           if (isAdmin)
             sideMenu.SideMenuItem(
               title: "Users",
@@ -130,8 +130,8 @@ class _SideMenuState extends State<SideMenu> {
                 Icons.people,
               ),
               onTap: (index, _) {
-                provider.setPageIndex(3);
-                sidemenu.changePage(3);
+                provider.setPageIndex(4);
+                sidemenu.changePage(4);
               },
             ),
           sideMenu.SideMenuItem(

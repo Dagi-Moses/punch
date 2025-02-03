@@ -12,14 +12,13 @@ import 'package:punch/providers/clientExtraProvider.dart';
 import 'package:punch/providers/clientProvider.dart';
 import 'package:punch/providers/companyProvider.dart';
 import 'package:punch/providers/dashboardPageProvider.dart';
+import 'package:punch/providers/sexProvider.dart';
+import 'package:punch/providers/staffprovider.dart';
 import 'package:punch/providers/textConroller.dart';
-import 'package:punch/screens/libraryScreen.dart';
+import 'package:punch/providers/titleProvider.dart';
 import 'package:punch/screens/loginPage.dart';
-import 'package:punch/screens/manageAnniversaryTypes.dart';
 import 'package:punch/screens/splashScreen.dart';
-import 'package:punch/screens/userHome.dart';
 import 'package:paged_datatable/l10n/generated/l10n.dart';
-
 import 'package:provider/provider.dart';
 import 'package:punch/src/routes.dart';
 
@@ -30,6 +29,9 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => SexProvider()),
+        ChangeNotifierProvider(create: (_) => TitleProvider()),
+        ChangeNotifierProvider(create: (_) => StaffProvider()),
         ChangeNotifierProvider(create: (_) => DashboardPageProvider()),
         ChangeNotifierProvider(create: (_) => AnniversaryProvider()),
         ChangeNotifierProvider(create: (_) => CompanyProvider()),
@@ -66,10 +68,9 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             textTheme: kIsWeb ? GoogleFonts.robotoTextTheme() : null,
-           
-             floatingActionButtonTheme: FloatingActionButtonThemeData(
+            floatingActionButtonTheme: FloatingActionButtonThemeData(
               hoverColor: hoverPunchRed,
-              backgroundColor:  punchRed, // FAB background color
+              backgroundColor: punchRed, // FAB background color
               foregroundColor: Colors.white, // FAB icon/text color
               elevation: 4, // Optional: Adjust the shadow
             ),
@@ -91,7 +92,6 @@ class MyApp extends StatelessWidget {
               );
             },
           ),
-     
           onGenerateRoute: Routes.generateRoute,
         ));
   }

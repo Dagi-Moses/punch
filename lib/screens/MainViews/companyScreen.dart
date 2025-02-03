@@ -17,8 +17,8 @@ import 'package:punch/providers/authProvider.dart';
 
 import 'package:punch/providers/companyProvider.dart';
 
-import 'package:punch/screens/companyView.dart';
-import 'package:punch/screens/manageCompanySectors.dart';
+import 'package:punch/screens/EditViewPages/companyView.dart';
+import 'package:punch/screens/ManageTypes/manageCompanySectors.dart';
 import 'package:punch/widgets/operations.dart';
 import 'package:punch/widgets/texts/richTextTableColumn.dart';
 

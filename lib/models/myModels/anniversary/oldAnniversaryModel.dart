@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-class Anniversary {
+class OldAnniversary {
   String? id;
   int? anniversaryNo;
   String? name;
@@ -17,7 +17,7 @@ class Anniversary {
   Uint8List? image; // Base64 encoded image
   String? description; // Description for the image
 
-  Anniversary({
+  OldAnniversary({
     this.id,
     this.anniversaryNo,
     this.name,
@@ -34,10 +34,10 @@ class Anniversary {
     this.description,
   });
 
-  // Deserialize JSON to Anniversary object
-  factory Anniversary.fromJson(Map<String, dynamic> json) {
+  // Deserialize JSON to OldAnniversary object
+  factory OldAnniversary.fromJson(Map<String, dynamic> json) {
    
-    return Anniversary(
+    return OldAnniversary(
       id: json['_id'] as String?,
       anniversaryNo: json['Anniversary_No'] as int?,
       name: json['Name'] as String?,
@@ -62,7 +62,7 @@ class Anniversary {
     );
   }
 
-  // Serialize Anniversary object to JSON
+  // Serialize OldAnniversary object to JSON
   Map<String, dynamic> toJson() {
     return {
       //'_id': id,

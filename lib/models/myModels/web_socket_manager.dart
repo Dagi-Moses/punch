@@ -48,6 +48,16 @@ class WebSocketManager {
     }
   }
 
+//   void send(dynamic message) {
+//   if (_channel != null) {
+//     _channel!.sink.add(message);
+//   } else {
+//     print('WebSocket is not connected. Attempting to reconnect...');
+//     _reconnect();
+//   }
+// }
+
+
   void dispose() {
     _channel?.sink.close();
   }

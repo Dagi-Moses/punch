@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:punch/admin/screens/home/home_screen.dart';
-import 'package:punch/screens/libraryScreen.dart';
+
 import 'package:punch/screens/loginPage.dart';
-import 'package:punch/screens/userHome.dart';
+
 
 
 class Routes {
@@ -20,10 +20,10 @@ class Routes {
         return MaterialPageRoute(builder: (_) => const ForgotPasswordScreen());
       case admin:
         return MaterialPageRoute(builder: (_) => AdminHome());
-      case user:
-        return MaterialPageRoute(builder: (_) =>  UserHome());
-      case library:
-        return MaterialPageRoute(builder: (_) => const LibraryScreen());
+      // case user:
+      //   return MaterialPageRoute(builder: (_) =>  UserHome());
+      // case library:
+      //   return MaterialPageRoute(builder: (_) => const LibraryScreen());
       default:
         return MaterialPageRoute(
           builder: (_) => const Scaffold(

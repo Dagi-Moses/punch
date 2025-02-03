@@ -15,9 +15,10 @@ import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/authProvider.dart';
 
 import 'package:punch/providers/clientProvider.dart';
+import 'package:punch/providers/titleProvider.dart';
 
-import 'package:punch/screens/clientDetailView.dart';
-import 'package:punch/screens/manageClientTitlePage.dart';
+import 'package:punch/screens/EditViewPages/clientDetailView.dart';
+import 'package:punch/screens/ManageTypes/manageTitlePage.dart';
 
 import 'package:punch/widgets/operations.dart';
 import 'package:punch/widgets/texts/richTextTableColumn.dart';
@@ -64,6 +65,7 @@ class _ClientScreenState extends State<ClientScreen> {
     final tableController =
         Provider.of<ClientProvider>(context, listen: false).tableController;
     final auth = Provider.of<AuthProvider>(context);
+    final titles = Provider.of<TitleProvider>(context);
 
     final isUser = auth.user?.loginId == UserRole.user;
     if (!_isInitialized) {
@@ -113,9 +115,6 @@ class _ClientScreenState extends State<ClientScreen> {
             fetcher: (pageSize, sortModel, filterModel, pageToken) {
               try {
                 int pageIndex = int.parse(pageToken ?? "0");
-
-                // Filter data based on filterModel
-                // Filter data based on filterModel
                 List<Client> filteredData = clients.where((client) {
                   // Get the search query
                   String? query = filterModel['Name'];
@@ -184,16 +183,7 @@ class _ClientScreenState extends State<ClientScreen> {
                             }));
                           },
                         ),
-                      if (!isUser)
-                        PopupMenuItem(
-                          child: const Text("Edit client title"),
-                          onTap: () {
-                            Navigator.push(context,
-                                MaterialPageRoute(builder: (_) {
-                              return ManageClientTitlePage();
-                            }));
-                          },
-                        ),
+                   
                       PopupMenuItem(
                         child: const Text("Refresh"),
                         onTap: () {
@@ -351,7 +341,7 @@ class _ClientScreenState extends State<ClientScreen> {
                       style: TextStyle(fontSize: 14),
                     ),
                   ),
-                  ...clientProvider.titles.entries.map((entry) {
+                  ...titles.titles.entries.map((entry) {
                     return DropdownMenuItem<int?>(
                       value:
                           entry.key, // Use the Anniversary_Type_Id as the value
@@ -367,7 +357,7 @@ class _ClientScreenState extends State<ClientScreen> {
                 getter: (item, index) {
                   int? typeId = item.titleId;
                   if (typeId == null ||
-                      !clientProvider.titles.containsKey(typeId)) {
+                      !titles.titles.containsKey(typeId)) {
                     return null; // or return a default/fallback typeId if necessary
                   }
                   return typeId;

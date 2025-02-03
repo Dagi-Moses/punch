@@ -4,13 +4,13 @@ import 'package:punch/admin/core/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/authProvider.dart';
-import 'package:punch/screens/clientScreen.dart';
-import 'package:punch/screens/main%20View.dart';
-import 'package:punch/screens/staff.dart';
-import 'package:punch/screens/users.dart';
+import 'package:punch/screens/MainViews/clientScreen.dart';
+import 'package:punch/screens/MainViews/main%20View.dart';
+import 'package:punch/screens/MainViews/staff.dart';
+import 'package:punch/screens/MainViews/users.dart';
 import 'package:punch/providers/dashboardPageProvider.dart';
 
-import 'package:punch/screens/companyScreen.dart';
+import 'package:punch/screens/MainViews/companyScreen.dart';
 
 import 'components/header.dart';
 
@@ -43,7 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const MainView(),
                     const ClientScreen(),
                     const CompanyScreen(),
-                  //  const StaffView(),
+                    const StaffView(),
                     if (isAdmin) const UsersScreen(),
                 
                   ],

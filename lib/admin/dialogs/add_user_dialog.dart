@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:punch/admin/core/constants/color_constants.dart';
-import 'package:punch/models/myModels/anniversaryModel.dart';
+import 'package:punch/models/myModels/anniversary/oldAnniversaryModel.dart';
 import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/anniversaryProvider.dart';
 import 'package:punch/providers/authProvider.dart';

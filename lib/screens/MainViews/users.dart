@@ -10,7 +10,7 @@ import 'package:punch/admin/responsive.dart';
 import 'package:punch/constants/constants.dart';
 import 'package:punch/models/myModels/userModel.dart';
 import 'package:punch/providers/authProvider.dart';
-import 'package:punch/screens/userDetailView.dart';
+import 'package:punch/screens/EditViewPages/userDetailView.dart';
 import 'package:punch/widgets/operations.dart';
 
 class UsersScreen extends StatefulWidget {
